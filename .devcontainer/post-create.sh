@@ -9,6 +9,7 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
     build-essential \
+    bubblewrap \
     clang \
     cmake \
     gdb \

@@ -36,7 +36,7 @@ htmlcov/
 .ipynb_checkpoints/
 
 # Local tool state
-.codex/
+.codex
 
 # Editors and OS files
 .vscode/
