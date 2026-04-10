@@ -39,6 +39,7 @@ python -m build
 Exercise the CLI during development with commands such as `devkit validate`, `devkit build --profile mpi`, and `devkit deploy --dry-run`. When using the devcontainer, `.devcontainer/post-create.sh` installs the same editable development environment automatically.
 
 Shared Python implementation guidance lives in `skills/python-development/`. Use that skill when editing Python code, tests, packaging metadata, or developer-tooling configuration in this repository.
+Shared GitHub execution guidance lives in `skills/github-issue-workflow/`. Use that skill when starting work from GitHub issues or when the task should end with an opened pull request.
 
 ## Coding Style & Naming Conventions
 
@@ -50,7 +51,7 @@ Use `pytest` for all tests. Add new tests in `tests/` with filenames named `test
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short, imperative subjects such as `Add devcontainer bootstrap and development docs`. Keep commit titles concise and specific. Pull requests should explain the user-facing change, note any config or CLI behavior differences, and list the verification performed, for example `ruff format .`, `ruff check .`, `pytest`, `python -m build`, or a representative `devkit ... --dry-run` command. Include sample output only when it clarifies behavior.
+Recent commits use short, imperative subjects such as `Add devcontainer bootstrap and development docs`. Keep commit titles concise and specific. When picking up work from GitHub issues, always create a dedicated branch before making changes and open a pull request when the work is complete. Pull requests should explain the user-facing change, note any config or CLI behavior differences, and list the verification performed, for example `ruff format .`, `ruff check .`, `pytest`, `python -m build`, or a representative `devkit ... --dry-run` command. Include sample output only when it clarifies behavior. After opening the PR, stop and wait for user feedback instead of continuing automatically.
 
 ## Configuration Notes
 

@@ -1,0 +1,3 @@
+interface:
+  display_name: "GitHub Issue Workflow"
+  short_description: "Pick the newest issue, branch, implement, and open a PR"
