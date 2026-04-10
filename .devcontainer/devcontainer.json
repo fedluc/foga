@@ -1,19 +1,25 @@
 {
-  "name": "codex-devcontainer-test",
+  "name": "devkit",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "remoteUser": "vscode",
   "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
     }
   },
-  "postCreateCommand": "npm install -g @openai/codex",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "mounts": [
     "type=bind,source=${localEnv:HOME}/.codex,target=/home/vscode/.codex"
   ],
   "customizations": {
     "vscode": {
       "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.cmake-tools",
         "openai.chatgpt"
       ]
     }

@@ -19,7 +19,7 @@ This repository contains the first implementation pass with:
 1. Install the package in editable mode:
 
 ```bash
-pip install -e .[test]
+pip install -e .[dev]
 ```
 
 2. Add a `devkit.yml` file to your project.
@@ -35,3 +35,15 @@ devkit deploy --profile release --dry-run
 
 See [`examples/qupled/devkit.yml`](examples/qupled/devkit.yml) for a concrete
 configuration derived from the current `qupled` workflow.
+
+## Devcontainer
+
+The repository includes a devcontainer in [`.devcontainer/devcontainer.json`](/Users/flufsr/Documents/devkit/.devcontainer/devcontainer.json).
+When opened in a compatible environment, it installs:
+
+- Python 3.11
+- `devkit` in editable mode with the `dev` extra
+- common native-tooling dependencies used by package workflows:
+  `build-essential`, `clang`, `cmake`, `ninja-build`, `pkg-config`, and `gdb`
+- GitHub CLI (`gh`) for authenticated GitHub API and repository operations
+- Codex via `npm`
