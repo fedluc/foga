@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Application code lives under `src/devkit/`. Keep CLI entrypoints in `src/devkit/cli.py`, shared config handling in `src/devkit/config.py`, execution helpers in `src/devkit/executor.py`, and backend-specific command builders in `src/devkit/adapters/`. Tests live in `tests/` and currently cover config loading, adapter behavior, and CLI routing. Example user configuration lives in `examples/qupled/devkit.yml`. Use `README.md` for end-user setup and `REMAINING_PLAN.md` for unfinished product work.
+Application code lives under `src/devkit/`. Keep CLI entrypoints in `src/devkit/cli.py`, shared config handling in `src/devkit/config.py`, execution helpers in `src/devkit/executor.py`, and backend-specific command builders in `src/devkit/adapters/`. Tests live in `tests/` and currently cover config loading, adapter behavior, and CLI routing. Example user configuration lives in `examples/qupled/devkit.yml`. Use `README.md` for end-user setup. Track unfinished product work in GitHub issues and milestones.
 
 ## Build, Test, and Development Commands
 
