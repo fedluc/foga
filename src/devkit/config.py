@@ -1,3 +1,5 @@
+"""Configuration loading and validation for devkit."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -15,12 +17,33 @@ SUPPORTED_DEPLOY_BACKENDS = {"twine"}
 
 @dataclass(frozen=True)
 class HookConfig:
+    """Pre- and post-command hooks for a workflow step.
+
+    Attributes:
+        pre: Commands executed before the main workflow command.
+        post: Commands executed after the main workflow command.
+    """
+
     pre: list[list[str]] = field(default_factory=list)
     post: list[list[str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class NativeBuildConfig:
+    """Configuration for a native CMake build workflow.
+
+    Attributes:
+        backend: Native build backend identifier.
+        source_dir: Source directory passed to CMake.
+        build_dir: Build directory passed to CMake.
+        generator: Optional generator name for CMake.
+        configure_args: Extra arguments passed to ``cmake -S``.
+        build_args: Extra arguments passed to ``cmake --build``.
+        targets: Default native targets to build when none are requested.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around native build steps.
+    """
+
     backend: str
     source_dir: str
     build_dir: str
@@ -34,6 +57,16 @@ class NativeBuildConfig:
 
 @dataclass(frozen=True)
 class PythonBuildConfig:
+    """Configuration for a Python package build workflow.
+
+    Attributes:
+        backend: Python build backend identifier.
+        command: Base command used to build the package.
+        args: Extra arguments passed to the build command.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around Python build steps.
+    """
+
     backend: str
     command: list[str] = field(default_factory=lambda: ["python3", "-m", "build"])
     args: list[str] = field(default_factory=list)
@@ -43,12 +76,38 @@ class PythonBuildConfig:
 
 @dataclass(frozen=True)
 class BuildConfig:
+    """Aggregate build configuration for supported build backends.
+
+    Attributes:
+        native: Optional native build configuration.
+        python: Optional Python build configuration.
+    """
+
     native: NativeBuildConfig | None = None
     python: PythonBuildConfig | None = None
 
 
 @dataclass(frozen=True)
 class TestRunnerConfig:
+    """Configuration for an individual test runner.
+
+    Attributes:
+        name: Runner name from the configuration file.
+        backend: Test backend identifier.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around test steps.
+        path: Pytest path to execute.
+        marker: Optional pytest marker expression.
+        tox_env: Optional tox environment name.
+        build_dir: Build directory used by ctest.
+        source_dir: Source directory used when ctest needs a configure step.
+        generator: Optional CMake generator for ctest preparation.
+        configure_args: Extra CMake configure arguments for ctest.
+        build_args: Extra CMake build arguments for ctest.
+        target: Optional build target for ctest preparation.
+    """
+
     name: str
     backend: str
     args: list[str] = field(default_factory=list)
@@ -67,6 +126,19 @@ class TestRunnerConfig:
 
 @dataclass(frozen=True)
 class DeployTargetConfig:
+    """Configuration for an individual deploy target.
+
+    Attributes:
+        name: Deploy target name from the configuration file.
+        backend: Deploy backend identifier.
+        artifacts: Glob patterns used to resolve artifacts for upload.
+        repository: Optional named repository understood by the backend.
+        repository_url: Optional explicit repository URL.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around deploy steps.
+    """
+
     name: str
     backend: str
     artifacts: list[str]
@@ -79,16 +151,40 @@ class DeployTargetConfig:
 
 @dataclass(frozen=True)
 class CleanConfig:
+    """Configuration for removable build artifact paths.
+
+    Attributes:
+        paths: Relative paths removed by ``devkit clean``.
+    """
+
     paths: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class ProjectConfig:
+    """Project metadata required by devkit.
+
+    Attributes:
+        name: Project name displayed in user-facing output.
+    """
+
     name: str
 
 
 @dataclass(frozen=True)
 class DevkitConfig:
+    """Fully parsed devkit configuration.
+
+    Attributes:
+        project_root: Directory containing the resolved configuration file.
+        project: Parsed project metadata.
+        build: Parsed build configuration.
+        tests: Parsed test runner configuration keyed by name.
+        deploy: Parsed deploy configuration keyed by target name.
+        clean: Parsed clean configuration.
+        raw: Raw merged configuration mapping after profile application.
+    """
+
     project_root: Path
     project: ProjectConfig
     build: BuildConfig
@@ -101,6 +197,18 @@ class DevkitConfig:
 def load_config(
     config_path: str | Path = "devkit.yml", profile: str | None = None
 ) -> DevkitConfig:
+    """Load, merge, and validate a devkit configuration file.
+
+    Args:
+        config_path: Path to the ``devkit.yml`` file.
+        profile: Optional profile to merge into the base configuration.
+
+    Returns:
+        Parsed configuration object.
+
+    Raises:
+        ConfigError: If the configuration file is missing or malformed.
+    """
     path = Path(config_path).resolve()
     if not path.exists():
         raise ConfigError(f"Configuration file not found: {path}")
@@ -115,6 +223,18 @@ def load_config(
 
 
 def apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
+    """Merge an optional named profile into the base configuration.
+
+    Args:
+        data: Raw configuration mapping.
+        profile: Optional profile name to apply.
+
+    Returns:
+        Configuration mapping after profile application.
+
+    Raises:
+        ConfigError: If the profile configuration is malformed or missing.
+    """
     base = deep_copy_mapping(data)
     profiles = base.pop("profiles", {})
     if profiles and not isinstance(profiles, dict):
@@ -135,6 +255,18 @@ def apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
 
 
 def parse_config(data: dict[str, Any], project_root: Path) -> DevkitConfig:
+    """Parse raw configuration data into typed config objects.
+
+    Args:
+        data: Raw merged configuration mapping.
+        project_root: Directory containing the configuration file.
+
+    Returns:
+        Parsed configuration object.
+
+    Raises:
+        ConfigError: If required configuration values are missing or invalid.
+    """
     project = data.get("project") or {}
     if not isinstance(project, dict) or not project.get("name"):
         raise ConfigError("`project.name` is required")
@@ -156,6 +288,17 @@ def parse_config(data: dict[str, Any], project_root: Path) -> DevkitConfig:
 
 
 def _parse_build(data: dict[str, Any]) -> BuildConfig:
+    """Parse build configuration for supported backends.
+
+    Args:
+        data: Raw build configuration mapping.
+
+    Returns:
+        Parsed build configuration.
+
+    Raises:
+        ConfigError: If the build configuration is malformed or unsupported.
+    """
     if not isinstance(data, dict):
         raise ConfigError("`build` must be a mapping")
 
@@ -215,6 +358,17 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
 
 
 def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
+    """Parse test runner configuration.
+
+    Args:
+        data: Raw test configuration mapping.
+
+    Returns:
+        Parsed test runners keyed by runner name.
+
+    Raises:
+        ConfigError: If the test configuration is malformed or unsupported.
+    """
     if not isinstance(data, dict):
         raise ConfigError("`test` must be a mapping")
     runners_data = data.get("runners") or {}
@@ -253,6 +407,17 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
 
 
 def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
+    """Parse deploy target configuration.
+
+    Args:
+        data: Raw deploy configuration mapping.
+
+    Returns:
+        Parsed deploy targets keyed by target name.
+
+    Raises:
+        ConfigError: If the deploy configuration is malformed or unsupported.
+    """
     if not isinstance(data, dict):
         raise ConfigError("`deploy` must be a mapping")
     targets_data = data.get("targets") or {}
@@ -288,12 +453,31 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
 
 
 def _parse_clean(data: dict[str, Any]) -> CleanConfig:
+    """Parse clean-path configuration.
+
+    Args:
+        data: Raw clean configuration mapping.
+
+    Returns:
+        Parsed clean configuration.
+
+    Raises:
+        ConfigError: If the clean configuration is malformed.
+    """
     if not isinstance(data, dict):
         raise ConfigError("`clean` must be a mapping")
     return CleanConfig(paths=_string_list(data.get("paths"), "clean.paths"))
 
 
 def _validate_test_runner(config: TestRunnerConfig) -> None:
+    """Validate backend-specific requirements for a test runner.
+
+    Args:
+        config: Test runner configuration to validate.
+
+    Raises:
+        ConfigError: If required fields for the selected backend are missing.
+    """
     if config.backend == "pytest" and not config.path:
         raise ConfigError(f"`test.runners.{config.name}.path` is required for pytest")
     if config.backend == "tox" and not config.tox_env:
@@ -305,6 +489,18 @@ def _validate_test_runner(config: TestRunnerConfig) -> None:
 
 
 def _parse_hooks(data: Any, path: str) -> HookConfig:
+    """Parse hook configuration from an optional mapping.
+
+    Args:
+        data: Raw hook configuration value.
+        path: Configuration path used in validation errors.
+
+    Returns:
+        Parsed hook configuration.
+
+    Raises:
+        ConfigError: If the hook configuration is malformed.
+    """
     if data is None:
         return HookConfig()
     if not isinstance(data, dict):
@@ -316,6 +512,15 @@ def _parse_hooks(data: Any, path: str) -> HookConfig:
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Recursively merge one mapping into another.
+
+    Args:
+        base: Base mapping to copy.
+        override: Mapping whose values override the base mapping.
+
+    Returns:
+        Deeply merged mapping.
+    """
     result = deep_copy_mapping(base)
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -326,10 +531,26 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
 
 
 def deep_copy_mapping(value: dict[str, Any]) -> dict[str, Any]:
+    """Create a deep copy of a mapping.
+
+    Args:
+        value: Mapping to copy.
+
+    Returns:
+        Deep copy of ``value``.
+    """
     return {key: deep_copy(item) for key, item in value.items()}
 
 
 def deep_copy(value: Any) -> Any:
+    """Create a deep copy of nested mappings and lists.
+
+    Args:
+        value: Value to copy.
+
+    Returns:
+        Deep copy of ``value``.
+    """
     if isinstance(value, dict):
         return deep_copy_mapping(value)
     if isinstance(value, list):
@@ -338,6 +559,19 @@ def deep_copy(value: Any) -> Any:
 
 
 def _required_str(data: dict[str, Any], key: str, path: str) -> str:
+    """Read a required non-empty string field.
+
+    Args:
+        data: Source mapping.
+        key: Mapping key to read.
+        path: Full configuration path used in validation errors.
+
+    Returns:
+        Non-empty string value.
+
+    Raises:
+        ConfigError: If the value is missing, empty, or not a string.
+    """
     value = data.get(key)
     if not isinstance(value, str) or not value.strip():
         raise ConfigError(f"`{path}` is required")
@@ -345,6 +579,18 @@ def _required_str(data: dict[str, Any], key: str, path: str) -> str:
 
 
 def _optional_str(data: dict[str, Any], key: str) -> str | None:
+    """Read an optional string field.
+
+    Args:
+        data: Source mapping.
+        key: Mapping key to read.
+
+    Returns:
+        String value when present, otherwise ``None``.
+
+    Raises:
+        ConfigError: If the value is present but not a string.
+    """
     value = data.get(key)
     if value is None:
         return None
@@ -354,6 +600,18 @@ def _optional_str(data: dict[str, Any], key: str) -> str | None:
 
 
 def _string_list(value: Any, path: str) -> list[str]:
+    """Validate a list of strings and return a shallow copy.
+
+    Args:
+        value: Raw configuration value.
+        path: Full configuration path used in validation errors.
+
+    Returns:
+        List of strings, or an empty list when ``value`` is ``None``.
+
+    Raises:
+        ConfigError: If the value is not a list of strings.
+    """
     if value is None:
         return []
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
@@ -362,6 +620,18 @@ def _string_list(value: Any, path: str) -> list[str]:
 
 
 def _string_mapping(value: Any, path: str) -> dict[str, str]:
+    """Validate a mapping of string keys and values.
+
+    Args:
+        value: Raw configuration value.
+        path: Full configuration path used in validation errors.
+
+    Returns:
+        Mapping of strings, or an empty mapping when ``value`` is ``None``.
+
+    Raises:
+        ConfigError: If the value is not a mapping of strings.
+    """
     if value is None:
         return {}
     if not isinstance(value, dict):
@@ -375,6 +645,18 @@ def _string_mapping(value: Any, path: str) -> dict[str, str]:
 
 
 def _command_list(value: Any, path: str) -> list[str]:
+    """Validate a non-empty command array.
+
+    Args:
+        value: Raw configuration value.
+        path: Full configuration path used in validation errors.
+
+    Returns:
+        Validated command list.
+
+    Raises:
+        ConfigError: If the command is empty or malformed.
+    """
     command = _string_list(value, path)
     if not command:
         raise ConfigError(f"`{path}` must not be empty")
@@ -382,6 +664,18 @@ def _command_list(value: Any, path: str) -> list[str]:
 
 
 def _command_matrix(value: Any, path: str) -> list[list[str]]:
+    """Validate a list of non-empty command arrays.
+
+    Args:
+        value: Raw configuration value.
+        path: Full configuration path used in validation errors.
+
+    Returns:
+        Validated command matrix.
+
+    Raises:
+        ConfigError: If the value is not a list of non-empty command arrays.
+    """
     if value is None:
         return []
     if not isinstance(value, list):

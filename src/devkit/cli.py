@@ -1,3 +1,5 @@
+"""CLI entrypoint and command routing for devkit."""
+
 from __future__ import annotations
 
 import argparse
@@ -12,6 +14,15 @@ from .executor import CommandExecutor
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the CLI.
+
+    Args:
+        argv: Optional CLI arguments. When omitted, ``argparse`` reads from
+            ``sys.argv``.
+
+    Returns:
+        Process exit code for the invoked command.
+    """
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -43,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Create the top-level argument parser for the CLI.
+
+    Returns:
+        Configured parser for all supported ``devkit`` commands.
+    """
     parser = argparse.ArgumentParser(
         description="Unified developer CLI for Python/C++ package workflows."
     )
@@ -105,12 +121,30 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _add_profile_arg(parser: argparse.ArgumentParser) -> None:
+    """Register the shared profile-selection argument on a parser.
+
+    Args:
+        parser: Parser that should accept the ``--profile`` option.
+    """
     parser.add_argument("--profile", help="Configuration profile to apply.")
 
 
 def _run_build(
     config: DevkitConfig, executor: CommandExecutor, args: argparse.Namespace
 ) -> int:
+    """Execute configured build workflows.
+
+    Args:
+        config: Loaded project configuration.
+        executor: Command executor used to run generated build commands.
+        args: Parsed CLI arguments for the ``build`` command.
+
+    Returns:
+        Process exit code for the command.
+
+    Raises:
+        ConfigError: If no build workflows are configured.
+    """
     specs = build_specs(config.build, targets=args.targets)
     if not specs:
         raise ConfigError("No build workflows configured")
@@ -121,6 +155,19 @@ def _run_build(
 def _run_test(
     config: DevkitConfig, executor: CommandExecutor, args: argparse.Namespace
 ) -> int:
+    """Execute configured test workflows.
+
+    Args:
+        config: Loaded project configuration.
+        executor: Command executor used to run generated test commands.
+        args: Parsed CLI arguments for the ``test`` command.
+
+    Returns:
+        Process exit code for the command.
+
+    Raises:
+        ConfigError: If no test workflows are configured.
+    """
     selected = _select_named_items(config.tests, args.runner, "test runner")
     specs = []
     for runner in selected.values():
@@ -134,6 +181,19 @@ def _run_test(
 def _run_deploy(
     config: DevkitConfig, executor: CommandExecutor, args: argparse.Namespace
 ) -> int:
+    """Execute configured deploy workflows.
+
+    Args:
+        config: Loaded project configuration.
+        executor: Command executor used to run generated deploy commands.
+        args: Parsed CLI arguments for the ``deploy`` command.
+
+    Returns:
+        Process exit code for the command.
+
+    Raises:
+        ConfigError: If no deploy workflows are configured.
+    """
     selected = _select_named_items(config.deploy, args.targets, "deploy target")
     specs = []
     for target in selected.values():
@@ -147,6 +207,20 @@ def _run_deploy(
 def _select_named_items(
     items: dict[str, object], selected_names: list[str] | None, label: str
 ) -> dict[str, object]:
+    """Filter named configuration items and validate explicit selections.
+
+    Args:
+        items: Available named items.
+        selected_names: Optional list of names explicitly requested by the user.
+        label: Human-readable item label used in validation errors.
+
+    Returns:
+        All items when no explicit selection is given, otherwise only the
+        requested items.
+
+    Raises:
+        ConfigError: If any requested item name is unknown.
+    """
     if not selected_names:
         return items
 
@@ -159,6 +233,14 @@ def _select_named_items(
 
 
 def _run_clean(config: DevkitConfig) -> int:
+    """Remove configured build artifacts from the project root.
+
+    Args:
+        config: Loaded project configuration.
+
+    Returns:
+        Process exit code for the command.
+    """
     for path_str in config.clean.paths:
         path = Path(config.project_root, path_str)
         if not path.exists():
