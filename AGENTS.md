@@ -51,7 +51,7 @@ Use `pytest` for all tests. Add new tests in `tests/` with filenames named `test
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short, imperative subjects such as `Add devcontainer bootstrap and development docs`. Keep commit titles concise and specific. When picking up work from GitHub issues, always create a dedicated branch before making changes and open a pull request when the work is complete. Pull requests should explain the user-facing change, note any config or CLI behavior differences, and list the verification performed, for example `ruff format .`, `ruff check .`, `pytest`, `python -m build`, or a representative `devkit ... --dry-run` command. Include sample output only when it clarifies behavior. After opening the PR, stop and wait for user feedback instead of continuing automatically.
+Recent commits use short, imperative subjects such as `Add devcontainer bootstrap and development docs`. Keep commit titles concise and specific. Before creating commits or changing git settings, check `.codex/` for repository-local git configuration instructions such as commit author requirements or other custom workflow notes. When picking up work from GitHub issues, always create a dedicated branch before making changes and open a pull request when the work is complete. Pull requests should explain the user-facing change, note any config or CLI behavior differences, and list the verification performed, for example `ruff format .`, `ruff check .`, `pytest`, `python -m build`, or a representative `devkit ... --dry-run` command. Include sample output only when it clarifies behavior. After opening the PR, stop and wait for user feedback instead of continuing automatically.
 
 ## Configuration Notes
 
