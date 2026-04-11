@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 
 from devkit import config as cfg
-from devkit.adapters.build import build_specs
-from devkit.adapters.deploy import deploy_specs
-from devkit.adapters.testing import runner_specs
+from devkit.adapters.build import build_specs, plan_build
+from devkit.adapters.deploy import deploy_specs, plan_deploy
+from devkit.adapters.testing import plan_tests, runner_specs
 from devkit.errors import ConfigError
 
 
@@ -54,6 +54,29 @@ def test_build_specs_generate_cmake_and_python_commands() -> None:
         "native_tests",
     ]
     assert specs[3].command == ["python3", "-m", "build", "--wheel"]
+
+
+def test_plan_build_returns_registered_backend_specs_in_order() -> None:
+    """Build planning uses the registered backend contracts in config order."""
+    config = cfg.BuildConfig(
+        native=cfg.NativeBuildConfig(
+            backend="cmake",
+            source_dir="src/native",
+            build_dir="build/native",
+        ),
+        python=cfg.PythonBuildConfig(
+            backend="python-build",
+            args=["--wheel"],
+        ),
+    )
+
+    plan = plan_build(config, targets=["native_tests"])
+
+    assert [spec.description for spec in plan.specs] == [
+        "cmake configure",
+        "cmake build target `native_tests`",
+        "python package build",
+    ]
 
 
 def test_ctest_runner_can_prepare_target_before_running() -> None:
@@ -118,6 +141,21 @@ def test_deploy_specs_resolve_matching_artifacts(tmp_path: Path) -> None:
     ]
 
 
+def test_plan_tests_combines_selected_runner_contracts() -> None:
+    """Test planning combines multiple registered runner backends."""
+    runners = [
+        cfg.TestRunnerConfig(name="unit", backend="pytest", path="tests/unit"),
+        cfg.TestRunnerConfig(name="integration", backend="tox", tox_env="py311"),
+    ]
+
+    plan = plan_tests(runners)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["pytest", "tests/unit"],
+        ["tox", "-e", "py311"],
+    ]
+
+
 def test_deploy_specs_fail_when_no_artifacts_found(tmp_path: Path) -> None:
     """Deploy spec generation fails when artifact globs match nothing."""
     target = cfg.DeployTargetConfig(
@@ -128,3 +166,34 @@ def test_deploy_specs_fail_when_no_artifacts_found(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigError):
         deploy_specs(tmp_path, target)
+
+
+def test_plan_deploy_combines_multiple_targets(tmp_path: Path) -> None:
+    """Deploy planning combines registered backend specs for each target."""
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    first = dist / "demo-0.1.0-py3-none-any.whl"
+    second = dist / "demo-0.1.0.tar.gz"
+    first.write_text("wheel", encoding="utf-8")
+    second.write_text("sdist", encoding="utf-8")
+
+    targets = [
+        cfg.DeployTargetConfig(
+            name="testpypi",
+            backend="twine",
+            artifacts=["dist/*.whl"],
+            repository="testpypi",
+        ),
+        cfg.DeployTargetConfig(
+            name="release",
+            backend="twine",
+            artifacts=["dist/*.tar.gz"],
+        ),
+    ]
+
+    plan = plan_deploy(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["twine", "upload", "--repository", "testpypi", str(first)],
+        ["twine", "upload", str(second)],
+    ]

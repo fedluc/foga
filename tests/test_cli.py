@@ -59,3 +59,22 @@ def test_build_dry_run_routes_to_executor(tmp_path: Path, monkeypatch) -> None:
 
     assert exit_code == 0
     assert captured == {"count": 1, "dry_run": True}
+
+
+def test_test_dry_run_routes_planned_specs_to_executor(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The test command routes the workflow plan to the executor."""
+    config = write_config(tmp_path)
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["count"] = len(specs)
+        captured["dry_run"] = dry_run
+
+    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "test", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured == {"count": 1, "dry_run": True}

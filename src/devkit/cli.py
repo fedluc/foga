@@ -7,7 +7,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from .adapters import build_specs, deploy_specs, runner_specs
+from .adapters import plan_build, plan_deploy, plan_tests
 from .config import DevkitConfig, load_config
 from .errors import ConfigError, DevkitError
 from .executor import CommandExecutor
@@ -145,10 +145,10 @@ def _run_build(
     Raises:
         ConfigError: If no build workflows are configured.
     """
-    specs = build_specs(config.build, targets=args.targets)
-    if not specs:
+    plan = plan_build(config.build, targets=args.targets)
+    if not plan.specs:
         raise ConfigError("No build workflows configured")
-    executor.run_specs(specs, dry_run=args.dry_run)
+    executor.run_specs(plan.specs, dry_run=args.dry_run)
     return 0
 
 
@@ -169,12 +169,10 @@ def _run_test(
         ConfigError: If no test workflows are configured.
     """
     selected = _select_named_items(config.tests, args.runner, "test runner")
-    specs = []
-    for runner in selected.values():
-        specs.extend(runner_specs(runner))
-    if not specs:
+    plan = plan_tests(list(selected.values()))
+    if not plan.specs:
         raise ConfigError("No test workflows configured")
-    executor.run_specs(specs, dry_run=args.dry_run)
+    executor.run_specs(plan.specs, dry_run=args.dry_run)
     return 0
 
 
@@ -195,12 +193,10 @@ def _run_deploy(
         ConfigError: If no deploy workflows are configured.
     """
     selected = _select_named_items(config.deploy, args.targets, "deploy target")
-    specs = []
-    for target in selected.values():
-        specs.extend(deploy_specs(config.project_root, target))
-    if not specs:
+    plan = plan_deploy(config.project_root, list(selected.values()))
+    if not plan.specs:
         raise ConfigError("No deploy workflows configured")
-    executor.run_specs(specs, dry_run=args.dry_run)
+    executor.run_specs(plan.specs, dry_run=args.dry_run)
     return 0
 
 

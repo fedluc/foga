@@ -62,3 +62,64 @@ test:
 
     with pytest.raises(ConfigError):
         load_config(config_path)
+
+
+def test_load_config_accepts_generic_named_build_entries(tmp_path: Path) -> None:
+    """Build config can use arbitrary section names with registered backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  wheelhouse:
+    backend: python-build
+    args: ["--wheel"]
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert "wheelhouse" in config.build.entries
+    assert config.build.python is None
+
+
+def test_load_config_rejects_build_section_backend_mismatch(tmp_path: Path) -> None:
+    """Legacy build sections still validate against the backend contract."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  native:
+    backend: python-build
+""",
+    )
+
+    with pytest.raises(ConfigError, match="build.native.*native build backend"):
+        load_config(config_path)
+
+
+def test_load_config_validates_deploy_target_artifacts(tmp_path: Path) -> None:
+    """Deploy target validation still runs through the backend registry."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+deploy:
+  targets:
+    pypi:
+      backend: twine
+      artifacts: []
+""",
+    )
+
+    with pytest.raises(ConfigError, match="deploy.targets.pypi.artifacts"):
+        load_config(config_path)

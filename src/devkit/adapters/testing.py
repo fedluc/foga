@@ -1,9 +1,23 @@
-"""Test adapter command generation."""
+"""Test backend contracts and command planning."""
 
 from __future__ import annotations
 
 from ..config import TestRunnerConfig
+from ..errors import ConfigError
 from ..executor import CommandSpec
+from .common import split_hooks
+from .contracts import BackendContract, WorkflowPlan
+
+
+def plan_tests(runners: list[TestRunnerConfig]) -> WorkflowPlan:
+    """Build a workflow plan for configured test runners."""
+
+    specs: list[CommandSpec] = []
+    for runner in runners:
+        contract = _test_contract(runner.backend)
+        contract.validate(runner)
+        specs.extend(contract.plan(runner, None))
+    return WorkflowPlan(specs=specs)
 
 
 def runner_specs(config: TestRunnerConfig) -> list[CommandSpec]:
@@ -15,40 +29,31 @@ def runner_specs(config: TestRunnerConfig) -> list[CommandSpec]:
     Returns:
         Command specs for the full runner workflow, including hooks.
     """
-    specs = [
-        CommandSpec(command=command, description=f"{config.name} pre-hook")
-        for command in config.hooks.pre
-    ]
-    specs.extend(_backend_specs(config))
-    specs.extend(
-        CommandSpec(command=command, description=f"{config.name} post-hook")
-        for command in config.hooks.post
-    )
-    return specs
+    return plan_tests([config]).specs
 
 
-def _backend_specs(config: TestRunnerConfig) -> list[CommandSpec]:
-    """Dispatch runner command generation based on backend type.
+def supported_test_backends() -> set[str]:
+    """Return the registered test backend names."""
 
-    Args:
-        config: Parsed test runner configuration.
-
-    Returns:
-        Command specs for the selected backend.
-
-    Raises:
-        ValueError: If the backend is unsupported.
-    """
-    if config.backend == "pytest":
-        return [_pytest_spec(config)]
-    if config.backend == "tox":
-        return [_tox_spec(config)]
-    if config.backend == "ctest":
-        return _ctest_specs(config)
-    raise ValueError(f"Unsupported backend: {config.backend}")
+    return set(TEST_BACKENDS)
 
 
-def _pytest_spec(config: TestRunnerConfig) -> CommandSpec:
+def validate_test_backend(config: TestRunnerConfig) -> None:
+    """Validate a configured test backend through the registry contract."""
+
+    _test_contract(config.backend).validate(config)
+
+
+def _test_contract(backend: str) -> BackendContract[TestRunnerConfig, None]:
+    """Resolve a registered test backend contract."""
+
+    try:
+        return TEST_BACKENDS[backend]
+    except KeyError as exc:
+        raise ConfigError(f"Unsupported test backend: {backend}") from exc
+
+
+def _pytest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
     """Build the pytest command for a test runner.
 
     Args:
@@ -61,12 +66,19 @@ def _pytest_spec(config: TestRunnerConfig) -> CommandSpec:
     if config.marker:
         command.extend(["-m", config.marker])
     command.extend(config.args)
-    return CommandSpec(
-        command=command, env=config.env, description=f"pytest runner `{config.name}`"
-    )
+    pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
+    specs = pre_hooks + [
+        CommandSpec(
+            command=command,
+            env=config.env,
+            description=f"pytest runner `{config.name}`",
+        )
+    ]
+    specs.extend(post_hooks)
+    return specs
 
 
-def _tox_spec(config: TestRunnerConfig) -> CommandSpec:
+def _tox_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
     """Build the tox command for a test runner.
 
     Args:
@@ -77,12 +89,17 @@ def _tox_spec(config: TestRunnerConfig) -> CommandSpec:
     """
     command = ["tox", "-e", config.tox_env or ""]
     command.extend(config.args)
-    return CommandSpec(
-        command=command, env=config.env, description=f"tox runner `{config.name}`"
-    )
+    pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
+    specs = pre_hooks + [
+        CommandSpec(
+            command=command, env=config.env, description=f"tox runner `{config.name}`"
+        )
+    ]
+    specs.extend(post_hooks)
+    return specs
 
 
-def _ctest_specs(config: TestRunnerConfig) -> list[CommandSpec]:
+def _ctest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
     """Build the optional CMake and ctest commands for a native test runner.
 
     Args:
@@ -91,7 +108,8 @@ def _ctest_specs(config: TestRunnerConfig) -> list[CommandSpec]:
     Returns:
         Command specs for optional configure and build steps followed by ctest.
     """
-    specs: list[CommandSpec] = []
+    pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
+    specs: list[CommandSpec] = list(pre_hooks)
     if config.source_dir:
         configure_command = [
             "cmake",
@@ -129,4 +147,47 @@ def _ctest_specs(config: TestRunnerConfig) -> list[CommandSpec]:
             command=command, env=config.env, description=f"ctest runner `{config.name}`"
         )
     )
+    specs.extend(post_hooks)
     return specs
+
+
+def _validate_pytest(config: TestRunnerConfig) -> None:
+    """Validate pytest runner configuration."""
+
+    if not config.path:
+        raise ConfigError(f"`test.runners.{config.name}.path` is required for pytest")
+
+
+def _validate_tox(config: TestRunnerConfig) -> None:
+    """Validate tox runner configuration."""
+
+    if not config.tox_env:
+        raise ConfigError(f"`test.runners.{config.name}.tox_env` is required for tox")
+
+
+def _validate_ctest(config: TestRunnerConfig) -> None:
+    """Validate ctest runner configuration."""
+
+    if not config.build_dir:
+        raise ConfigError(
+            f"`test.runners.{config.name}.build_dir` is required for ctest"
+        )
+
+
+TEST_BACKENDS: dict[str, BackendContract[TestRunnerConfig, None]] = {
+    "pytest": BackendContract(
+        name="pytest",
+        validate=_validate_pytest,
+        plan=_pytest_plan,
+    ),
+    "tox": BackendContract(
+        name="tox",
+        validate=_validate_tox,
+        plan=_tox_plan,
+    ),
+    "ctest": BackendContract(
+        name="ctest",
+        validate=_validate_ctest,
+        plan=_ctest_plan,
+    ),
+}

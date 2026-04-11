@@ -10,10 +10,6 @@ import yaml
 
 from .errors import ConfigError
 
-SUPPORTED_BUILD_BACKENDS = {"cmake", "python-build"}
-SUPPORTED_TEST_BACKENDS = {"pytest", "tox", "ctest"}
-SUPPORTED_DEPLOY_BACKENDS = {"twine"}
-
 
 @dataclass(frozen=True)
 class HookConfig:
@@ -76,15 +72,33 @@ class PythonBuildConfig:
 
 @dataclass(frozen=True)
 class BuildConfig:
-    """Aggregate build configuration for supported build backends.
+    """Aggregate build configuration for configured build workflows.
 
     Attributes:
+        entries: Build workflow configuration keyed by section name under
+            ``build``.
         native: Optional native build configuration.
         python: Optional Python build configuration.
     """
 
+    entries: dict[str, NativeBuildConfig | PythonBuildConfig] = field(
+        default_factory=dict
+    )
     native: NativeBuildConfig | None = None
     python: PythonBuildConfig | None = None
+
+    def configured_backends(self) -> list[NativeBuildConfig | PythonBuildConfig]:
+        """Return configured build backends in execution order."""
+
+        if self.entries:
+            return list(self.entries.values())
+
+        backends: list[NativeBuildConfig | PythonBuildConfig] = []
+        if self.native is not None:
+            backends.append(self.native)
+        if self.python is not None:
+            backends.append(self.python)
+        return backends
 
 
 @dataclass(frozen=True)
@@ -302,59 +316,66 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
     if not isinstance(data, dict):
         raise ConfigError("`build` must be a mapping")
 
-    native_data = data.get("native")
-    python_data = data.get("python")
-
+    entries: dict[str, NativeBuildConfig | PythonBuildConfig] = {}
     native = None
-    if native_data is not None:
-        if not isinstance(native_data, dict):
-            raise ConfigError("`build.native` must be a mapping")
-        backend = _required_str(native_data, "backend", "build.native.backend")
-        if backend not in SUPPORTED_BUILD_BACKENDS:
-            raise ConfigError(f"Unsupported build backend: {backend}")
-        if backend != "cmake":
-            raise ConfigError(
-                "`build.native` currently supports only the `cmake` backend"
-            )
-        native = NativeBuildConfig(
-            backend=backend,
-            source_dir=_required_str(
-                native_data, "source_dir", "build.native.source_dir"
-            ),
-            build_dir=_required_str(native_data, "build_dir", "build.native.build_dir"),
-            generator=_optional_str(native_data, "generator"),
-            configure_args=_string_list(
-                native_data.get("configure_args"), "build.native.configure_args"
-            ),
-            build_args=_string_list(
-                native_data.get("build_args"), "build.native.build_args"
-            ),
-            targets=_string_list(native_data.get("targets"), "build.native.targets"),
-            env=_string_mapping(native_data.get("env"), "build.native.env"),
-            hooks=_parse_hooks(native_data.get("hooks"), "build.native.hooks"),
-        )
-
     python_build = None
-    if python_data is not None:
-        if not isinstance(python_data, dict):
-            raise ConfigError("`build.python` must be a mapping")
-        backend = _required_str(python_data, "backend", "build.python.backend")
-        if backend not in SUPPORTED_BUILD_BACKENDS:
-            raise ConfigError(f"Unsupported build backend: {backend}")
-        if backend != "python-build":
-            raise ConfigError(
-                "`build.python` currently supports only the `python-build` backend"
-            )
-        command = python_data.get("command", ["python3", "-m", "build"])
-        python_build = PythonBuildConfig(
-            backend=backend,
-            command=_command_list(command, "build.python.command"),
-            args=_string_list(python_data.get("args"), "build.python.args"),
-            env=_string_mapping(python_data.get("env"), "build.python.env"),
-            hooks=_parse_hooks(python_data.get("hooks"), "build.python.hooks"),
-        )
 
-    return BuildConfig(native=native, python=python_build)
+    for name, build_data in data.items():
+        if not isinstance(build_data, dict):
+            raise ConfigError(f"`build.{name}` must be a mapping")
+        backend = _required_str(build_data, "backend", f"build.{name}.backend")
+        if backend not in _supported_build_backends():
+            raise ConfigError(f"Unsupported build backend: {backend}")
+
+        config = _parse_build_backend(name, build_data, backend)
+        _validate_build_backend(config)
+        if name == "native" and not isinstance(config, NativeBuildConfig):
+            raise ConfigError(
+                "The `build.native` section requires a native build backend"
+            )
+        if name == "python" and not isinstance(config, PythonBuildConfig):
+            raise ConfigError(
+                "The `build.python` section requires a Python build backend"
+            )
+        entries[name] = config
+        if name == "native" and isinstance(config, NativeBuildConfig):
+            native = config
+        if name == "python" and isinstance(config, PythonBuildConfig):
+            python_build = config
+
+    return BuildConfig(entries=entries, native=native, python=python_build)
+
+
+def _parse_build_backend(
+    name: str, data: dict[str, Any], backend: str
+) -> NativeBuildConfig | PythonBuildConfig:
+    """Parse a configured build backend by backend type."""
+
+    path = f"build.{name}"
+    if backend == "cmake":
+        return NativeBuildConfig(
+            backend=backend,
+            source_dir=_required_str(data, "source_dir", f"{path}.source_dir"),
+            build_dir=_required_str(data, "build_dir", f"{path}.build_dir"),
+            generator=_optional_str(data, "generator"),
+            configure_args=_string_list(
+                data.get("configure_args"), f"{path}.configure_args"
+            ),
+            build_args=_string_list(data.get("build_args"), f"{path}.build_args"),
+            targets=_string_list(data.get("targets"), f"{path}.targets"),
+            env=_string_mapping(data.get("env"), f"{path}.env"),
+            hooks=_parse_hooks(data.get("hooks"), f"{path}.hooks"),
+        )
+    if backend == "python-build":
+        command = data.get("command", ["python3", "-m", "build"])
+        return PythonBuildConfig(
+            backend=backend,
+            command=_command_list(command, f"{path}.command"),
+            args=_string_list(data.get("args"), f"{path}.args"),
+            env=_string_mapping(data.get("env"), f"{path}.env"),
+            hooks=_parse_hooks(data.get("hooks"), f"{path}.hooks"),
+        )
+    raise ConfigError(f"Unsupported build backend: {backend}")
 
 
 def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
@@ -380,7 +401,7 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
         if not isinstance(runner_data, dict):
             raise ConfigError(f"`test.runners.{name}` must be a mapping")
         backend = _required_str(runner_data, "backend", f"test.runners.{name}.backend")
-        if backend not in SUPPORTED_TEST_BACKENDS:
+        if backend not in _supported_test_backends():
             raise ConfigError(f"Unsupported test backend: {backend}")
         runners[name] = TestRunnerConfig(
             name=name,
@@ -431,7 +452,7 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
         backend = _required_str(
             target_data, "backend", f"deploy.targets.{name}.backend"
         )
-        if backend not in SUPPORTED_DEPLOY_BACKENDS:
+        if backend not in _supported_deploy_backends():
             raise ConfigError(f"Unsupported deploy backend: {backend}")
         targets[name] = DeployTargetConfig(
             name=name,
@@ -447,8 +468,7 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
                 target_data.get("hooks"), f"deploy.targets.{name}.hooks"
             ),
         )
-        if not targets[name].artifacts:
-            raise ConfigError(f"`deploy.targets.{name}.artifacts` must not be empty")
+        _validate_deploy_backend(targets[name])
     return targets
 
 
@@ -478,14 +498,49 @@ def _validate_test_runner(config: TestRunnerConfig) -> None:
     Raises:
         ConfigError: If required fields for the selected backend are missing.
     """
-    if config.backend == "pytest" and not config.path:
-        raise ConfigError(f"`test.runners.{config.name}.path` is required for pytest")
-    if config.backend == "tox" and not config.tox_env:
-        raise ConfigError(f"`test.runners.{config.name}.tox_env` is required for tox")
-    if config.backend == "ctest" and not config.build_dir:
-        raise ConfigError(
-            f"`test.runners.{config.name}.build_dir` is required for ctest"
-        )
+    from .adapters.testing import validate_test_backend
+
+    validate_test_backend(config)
+
+
+def _validate_build_backend(config: NativeBuildConfig | PythonBuildConfig) -> None:
+    """Validate backend-specific build configuration."""
+
+    from .adapters.build import validate_build_backend
+
+    validate_build_backend(config)
+
+
+def _validate_deploy_backend(config: DeployTargetConfig) -> None:
+    """Validate backend-specific deploy configuration."""
+
+    from .adapters.deploy import validate_deploy_backend
+
+    validate_deploy_backend(config)
+
+
+def _supported_build_backends() -> set[str]:
+    """Return the registered build backend names."""
+
+    from .adapters import supported_build_backends
+
+    return supported_build_backends()
+
+
+def _supported_test_backends() -> set[str]:
+    """Return the registered test backend names."""
+
+    from .adapters import supported_test_backends
+
+    return supported_test_backends()
+
+
+def _supported_deploy_backends() -> set[str]:
+    """Return the registered deploy backend names."""
+
+    from .adapters import supported_deploy_backends
+
+    return supported_deploy_backends()
 
 
 def _parse_hooks(data: Any, path: str) -> HookConfig:
