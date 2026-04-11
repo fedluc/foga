@@ -19,6 +19,7 @@ Use this skill to keep Python changes small, typed, testable, and easy to verify
 
 - Target Python 3.10+ features already used by the repo.
 - Add type hints for public functions and for internal functions when they clarify behavior.
+- When docstrings are added or expanded, use Google-style docstrings with `Args:`, `Returns:`, `Raises:`, and `Attributes:` sections where they add value.
 - Prefer `pathlib.Path`, `dataclass`, and straightforward collections over stringly-typed or deeply nested state.
 - Raise precise exceptions with actionable messages.
 - Keep functions focused. Split only when it improves readability or testability.
@@ -75,3 +76,4 @@ Use judgment:
 ## Work Log
 
 - 2026-04-11: In `/workspaces/devkit`, added module, class, and function docstrings across the Python package and tests to improve API readability without changing behavior.
+- 2026-04-11: Recorded the repository preference for Google-style Python docstrings so future docstring updates stay consistent.
