@@ -1,3 +1,5 @@
+"""Build adapter command generation."""
+
 from __future__ import annotations
 
 from ..config import BuildConfig, NativeBuildConfig
@@ -7,6 +9,7 @@ from ..executor import CommandSpec
 def build_specs(
     config: BuildConfig, targets: list[str] | None = None
 ) -> list[CommandSpec]:
+    """Build the command sequence for configured build workflows."""
     specs: list[CommandSpec] = []
     if config.native is not None:
         specs.extend(_hook_specs(config.native.hooks.pre, "native pre-hook"))
@@ -28,6 +31,7 @@ def build_specs(
 def _cmake_specs(
     config: NativeBuildConfig, targets: list[str] | None
 ) -> list[CommandSpec]:
+    """Build CMake configure and build commands for a native workflow."""
     command = [
         "cmake",
         "-S",
@@ -70,6 +74,7 @@ def _cmake_specs(
 
 
 def _hook_specs(commands: list[list[str]], description: str) -> list[CommandSpec]:
+    """Convert configured hook commands into executable command specs."""
     return [
         CommandSpec(command=command, description=description) for command in commands
     ]

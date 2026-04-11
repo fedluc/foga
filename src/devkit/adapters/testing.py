@@ -1,3 +1,5 @@
+"""Test adapter command generation."""
+
 from __future__ import annotations
 
 from ..config import TestRunnerConfig
@@ -5,6 +7,7 @@ from ..executor import CommandSpec
 
 
 def runner_specs(config: TestRunnerConfig) -> list[CommandSpec]:
+    """Build the command sequence for a configured test runner."""
     specs = [
         CommandSpec(command=command, description=f"{config.name} pre-hook")
         for command in config.hooks.pre
@@ -18,6 +21,7 @@ def runner_specs(config: TestRunnerConfig) -> list[CommandSpec]:
 
 
 def _backend_specs(config: TestRunnerConfig) -> list[CommandSpec]:
+    """Dispatch runner command generation based on backend type."""
     if config.backend == "pytest":
         return [_pytest_spec(config)]
     if config.backend == "tox":
@@ -28,6 +32,7 @@ def _backend_specs(config: TestRunnerConfig) -> list[CommandSpec]:
 
 
 def _pytest_spec(config: TestRunnerConfig) -> CommandSpec:
+    """Build the pytest command for a test runner."""
     command = ["pytest", config.path or "."]
     if config.marker:
         command.extend(["-m", config.marker])
@@ -38,6 +43,7 @@ def _pytest_spec(config: TestRunnerConfig) -> CommandSpec:
 
 
 def _tox_spec(config: TestRunnerConfig) -> CommandSpec:
+    """Build the tox command for a test runner."""
     command = ["tox", "-e", config.tox_env or ""]
     command.extend(config.args)
     return CommandSpec(
@@ -46,6 +52,7 @@ def _tox_spec(config: TestRunnerConfig) -> CommandSpec:
 
 
 def _ctest_specs(config: TestRunnerConfig) -> list[CommandSpec]:
+    """Build the optional CMake and ctest commands for a native test runner."""
     specs: list[CommandSpec] = []
     if config.source_dir:
         configure_command = [

@@ -1,3 +1,5 @@
+"""Configuration loading and validation for devkit."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -15,12 +17,16 @@ SUPPORTED_DEPLOY_BACKENDS = {"twine"}
 
 @dataclass(frozen=True)
 class HookConfig:
+    """Pre- and post-command hooks for a workflow step."""
+
     pre: list[list[str]] = field(default_factory=list)
     post: list[list[str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class NativeBuildConfig:
+    """Configuration for a native CMake build workflow."""
+
     backend: str
     source_dir: str
     build_dir: str
@@ -34,6 +40,8 @@ class NativeBuildConfig:
 
 @dataclass(frozen=True)
 class PythonBuildConfig:
+    """Configuration for a Python package build workflow."""
+
     backend: str
     command: list[str] = field(default_factory=lambda: ["python3", "-m", "build"])
     args: list[str] = field(default_factory=list)
@@ -43,12 +51,16 @@ class PythonBuildConfig:
 
 @dataclass(frozen=True)
 class BuildConfig:
+    """Aggregate build configuration for supported build backends."""
+
     native: NativeBuildConfig | None = None
     python: PythonBuildConfig | None = None
 
 
 @dataclass(frozen=True)
 class TestRunnerConfig:
+    """Configuration for an individual test runner."""
+
     name: str
     backend: str
     args: list[str] = field(default_factory=list)
@@ -67,6 +79,8 @@ class TestRunnerConfig:
 
 @dataclass(frozen=True)
 class DeployTargetConfig:
+    """Configuration for an individual deploy target."""
+
     name: str
     backend: str
     artifacts: list[str]
@@ -79,16 +93,22 @@ class DeployTargetConfig:
 
 @dataclass(frozen=True)
 class CleanConfig:
+    """Configuration for removable build artifact paths."""
+
     paths: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class ProjectConfig:
+    """Project metadata required by devkit."""
+
     name: str
 
 
 @dataclass(frozen=True)
 class DevkitConfig:
+    """Fully parsed devkit configuration."""
+
     project_root: Path
     project: ProjectConfig
     build: BuildConfig
@@ -101,6 +121,7 @@ class DevkitConfig:
 def load_config(
     config_path: str | Path = "devkit.yml", profile: str | None = None
 ) -> DevkitConfig:
+    """Load, merge, and validate a devkit configuration file."""
     path = Path(config_path).resolve()
     if not path.exists():
         raise ConfigError(f"Configuration file not found: {path}")
@@ -115,6 +136,7 @@ def load_config(
 
 
 def apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
+    """Merge an optional named profile into the base configuration."""
     base = deep_copy_mapping(data)
     profiles = base.pop("profiles", {})
     if profiles and not isinstance(profiles, dict):
@@ -135,6 +157,7 @@ def apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
 
 
 def parse_config(data: dict[str, Any], project_root: Path) -> DevkitConfig:
+    """Parse validated raw configuration data into typed config objects."""
     project = data.get("project") or {}
     if not isinstance(project, dict) or not project.get("name"):
         raise ConfigError("`project.name` is required")
@@ -156,6 +179,7 @@ def parse_config(data: dict[str, Any], project_root: Path) -> DevkitConfig:
 
 
 def _parse_build(data: dict[str, Any]) -> BuildConfig:
+    """Parse build configuration for supported backends."""
     if not isinstance(data, dict):
         raise ConfigError("`build` must be a mapping")
 
@@ -215,6 +239,7 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
 
 
 def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
+    """Parse test runner configuration."""
     if not isinstance(data, dict):
         raise ConfigError("`test` must be a mapping")
     runners_data = data.get("runners") or {}
@@ -253,6 +278,7 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
 
 
 def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
+    """Parse deploy target configuration."""
     if not isinstance(data, dict):
         raise ConfigError("`deploy` must be a mapping")
     targets_data = data.get("targets") or {}
@@ -288,12 +314,14 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
 
 
 def _parse_clean(data: dict[str, Any]) -> CleanConfig:
+    """Parse clean-path configuration."""
     if not isinstance(data, dict):
         raise ConfigError("`clean` must be a mapping")
     return CleanConfig(paths=_string_list(data.get("paths"), "clean.paths"))
 
 
 def _validate_test_runner(config: TestRunnerConfig) -> None:
+    """Validate backend-specific requirements for a test runner."""
     if config.backend == "pytest" and not config.path:
         raise ConfigError(f"`test.runners.{config.name}.path` is required for pytest")
     if config.backend == "tox" and not config.tox_env:
@@ -305,6 +333,7 @@ def _validate_test_runner(config: TestRunnerConfig) -> None:
 
 
 def _parse_hooks(data: Any, path: str) -> HookConfig:
+    """Parse hook configuration from an optional mapping."""
     if data is None:
         return HookConfig()
     if not isinstance(data, dict):
@@ -316,6 +345,7 @@ def _parse_hooks(data: Any, path: str) -> HookConfig:
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Recursively merge one mapping into another."""
     result = deep_copy_mapping(base)
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -326,10 +356,12 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
 
 
 def deep_copy_mapping(value: dict[str, Any]) -> dict[str, Any]:
+    """Create a deep copy of a mapping."""
     return {key: deep_copy(item) for key, item in value.items()}
 
 
 def deep_copy(value: Any) -> Any:
+    """Create a deep copy of nested mappings and lists."""
     if isinstance(value, dict):
         return deep_copy_mapping(value)
     if isinstance(value, list):
@@ -338,6 +370,7 @@ def deep_copy(value: Any) -> Any:
 
 
 def _required_str(data: dict[str, Any], key: str, path: str) -> str:
+    """Read a required non-empty string field."""
     value = data.get(key)
     if not isinstance(value, str) or not value.strip():
         raise ConfigError(f"`{path}` is required")
@@ -345,6 +378,7 @@ def _required_str(data: dict[str, Any], key: str, path: str) -> str:
 
 
 def _optional_str(data: dict[str, Any], key: str) -> str | None:
+    """Read an optional string field."""
     value = data.get(key)
     if value is None:
         return None
@@ -354,6 +388,7 @@ def _optional_str(data: dict[str, Any], key: str) -> str | None:
 
 
 def _string_list(value: Any, path: str) -> list[str]:
+    """Validate a list of strings and return a shallow copy."""
     if value is None:
         return []
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
@@ -362,6 +397,7 @@ def _string_list(value: Any, path: str) -> list[str]:
 
 
 def _string_mapping(value: Any, path: str) -> dict[str, str]:
+    """Validate a mapping of string keys and values."""
     if value is None:
         return {}
     if not isinstance(value, dict):
@@ -375,6 +411,7 @@ def _string_mapping(value: Any, path: str) -> dict[str, str]:
 
 
 def _command_list(value: Any, path: str) -> list[str]:
+    """Validate a non-empty command array."""
     command = _string_list(value, path)
     if not command:
         raise ConfigError(f"`{path}` must not be empty")
@@ -382,6 +419,7 @@ def _command_list(value: Any, path: str) -> list[str]:
 
 
 def _command_matrix(value: Any, path: str) -> list[list[str]]:
+    """Validate a list of non-empty command arrays."""
     if value is None:
         return []
     if not isinstance(value, list):

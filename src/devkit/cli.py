@@ -1,3 +1,5 @@
+"""CLI entrypoint and command routing for devkit."""
+
 from __future__ import annotations
 
 import argparse
@@ -12,6 +14,7 @@ from .executor import CommandExecutor
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the CLI and return the process exit code."""
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -43,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Create the top-level argument parser for the CLI."""
     parser = argparse.ArgumentParser(
         description="Unified developer CLI for Python/C++ package workflows."
     )
@@ -105,12 +109,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _add_profile_arg(parser: argparse.ArgumentParser) -> None:
+    """Register the shared profile-selection argument on a parser."""
     parser.add_argument("--profile", help="Configuration profile to apply.")
 
 
 def _run_build(
     config: DevkitConfig, executor: CommandExecutor, args: argparse.Namespace
 ) -> int:
+    """Execute configured build workflows."""
     specs = build_specs(config.build, targets=args.targets)
     if not specs:
         raise ConfigError("No build workflows configured")
@@ -121,6 +127,7 @@ def _run_build(
 def _run_test(
     config: DevkitConfig, executor: CommandExecutor, args: argparse.Namespace
 ) -> int:
+    """Execute configured test workflows."""
     selected = _select_named_items(config.tests, args.runner, "test runner")
     specs = []
     for runner in selected.values():
@@ -134,6 +141,7 @@ def _run_test(
 def _run_deploy(
     config: DevkitConfig, executor: CommandExecutor, args: argparse.Namespace
 ) -> int:
+    """Execute configured deploy workflows."""
     selected = _select_named_items(config.deploy, args.targets, "deploy target")
     specs = []
     for target in selected.values():
@@ -147,6 +155,7 @@ def _run_deploy(
 def _select_named_items(
     items: dict[str, object], selected_names: list[str] | None, label: str
 ) -> dict[str, object]:
+    """Filter named configuration items and validate explicit selections."""
     if not selected_names:
         return items
 
@@ -159,6 +168,7 @@ def _select_named_items(
 
 
 def _run_clean(config: DevkitConfig) -> int:
+    """Remove configured build artifacts from the project root."""
     for path_str in config.clean.paths:
         path = Path(config.project_root, path_str)
         if not path.exists():

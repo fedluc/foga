@@ -1,3 +1,5 @@
+"""Tests for adapter command generation."""
+
 from pathlib import Path
 
 import pytest
@@ -10,6 +12,7 @@ from devkit.errors import ConfigError
 
 
 def test_build_specs_generate_cmake_and_python_commands() -> None:
+    """Build specs include native and Python commands in order."""
     config = cfg.BuildConfig(
         native=cfg.NativeBuildConfig(
             backend="cmake",
@@ -54,6 +57,7 @@ def test_build_specs_generate_cmake_and_python_commands() -> None:
 
 
 def test_ctest_runner_can_prepare_target_before_running() -> None:
+    """ctest runners can configure and build before executing tests."""
     runner = cfg.TestRunnerConfig(
         name="native",
         backend="ctest",
@@ -90,6 +94,7 @@ def test_ctest_runner_can_prepare_target_before_running() -> None:
 
 
 def test_deploy_specs_resolve_matching_artifacts(tmp_path: Path) -> None:
+    """Deploy specs include matched artifact paths for uploads."""
     dist = tmp_path / "dist"
     dist.mkdir()
     wheel = dist / "demo-0.1.0-py3-none-any.whl"
@@ -114,6 +119,7 @@ def test_deploy_specs_resolve_matching_artifacts(tmp_path: Path) -> None:
 
 
 def test_deploy_specs_fail_when_no_artifacts_found(tmp_path: Path) -> None:
+    """Deploy spec generation fails when artifact globs match nothing."""
     target = cfg.DeployTargetConfig(
         name="pypi",
         backend="twine",

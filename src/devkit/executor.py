@@ -1,3 +1,5 @@
+"""Command execution helpers used by CLI workflows."""
+
 from __future__ import annotations
 
 import os
@@ -11,6 +13,8 @@ from .errors import ExecutionError
 
 @dataclass(frozen=True)
 class CommandSpec:
+    """A command invocation with optional execution metadata."""
+
     command: list[str]
     cwd: Path | None = None
     env: dict[str, str] = field(default_factory=dict)
@@ -18,14 +22,19 @@ class CommandSpec:
 
 
 class CommandExecutor:
+    """Run prepared command specs relative to a project root."""
+
     def __init__(self, project_root: Path):
+        """Store the default project root for command execution."""
         self.project_root = project_root
 
     def run_specs(self, specs: list[CommandSpec], dry_run: bool = False) -> None:
+        """Execute each command spec in order."""
         for spec in specs:
             self.run(spec, dry_run=dry_run)
 
     def run(self, spec: CommandSpec, dry_run: bool = False) -> None:
+        """Execute a single command spec or print it during dry runs."""
         command_str = shlex.join(spec.command)
         prefix = "[dry-run]" if dry_run else "[run]"
         suffix = f" ({spec.description})" if spec.description else ""

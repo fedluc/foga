@@ -1,9 +1,12 @@
+"""Tests for CLI routing and user-visible output."""
+
 from pathlib import Path
 
 from devkit import cli
 
 
 def write_config(path: Path) -> Path:
+    """Write a minimal valid devkit configuration for CLI tests."""
     config = path / "devkit.yml"
     config.write_text(
         """
@@ -31,6 +34,7 @@ clean:
 
 
 def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
+    """The validate command reports success for a valid config."""
     config = write_config(tmp_path)
 
     exit_code = cli.main(["--config", str(config), "validate"])
@@ -41,6 +45,7 @@ def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
 
 
 def test_build_dry_run_routes_to_executor(tmp_path: Path, monkeypatch) -> None:
+    """The build command forwards dry-run execution to the executor."""
     config = write_config(tmp_path)
     captured: dict[str, object] = {}
 

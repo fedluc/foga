@@ -71,3 +71,7 @@ Use judgment:
 ## References
 
 - Read [references/python-standards.md](references/python-standards.md) for the detailed checklist and code-review heuristics used by this skill.
+
+## Work Log
+
+- 2026-04-11: In `/workspaces/devkit`, added module, class, and function docstrings across the Python package and tests to improve API readability without changing behavior.
