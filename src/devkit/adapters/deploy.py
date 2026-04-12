@@ -12,7 +12,15 @@ from .contracts import BackendContract, DeployRequest, WorkflowPlan
 
 
 def plan_deploy(project_root: Path, targets: list[DeployTargetConfig]) -> WorkflowPlan:
-    """Build a workflow plan for configured deploy targets."""
+    """Build a workflow plan for configured deploy targets.
+
+    Args:
+        project_root: Project root used to resolve configured artifact globs.
+        targets: Deploy targets selected for the current invocation.
+
+    Returns:
+        Prepared command specs for each selected deploy target.
+    """
 
     specs: list[CommandSpec] = []
     request = DeployRequest(project_root=project_root)
@@ -21,19 +29,6 @@ def plan_deploy(project_root: Path, targets: list[DeployTargetConfig]) -> Workfl
         contract.validate(target)
         specs.extend(contract.plan(target, request))
     return WorkflowPlan(specs=specs)
-
-
-def deploy_specs(project_root: Path, config: DeployTargetConfig) -> list[CommandSpec]:
-    """Build command specs for a deploy target.
-
-    Args:
-        project_root: Project root used to resolve artifact patterns.
-        config: Parsed deploy target configuration.
-
-    Returns:
-        Command specs for the deploy workflow.
-    """
-    return plan_deploy(project_root, [config]).specs
 
 
 def supported_deploy_backends() -> set[str]:

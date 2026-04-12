@@ -324,8 +324,11 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
         if not isinstance(build_data, dict):
             raise ConfigError(f"`build.{name}` must be a mapping")
         backend = _required_str(build_data, "backend", f"build.{name}.backend")
-        if backend not in _supported_build_backends():
-            raise ConfigError(f"Unsupported build backend: {backend}")
+        supported_backends = _supported_build_backends()
+        if backend not in supported_backends:
+            raise ConfigError(
+                _unsupported_backend_message("build", backend, supported_backends)
+            )
 
         config = _parse_build_backend(name, build_data, backend)
         _validate_build_backend(config)
@@ -401,8 +404,11 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
         if not isinstance(runner_data, dict):
             raise ConfigError(f"`test.runners.{name}` must be a mapping")
         backend = _required_str(runner_data, "backend", f"test.runners.{name}.backend")
-        if backend not in _supported_test_backends():
-            raise ConfigError(f"Unsupported test backend: {backend}")
+        supported_backends = _supported_test_backends()
+        if backend not in supported_backends:
+            raise ConfigError(
+                _unsupported_backend_message("test", backend, supported_backends)
+            )
         runners[name] = TestRunnerConfig(
             name=name,
             backend=backend,
@@ -452,8 +458,11 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
         backend = _required_str(
             target_data, "backend", f"deploy.targets.{name}.backend"
         )
-        if backend not in _supported_deploy_backends():
-            raise ConfigError(f"Unsupported deploy backend: {backend}")
+        supported_backends = _supported_deploy_backends()
+        if backend not in supported_backends:
+            raise ConfigError(
+                _unsupported_backend_message("deploy", backend, supported_backends)
+            )
         targets[name] = DeployTargetConfig(
             name=name,
             backend=backend,
@@ -522,15 +531,32 @@ def _validate_deploy_backend(config: DeployTargetConfig) -> None:
 def _supported_build_backends() -> set[str]:
     """Return the registered build backend names."""
 
-    from .adapters import supported_build_backends
+    from .adapters.build import supported_build_backends
 
     return supported_build_backends()
+
+
+def _unsupported_backend_message(
+    workflow: str, backend: str, supported_backends: set[str]
+) -> str:
+    """Build a stable error for unsupported backend names.
+
+    Args:
+        workflow: Workflow family containing the invalid backend.
+        backend: Unsupported backend name from the configuration.
+        supported_backends: Registered backend names for the workflow.
+
+    Returns:
+        User-facing validation error with the supported backend list.
+    """
+    supported = ", ".join(sorted(supported_backends))
+    return f"Unsupported {workflow} backend: {backend}. Supported backends: {supported}"
 
 
 def _supported_test_backends() -> set[str]:
     """Return the registered test backend names."""
 
-    from .adapters import supported_test_backends
+    from .adapters.testing import supported_test_backends
 
     return supported_test_backends()
 
@@ -538,7 +564,7 @@ def _supported_test_backends() -> set[str]:
 def _supported_deploy_backends() -> set[str]:
     """Return the registered deploy backend names."""
 
-    from .adapters import supported_deploy_backends
+    from .adapters.deploy import supported_deploy_backends
 
     return supported_deploy_backends()
 

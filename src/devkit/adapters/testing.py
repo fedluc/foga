@@ -10,7 +10,14 @@ from .contracts import BackendContract, WorkflowPlan
 
 
 def plan_tests(runners: list[TestRunnerConfig]) -> WorkflowPlan:
-    """Build a workflow plan for configured test runners."""
+    """Build a workflow plan for configured test runners.
+
+    Args:
+        runners: Test runners selected for the current invocation.
+
+    Returns:
+        Prepared command specs for each selected test runner.
+    """
 
     specs: list[CommandSpec] = []
     for runner in runners:
@@ -18,18 +25,6 @@ def plan_tests(runners: list[TestRunnerConfig]) -> WorkflowPlan:
         contract.validate(runner)
         specs.extend(contract.plan(runner, None))
     return WorkflowPlan(specs=specs)
-
-
-def runner_specs(config: TestRunnerConfig) -> list[CommandSpec]:
-    """Build command specs for a configured test runner.
-
-    Args:
-        config: Parsed test runner configuration.
-
-    Returns:
-        Command specs for the full runner workflow, including hooks.
-    """
-    return plan_tests([config]).specs
 
 
 def supported_test_backends() -> set[str]:

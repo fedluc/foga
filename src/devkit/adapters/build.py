@@ -12,7 +12,16 @@ BuildBackendConfig = NativeBuildConfig | PythonBuildConfig
 
 
 def plan_build(config: BuildConfig, targets: list[str] | None = None) -> WorkflowPlan:
-    """Build a workflow plan for all configured build backends."""
+    """Build a workflow plan for all configured build backends.
+
+    Args:
+        config: Parsed build configuration for the current project.
+        targets: Optional explicit native build targets that override the
+            configured defaults.
+
+    Returns:
+        Prepared command specs for each configured build backend.
+    """
 
     specs: list[CommandSpec] = []
     for build_config in config.configured_backends():
@@ -20,21 +29,6 @@ def plan_build(config: BuildConfig, targets: list[str] | None = None) -> Workflo
         contract = _build_contract(build_config.backend)
         specs.extend(contract.plan(build_config, BuildRequest(targets=targets)))
     return WorkflowPlan(specs=specs)
-
-
-def build_specs(
-    config: BuildConfig, targets: list[str] | None = None
-) -> list[CommandSpec]:
-    """Build command specs for configured build workflows.
-
-    Args:
-        config: Parsed build configuration.
-        targets: Optional explicit native build targets.
-
-    Returns:
-        Command specs for the configured build workflow.
-    """
-    return plan_build(config, targets=targets).specs
 
 
 def supported_build_backends() -> set[str]:

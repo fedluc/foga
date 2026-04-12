@@ -123,3 +123,28 @@ deploy:
 
     with pytest.raises(ConfigError, match="deploy.targets.pypi.artifacts"):
         load_config(config_path)
+
+
+def test_load_config_lists_supported_build_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown build backends report the registered backend names."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  native:
+    backend: unknown
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "Unsupported build backend: unknown. "
+            "Supported backends: cmake, python-build"
+        ),
+    ):
+        load_config(config_path)

@@ -7,7 +7,9 @@ import shutil
 import sys
 from pathlib import Path
 
-from .adapters import plan_build, plan_deploy, plan_tests
+from .adapters.build import plan_build
+from .adapters.deploy import plan_deploy
+from .adapters.testing import plan_tests
 from .config import DevkitConfig, load_config
 from .errors import ConfigError, DevkitError
 from .executor import CommandExecutor
