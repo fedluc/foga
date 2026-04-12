@@ -324,10 +324,11 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
         if not isinstance(build_data, dict):
             raise ConfigError(f"`build.{name}` must be a mapping")
         backend = _required_str(build_data, "backend", f"build.{name}.backend")
-        supported_backends = _supported_build_backends()
-        if backend not in supported_backends:
+        if backend not in _supported_build_backends():
             raise ConfigError(
-                _unsupported_backend_message("build", backend, supported_backends)
+                _unsupported_backend_message(
+                    "build", backend, _supported_build_backends()
+                )
             )
 
         config = _parse_build_backend(name, build_data, backend)
@@ -404,10 +405,11 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
         if not isinstance(runner_data, dict):
             raise ConfigError(f"`test.runners.{name}` must be a mapping")
         backend = _required_str(runner_data, "backend", f"test.runners.{name}.backend")
-        supported_backends = _supported_test_backends()
-        if backend not in supported_backends:
+        if backend not in _supported_test_backends():
             raise ConfigError(
-                _unsupported_backend_message("test", backend, supported_backends)
+                _unsupported_backend_message(
+                    "test", backend, _supported_test_backends()
+                )
             )
         runners[name] = TestRunnerConfig(
             name=name,
@@ -458,10 +460,11 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
         backend = _required_str(
             target_data, "backend", f"deploy.targets.{name}.backend"
         )
-        supported_backends = _supported_deploy_backends()
-        if backend not in supported_backends:
+        if backend not in _supported_deploy_backends():
             raise ConfigError(
-                _unsupported_backend_message("deploy", backend, supported_backends)
+                _unsupported_backend_message(
+                    "deploy", backend, _supported_deploy_backends()
+                )
             )
         targets[name] = DeployTargetConfig(
             name=name,

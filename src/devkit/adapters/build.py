@@ -32,13 +32,27 @@ def plan_build(config: BuildConfig, targets: list[str] | None = None) -> Workflo
 
 
 def supported_build_backends() -> set[str]:
-    """Return the registered build backend names."""
+    """Return the registered build backend names.
+
+    Returns:
+        Set of backend names accepted under the build configuration.
+    """
 
     return set(BUILD_BACKENDS)
 
 
 def _build_contract(backend: str) -> BackendContract[BuildBackendConfig, BuildRequest]:
-    """Resolve a registered build backend contract."""
+    """Resolve a registered build backend contract.
+
+    Args:
+        backend: Configured build backend name.
+
+    Returns:
+        Registered backend contract for the requested backend.
+
+    Raises:
+        ConfigError: If the backend name is not registered.
+    """
 
     try:
         return BUILD_BACKENDS[backend]
@@ -47,7 +61,14 @@ def _build_contract(backend: str) -> BackendContract[BuildBackendConfig, BuildRe
 
 
 def validate_build_backend(config: BuildBackendConfig) -> None:
-    """Validate a configured build backend through the registry contract."""
+    """Validate a configured build backend through the registry contract.
+
+    Args:
+        config: Parsed build backend configuration.
+
+    Raises:
+        ConfigError: If the configuration does not match the backend contract.
+    """
 
     _build_contract(config.backend).validate(config)
 
@@ -128,7 +149,14 @@ def _validate_native_build(config: BuildBackendConfig) -> None:
 
 
 def _validate_python_build(config: BuildBackendConfig) -> None:
-    """Validate the Python build contract input."""
+    """Validate the Python build contract input.
+
+    Args:
+        config: Parsed build backend configuration.
+
+    Raises:
+        ConfigError: If the config is not a Python build configuration.
+    """
 
     if not isinstance(config, PythonBuildConfig):
         raise ConfigError(
