@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import re
+import sys
 from pathlib import Path
 
 import yaml
@@ -120,7 +122,7 @@ def run_inspect(config_path: str | Path, args: argparse.Namespace) -> int:
         context=context,
         resolved_config=resolved_config,
     )
-    print(yaml.safe_dump(document, sort_keys=False), end="")
+    _emit_document(document)
     return 0
 
 
@@ -224,13 +226,15 @@ def _build_build_context(
         for name in selected_entries
         if build_kind(config.build.entries[name]) == "native"
     }
-    return {
+    summary: dict[str, object] = {
         "command": "build",
         "selection": args.selection or config.build.default or "all",
-        "active_kinds": active_kinds,
-        "selected_entries": selected_entries,
-        "effective_targets": effective_targets,
     }
+    if _should_include_build_entries(selected_entries, summary["selection"]):
+        summary["entries"] = selected_entries
+    if effective_targets:
+        summary["targets"] = _summarize_targets(effective_targets)
+    return summary
 
 
 def _build_test_context(
@@ -253,8 +257,7 @@ def _build_test_context(
     return {
         "command": "test",
         "selection": args.selection or config.tests.default or "all",
-        "active_kinds": config.tests.selected_kinds(args.selection),
-        "selected_runners": list(selected_runners),
+        "runners": list(selected_runners),
     }
 
 
@@ -273,8 +276,39 @@ def _build_deploy_context(
     selected_targets = _select_named_items(config.deploy, args.targets, "deploy target")
     return {
         "command": "deploy",
-        "selected_targets": list(selected_targets),
+        "targets": list(selected_targets),
     }
+
+
+def _should_include_build_entries(
+    selected_entries: list[str], selection: object
+) -> bool:
+    """Return whether build entry names add useful detail to the summary.
+
+    Args:
+        selected_entries: Matching build entry names for the current invocation.
+        selection: User-facing selection value already resolved for the summary.
+
+    Returns:
+        ``True`` when build entry names are worth showing explicitly.
+    """
+    return not (len(selected_entries) == 1 and selected_entries[0] == selection)
+
+
+def _summarize_targets(
+    effective_targets: dict[str, list[str]],
+) -> list[str] | dict[str, list[str]]:
+    """Collapse target output when only one native build entry is active.
+
+    Args:
+        effective_targets: Effective targets keyed by build entry name.
+
+    Returns:
+        Flat target list for a single entry, otherwise the full mapping.
+    """
+    if len(effective_targets) == 1:
+        return next(iter(effective_targets.values()))
+    return effective_targets
 
 
 def _build_resolved_config(
@@ -488,3 +522,55 @@ def _select_named_items(
             raise ConfigError(f"Unknown {label}: {name}")
         selected[name] = items[name]
     return selected
+
+
+def _emit_document(document: dict[str, object]) -> None:
+    """Print an inspect document, colorizing it for interactive terminals.
+
+    Args:
+        document: YAML-serializable inspect output document.
+    """
+    text = yaml.safe_dump(document, sort_keys=False)
+    if sys.stdout.isatty():
+        text = _colorize_yaml(text)
+    print(text, end="")
+
+
+def _colorize_yaml(text: str) -> str:
+    """Apply lightweight ANSI colors to YAML output for terminal readability.
+
+    Args:
+        text: Plain YAML text.
+
+    Returns:
+        Colorized YAML text.
+    """
+    colored_lines = []
+    for line in text.splitlines():
+        colored_lines.append(_colorize_yaml_line(line))
+    return "\n".join(colored_lines) + ("\n" if text.endswith("\n") else "")
+
+
+def _colorize_yaml_line(line: str) -> str:
+    """Colorize a single YAML line.
+
+    Args:
+        line: Plain YAML line.
+
+    Returns:
+        Colorized line.
+    """
+    match = re.match(r"^(\s*)([^:\n][^:]*):(.*)$", line)
+    if not match:
+        return line
+
+    indent, key, rest = match.groups()
+    key_color = "\033[1;36m" if not indent else "\033[34m"
+    reset = "\033[0m"
+    if not rest:
+        return f"{indent}{key_color}{key}{reset}:"
+
+    value = rest
+    if value.strip():
+        value = f" \033[32m{value.strip()}{reset}"
+    return f"{indent}{key_color}{key}{reset}:{value}"

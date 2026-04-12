@@ -142,9 +142,7 @@ test:
     assert document["summary"] == {
         "command": "build",
         "selection": "native",
-        "active_kinds": ["native"],
-        "selected_entries": ["native"],
-        "effective_targets": {"native": ["cli-target"]},
+        "targets": ["cli-target"],
     }
     assert document["effective_config"] == {
         "build": {
@@ -207,9 +205,7 @@ test:
     assert document["context"] == {
         "command": "build",
         "selection": "native",
-        "active_kinds": ["native"],
-        "selected_entries": ["native"],
-        "effective_targets": {"native": ["cli-target"]},
+        "targets": ["cli-target"],
     }
     assert document["resolved_config"]["build"]["native"]["targets"] == ["cli-target"]
 
@@ -257,8 +253,7 @@ test:
     assert document["summary"] == {
         "command": "test",
         "selection": "python",
-        "active_kinds": ["python"],
-        "selected_runners": ["integration"],
+        "runners": ["integration"],
     }
     assert document["effective_config"] == {
         "test": {

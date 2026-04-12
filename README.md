@@ -116,9 +116,14 @@ document instead.
 The concise command-specific output includes:
 
 - `active_profile` to show which profile was applied, if any
-- `summary` to show the active inspect mode and selected runners or targets
+- `summary` to show the active inspect mode with direct fields such as
+  `selection`, `targets`, or `runners`
 - `effective_config` to show only the relevant config fragment for the selected
   build, test, or deploy scope
+
+When run in an interactive terminal, inspect output is colorized for easier
+scanning. Non-interactive output stays plain YAML so it remains easy to pipe or
+parse.
 
 With `--full`, the output includes:
 
