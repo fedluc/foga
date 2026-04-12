@@ -13,9 +13,9 @@ from .config import (
     WORKFLOW_SELECTIONS,
     DevkitConfig,
     build_kind,
+    deep_copy_mapping,
     load_config,
 )
-from .config_merge import deep_copy_mapping
 from .errors import ConfigError
 from .output import style, supports_color
 

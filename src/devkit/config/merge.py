@@ -1,10 +1,10 @@
-"""Profile merge helpers for devkit configuration."""
+"""Profile merging helpers for devkit configuration."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from .errors import ConfigError
+from ..errors import ConfigError
 
 
 def _apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
@@ -20,6 +20,7 @@ def _apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
     Raises:
         ConfigError: If the profile configuration is malformed or missing.
     """
+
     base = deep_copy_mapping(data)
     profiles = base.pop("profiles", {})
     if profiles and not isinstance(profiles, dict):
@@ -49,6 +50,7 @@ def deep_copy_mapping(value: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Deep copy of ``value``.
     """
+
     return {key: _deep_copy(item) for key, item in value.items()}
 
 
@@ -62,6 +64,7 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
     Returns:
         Deeply merged mapping.
     """
+
     result = deep_copy_mapping(base)
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -85,6 +88,7 @@ def _validate_profile_override(
         ConfigError: If the override changes container shape or swaps an
             existing backend identifier.
     """
+
     for key, value in override.items():
         current_path = f"{path}.{key}"
         if key not in base:
@@ -115,6 +119,7 @@ def _validate_mapping_override(
     Raises:
         ConfigError: If the override replaces a mapping with a non-mapping.
     """
+
     if not isinstance(value, dict):
         raise ConfigError(f"`{path}` must remain a mapping in profile overrides")
     _validate_profile_override(base_value, value, path)
@@ -130,6 +135,7 @@ def _validate_list_override(value: Any, path: str) -> None:
     Raises:
         ConfigError: If the override replaces a list with a different shape.
     """
+
     if isinstance(value, dict):
         raise ConfigError(f"`{path}` cannot replace a scalar or list with a mapping")
     if not isinstance(value, list):
@@ -149,6 +155,7 @@ def _validate_scalar_override(key: str, base_value: Any, value: Any, path: str) 
         ConfigError: If the override replaces a scalar with a mapping or swaps
             an existing backend identifier.
     """
+
     if isinstance(value, dict):
         raise ConfigError(f"`{path}` cannot replace a scalar or list with a mapping")
     if key == "backend" and base_value != value:
@@ -167,6 +174,7 @@ def _deep_copy(value: Any) -> Any:
     Returns:
         Deep copy of ``value``.
     """
+
     if isinstance(value, dict):
         return deep_copy_mapping(value)
     if isinstance(value, list):
