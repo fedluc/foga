@@ -10,7 +10,7 @@ from pathlib import Path
 from .adapters.build import plan_build
 from .adapters.deploy import plan_deploy
 from .adapters.testing import plan_tests
-from .config import DevkitConfig, load_config
+from .config import WORKFLOW_SELECTIONS, DevkitConfig, load_config
 from .errors import ConfigError, DevkitError
 from .executor import CommandExecutor
 
@@ -77,6 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_profile_arg(build_parser)
     build_parser.add_argument(
+        "selection",
+        nargs="?",
+        choices=WORKFLOW_SELECTIONS,
+        help="Run only the selected build kind.",
+    )
+    build_parser.add_argument(
         "--target",
         action="append",
         dest="targets",
@@ -88,6 +94,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     test_parser = subparsers.add_parser("test", help="Run configured test workflows.")
     _add_profile_arg(test_parser)
+    test_parser.add_argument(
+        "selection",
+        nargs="?",
+        choices=WORKFLOW_SELECTIONS,
+        help="Run only the selected test kind.",
+    )
     test_parser.add_argument(
         "--runner", action="append", help="Run only the named test runner."
     )
@@ -145,10 +157,16 @@ def _run_build(
         Process exit code for the command.
 
     Raises:
-        ConfigError: If no build workflows are configured.
+        ConfigError: If no matching build workflows are configured or if
+            incompatible CLI options are combined.
     """
-    plan = plan_build(config.build, targets=args.targets)
+    if args.targets and config.build.selected_kinds(args.selection) == ["python"]:
+        raise ConfigError("`build --target` can only be used with native builds")
+
+    plan = plan_build(config.build, selection=args.selection, targets=args.targets)
     if not plan.specs:
+        if args.selection:
+            raise ConfigError(f"No {args.selection} build workflows configured")
         raise ConfigError("No build workflows configured")
     executor.run_specs(plan.specs, dry_run=args.dry_run)
     return 0
@@ -168,11 +186,14 @@ def _run_test(
         Process exit code for the command.
 
     Raises:
-        ConfigError: If no test workflows are configured.
+        ConfigError: If no matching test workflows are configured.
     """
-    selected = _select_named_items(config.tests, args.runner, "test runner")
+    selected_by_kind = config.tests.select_runners(args.selection)
+    selected = _select_named_items(selected_by_kind, args.runner, "test runner")
     plan = plan_tests(list(selected.values()))
     if not plan.specs:
+        if args.selection:
+            raise ConfigError(f"No {args.selection} test workflows configured")
         raise ConfigError("No test workflows configured")
     executor.run_specs(plan.specs, dry_run=args.dry_run)
     return 0

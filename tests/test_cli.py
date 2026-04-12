@@ -130,3 +130,151 @@ build:
         ["cmake", "-S", "cpp", "-B", "build"],
         ["cmake", "--build", "build", "--parallel", "--target", "cli-target"],
     ]
+
+
+def test_build_selection_runs_only_selected_workflow_kind(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Explicit build selection narrows execution to the requested kind."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+  python:
+    backend: python-build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["commands"] = [spec.command for spec in specs]
+
+    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "build", "python", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured["commands"] == [["python3", "-m", "build"]]
+
+
+def test_build_uses_default_selection_when_cli_selection_is_omitted(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Build defaults apply when the CLI does not specify a selection."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  default: python
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+  python:
+    backend: python-build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["commands"] = [spec.command for spec in specs]
+
+    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "build", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured["commands"] == [["python3", "-m", "build"]]
+
+
+def test_test_selection_runs_only_selected_runner_kind(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Explicit test selection narrows execution to matching runner kinds."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+    native-cpp:
+      backend: ctest
+      build_dir: build/tests
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["descriptions"] = [spec.description for spec in specs]
+
+    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "test", "native", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured["descriptions"] == ["ctest runner `native-cpp`"]
+
+
+def test_test_uses_default_selection_when_cli_selection_is_omitted(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Test defaults apply when the CLI does not specify a selection."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+test:
+  default: python
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+    native-cpp:
+      backend: ctest
+      build_dir: build/tests
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["descriptions"] = [spec.description for spec in specs]
+
+    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "test", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured["descriptions"] == ["pytest runner `unit`"]

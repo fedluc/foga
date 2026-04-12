@@ -10,6 +10,9 @@ import yaml
 
 from .errors import ConfigError
 
+WORKFLOW_KINDS = ("native", "python")
+WORKFLOW_SELECTIONS = (*WORKFLOW_KINDS, "all")
+
 
 @dataclass(frozen=True)
 class HookConfig:
@@ -75,30 +78,139 @@ class BuildConfig:
     """Aggregate build configuration for configured build workflows.
 
     Attributes:
+        default: Default build kind selection used when the CLI does not
+            request an explicit build mode.
         entries: Build workflow configuration keyed by section name under
             ``build``.
         native: Optional native build configuration.
         python: Optional Python build configuration.
     """
 
+    default: str | None = None
     entries: dict[str, NativeBuildConfig | PythonBuildConfig] = field(
         default_factory=dict
     )
     native: NativeBuildConfig | None = None
     python: PythonBuildConfig | None = None
 
-    def configured_backends(self) -> list[NativeBuildConfig | PythonBuildConfig]:
-        """Return configured build backends in execution order."""
+    def configured_backends(
+        self, selection: str | None = None
+    ) -> list[NativeBuildConfig | PythonBuildConfig]:
+        """Return configured build backends in execution order.
+
+        Args:
+            selection: Optional explicit build kind for the current invocation.
+
+        Returns:
+            Configured build backends filtered to the selected kind.
+        """
+
+        active_kinds = set(self.selected_kinds(selection))
 
         if self.entries:
-            return list(self.entries.values())
+            return [
+                config
+                for config in self.entries.values()
+                if build_kind(config) in active_kinds
+            ]
 
         backends: list[NativeBuildConfig | PythonBuildConfig] = []
-        if self.native is not None:
+        if self.native is not None and "native" in active_kinds:
             backends.append(self.native)
-        if self.python is not None:
+        if self.python is not None and "python" in active_kinds:
             backends.append(self.python)
         return backends
+
+    def available_kinds(self) -> list[str]:
+        """Return the configured build kinds in stable execution order.
+
+        Returns:
+            Ordered build kinds present in the current configuration.
+        """
+
+        if self.entries:
+            return _ordered_unique(
+                build_kind(config) for config in self.entries.values()
+            )
+
+        kinds: list[str] = []
+        if self.native is not None:
+            kinds.append("native")
+        if self.python is not None:
+            kinds.append("python")
+        return kinds
+
+    def selected_kinds(self, selection: str | None = None) -> list[str]:
+        """Resolve the active build kinds for an invocation.
+
+        Args:
+            selection: Optional explicit build kind from the CLI.
+
+        Returns:
+            Ordered build kinds that should run for the invocation.
+        """
+
+        selected = selection or self.default or "all"
+        if selected == "all":
+            return self.available_kinds()
+        return [selected]
+
+
+@dataclass(frozen=True)
+class TestConfig:
+    """Aggregate test configuration for configured test workflows.
+
+    Attributes:
+        default: Default test kind selection used when the CLI does not request
+            an explicit test mode.
+        runners: Parsed test runners keyed by runner name.
+    """
+
+    default: str | None = None
+    runners: dict[str, TestRunnerConfig] = field(default_factory=dict)
+
+    def available_kinds(self) -> list[str]:
+        """Return the configured test kinds in stable execution order.
+
+        Returns:
+            Ordered test kinds present in the configured runners.
+        """
+
+        return _ordered_unique(runner.kind for runner in self.runners.values())
+
+    def selected_kinds(self, selection: str | None = None) -> list[str]:
+        """Resolve the active test kinds for an invocation.
+
+        Args:
+            selection: Optional explicit test kind from the CLI.
+
+        Returns:
+            Ordered test kinds that should run for the invocation.
+        """
+
+        selected = selection or self.default or "all"
+        if selected == "all":
+            return self.available_kinds()
+        return [selected]
+
+    def select_runners(
+        self, selection: str | None = None
+    ) -> dict[str, TestRunnerConfig]:
+        """Return runners matching the active test kind selection.
+
+        Args:
+            selection: Optional explicit test kind from the CLI.
+
+        Returns:
+            Runner mapping filtered to the active test kinds.
+        """
+
+        active_kinds = set(self.selected_kinds(selection))
+        return {
+            name: runner
+            for name, runner in self.runners.items()
+            if runner.kind in active_kinds
+        }
 
 
 @dataclass(frozen=True)
@@ -107,6 +219,7 @@ class TestRunnerConfig:
 
     Attributes:
         name: Runner name from the configuration file.
+        kind: Logical test kind used for CLI selection.
         backend: Test backend identifier.
         args: Extra backend-specific command arguments.
         env: Environment variables applied to generated commands.
@@ -123,6 +236,7 @@ class TestRunnerConfig:
     """
 
     name: str
+    kind: str
     backend: str
     args: list[str] = field(default_factory=list)
     env: dict[str, str] = field(default_factory=dict)
@@ -193,7 +307,7 @@ class DevkitConfig:
         project_root: Directory containing the resolved configuration file.
         project: Parsed project metadata.
         build: Parsed build configuration.
-        tests: Parsed test runner configuration keyed by name.
+        tests: Parsed test runner configuration and defaults.
         deploy: Parsed deploy configuration keyed by target name.
         clean: Parsed clean configuration.
         raw: Raw merged configuration mapping after profile application.
@@ -202,7 +316,7 @@ class DevkitConfig:
     project_root: Path
     project: ProjectConfig
     build: BuildConfig
-    tests: dict[str, TestRunnerConfig]
+    tests: TestConfig
     deploy: dict[str, DeployTargetConfig]
     clean: CleanConfig
     raw: dict[str, Any] = field(repr=False)
@@ -320,8 +434,11 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
     entries: dict[str, NativeBuildConfig | PythonBuildConfig] = {}
     native = None
     python_build = None
+    default = _parse_workflow_selection(data.get("default"), "build.default")
 
     for name, build_data in data.items():
+        if name == "default":
+            continue
         if not isinstance(build_data, dict):
             raise ConfigError(f"`build.{name}` must be a mapping")
         backend = _required_str(build_data, "backend", f"build.{name}.backend")
@@ -348,13 +465,31 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
         if name == "python" and isinstance(config, PythonBuildConfig):
             python_build = config
 
-    return BuildConfig(entries=entries, native=native, python=python_build)
+    build_config = BuildConfig(
+        default=default, entries=entries, native=native, python=python_build
+    )
+    _validate_selected_kinds(
+        build_config.available_kinds(), build_config.default, "build.default", "build"
+    )
+    return build_config
 
 
 def _parse_build_backend(
     name: str, data: dict[str, Any], backend: str
 ) -> NativeBuildConfig | PythonBuildConfig:
-    """Parse a configured build backend by backend type."""
+    """Parse a configured build backend by backend type.
+
+    Args:
+        name: Build entry name under ``build``.
+        data: Raw build entry mapping.
+        backend: Registered backend identifier for the entry.
+
+    Returns:
+        Parsed native or Python build configuration.
+
+    Raises:
+        ConfigError: If the backend identifier is unsupported.
+    """
 
     path = f"build.{name}"
     if backend == "cmake":
@@ -383,7 +518,7 @@ def _parse_build_backend(
     raise ConfigError(f"Unsupported build backend: {backend}")
 
 
-def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
+def _parse_tests(data: dict[str, Any]) -> TestConfig:
     """Parse test runner configuration.
 
     Args:
@@ -400,6 +535,7 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
     runners_data = data.get("runners") or {}
     if not isinstance(runners_data, dict):
         raise ConfigError("`test.runners` must be a mapping")
+    default = _parse_workflow_selection(data.get("default"), "test.default")
 
     runners: dict[str, TestRunnerConfig] = {}
     for name, runner_data in runners_data.items():
@@ -414,6 +550,7 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
             )
         runners[name] = TestRunnerConfig(
             name=name,
+            kind=_parse_test_kind(runner_data, name, backend),
             backend=backend,
             args=_string_list(runner_data.get("args"), f"test.runners.{name}.args"),
             env=_string_mapping(runner_data.get("env"), f"test.runners.{name}.env"),
@@ -433,7 +570,11 @@ def _parse_tests(data: dict[str, Any]) -> dict[str, TestRunnerConfig]:
             target=_optional_str(runner_data, "target"),
         )
         _validate_test_runner(runners[name])
-    return runners
+    test_config = TestConfig(default=default, runners=runners)
+    _validate_selected_kinds(
+        test_config.available_kinds(), test_config.default, "test.default", "test"
+    )
+    return test_config
 
 
 def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
@@ -517,7 +658,14 @@ def _validate_test_runner(config: TestRunnerConfig) -> None:
 
 
 def _validate_build_backend(config: NativeBuildConfig | PythonBuildConfig) -> None:
-    """Validate backend-specific build configuration."""
+    """Validate backend-specific build configuration.
+
+    Args:
+        config: Build configuration to validate.
+
+    Raises:
+        ConfigError: If required fields for the selected backend are missing.
+    """
 
     from .adapters.build import validate_build_backend
 
@@ -533,7 +681,11 @@ def _validate_deploy_backend(config: DeployTargetConfig) -> None:
 
 
 def _supported_build_backends() -> set[str]:
-    """Return the registered build backend names."""
+    """Return the registered build backend names.
+
+    Returns:
+        Registered build backend identifiers.
+    """
 
     from .adapters.build import supported_build_backends
 
@@ -558,7 +710,11 @@ def _unsupported_backend_message(
 
 
 def _supported_test_backends() -> set[str]:
-    """Return the registered test backend names."""
+    """Return the registered test backend names.
+
+    Returns:
+        Registered test backend identifiers.
+    """
 
     from .adapters.testing import supported_test_backends
 
@@ -566,7 +722,11 @@ def _supported_test_backends() -> set[str]:
 
 
 def _supported_deploy_backends() -> set[str]:
-    """Return the registered deploy backend names."""
+    """Return the registered deploy backend names.
+
+    Returns:
+        Registered deploy backend identifiers.
+    """
 
     from .adapters.deploy import supported_deploy_backends
 
@@ -769,6 +929,134 @@ def _optional_str(data: dict[str, Any], key: str) -> str | None:
     if not isinstance(value, str):
         raise ConfigError(f"`{key}` must be a string")
     return value
+
+
+def _parse_workflow_selection(value: Any, path: str) -> str | None:
+    """Parse a workflow kind selector.
+
+    Args:
+        value: Raw selector value from configuration.
+        path: Configuration path used in validation errors.
+
+    Returns:
+        Parsed workflow kind or ``None`` when the field is unset.
+
+    Raises:
+        ConfigError: If the selector is not one of the supported values.
+    """
+
+    if value is None:
+        return None
+    if not isinstance(value, str) or value not in WORKFLOW_SELECTIONS:
+        expected = ", ".join(WORKFLOW_SELECTIONS)
+        raise ConfigError(f"`{path}` must be one of: {expected}")
+    return value
+
+
+def _parse_test_kind(data: dict[str, Any], name: str, backend: str) -> str:
+    """Parse or infer the logical kind for a configured test runner.
+
+    Args:
+        data: Raw runner configuration mapping.
+        name: Runner name from ``test.runners``.
+        backend: Registered backend identifier for the runner.
+
+    Returns:
+        Logical runner kind used for CLI selection.
+
+    Raises:
+        ConfigError: If the configured kind uses an unsupported value.
+    """
+
+    path = f"test.runners.{name}.kind"
+    kind = _parse_workflow_selection(data.get("kind"), path)
+    if kind == "all":
+        raise ConfigError(f"`{path}` must be one of: native, python")
+    if kind is not None:
+        return kind
+    return _default_test_kind(backend)
+
+
+def _default_test_kind(backend: str) -> str:
+    """Infer a default test kind from the configured backend.
+
+    Args:
+        backend: Registered test backend identifier.
+
+    Returns:
+        Default logical kind implied by the backend.
+    """
+
+    if backend == "ctest":
+        return "native"
+    return "python"
+
+
+def _validate_selected_kinds(
+    available_kinds: list[str], selected: str | None, path: str, workflow: str
+) -> None:
+    """Validate that a configured default selection matches configured kinds.
+
+    Args:
+        available_kinds: Workflow kinds present in the active configuration.
+        selected: Configured default workflow kind.
+        path: Configuration path used in validation errors.
+        workflow: Human-readable workflow name for diagnostics.
+
+    Raises:
+        ConfigError: If the configured default references missing workflow kinds.
+    """
+
+    if selected is None:
+        return
+    if selected == "all":
+        if not available_kinds:
+            return
+        missing = [kind for kind in WORKFLOW_KINDS if kind not in available_kinds]
+        if missing:
+            missing_str = ", ".join(missing)
+            raise ConfigError(
+                f"`{path}` cannot be `all` when {workflow} only configures: "
+                f"{', '.join(available_kinds)}. Missing: {missing_str}"
+            )
+        return
+    if selected not in available_kinds:
+        raise ConfigError(
+            f"`{path}` selects `{selected}` but no {selected} {workflow} workflows "
+            "are configured"
+        )
+
+
+def build_kind(config: NativeBuildConfig | PythonBuildConfig) -> str:
+    """Return the logical kind for a parsed build backend config.
+
+    Args:
+        config: Parsed build backend configuration.
+
+    Returns:
+        Logical build kind associated with the backend config.
+    """
+
+    if isinstance(config, NativeBuildConfig):
+        return "native"
+    return "python"
+
+
+def _ordered_unique(values: Any) -> list[str]:
+    """Return values in input order without duplicates.
+
+    Args:
+        values: Iterable of values that may contain duplicates.
+
+    Returns:
+        Ordered unique string values.
+    """
+
+    ordered: list[str] = []
+    for value in values:
+        if value not in ordered:
+            ordered.append(value)
+    return ordered
 
 
 def _string_list(value: Any, path: str) -> list[str]:

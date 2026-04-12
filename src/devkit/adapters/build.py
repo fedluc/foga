@@ -11,11 +11,16 @@ from .contracts import BackendContract, BuildRequest, WorkflowPlan
 BuildBackendConfig = NativeBuildConfig | PythonBuildConfig
 
 
-def plan_build(config: BuildConfig, targets: list[str] | None = None) -> WorkflowPlan:
+def plan_build(
+    config: BuildConfig,
+    selection: str | None = None,
+    targets: list[str] | None = None,
+) -> WorkflowPlan:
     """Build a workflow plan for all configured build backends.
 
     Args:
         config: Parsed build configuration for the current project.
+        selection: Optional explicit build kind requested by the CLI.
         targets: Optional explicit native build targets that override the
             configured defaults.
 
@@ -24,10 +29,15 @@ def plan_build(config: BuildConfig, targets: list[str] | None = None) -> Workflo
     """
 
     specs: list[CommandSpec] = []
-    for build_config in config.configured_backends():
+    for build_config in config.configured_backends(selection):
         validate_build_backend(build_config)
         contract = _build_contract(build_config.backend)
-        specs.extend(contract.plan(build_config, BuildRequest(targets=targets)))
+        specs.extend(
+            contract.plan(
+                build_config,
+                BuildRequest(selection=selection, targets=targets),
+            )
+        )
     return WorkflowPlan(specs=specs)
 
 
@@ -127,7 +137,15 @@ def _cmake_plan(config: NativeBuildConfig, request: BuildRequest) -> list[Comman
 
 
 def _python_build_plan(config: PythonBuildConfig, _: BuildRequest) -> list[CommandSpec]:
-    """Build commands for the Python package build backend."""
+    """Build commands for the Python package build backend.
+
+    Args:
+        config: Parsed Python build configuration.
+        _: Unused build planning options.
+
+    Returns:
+        Command specs for the Python build workflow.
+    """
 
     pre_hooks, post_hooks = split_hooks(config.hooks, "python build")
     specs = pre_hooks + [
@@ -142,7 +160,14 @@ def _python_build_plan(config: PythonBuildConfig, _: BuildRequest) -> list[Comma
 
 
 def _validate_native_build(config: BuildBackendConfig) -> None:
-    """Validate the native build contract input."""
+    """Validate the native build contract input.
+
+    Args:
+        config: Parsed build backend configuration.
+
+    Raises:
+        ConfigError: If the config is not a native build configuration.
+    """
 
     if not isinstance(config, NativeBuildConfig):
         raise ConfigError("The `cmake` backend requires a native build configuration")

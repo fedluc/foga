@@ -89,6 +89,103 @@ test:
     assert config.build.python is None
 
 
+def test_load_config_parses_build_and_test_defaults(tmp_path: Path) -> None:
+    """Workflow defaults are loaded for build and test selection."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  default: python
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+  python:
+    backend: python-build
+test:
+  default: native
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+    native-cpp:
+      backend: ctest
+      build_dir: build/tests
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.build.default == "python"
+    assert config.tests.default == "native"
+    assert config.tests.runners["unit"].kind == "python"
+    assert config.tests.runners["native-cpp"].kind == "native"
+
+
+def test_load_config_rejects_build_default_for_missing_kind(tmp_path: Path) -> None:
+    """Build defaults must reference configured build kinds."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  default: python
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "`build.default` selects `python` but no python build workflows "
+            "are configured"
+        ),
+    ):
+        load_config(config_path)
+
+
+def test_load_config_rejects_test_default_all_when_kind_is_missing(
+    tmp_path: Path,
+) -> None:
+    """Test defaults cannot request all kinds unless both are configured."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+test:
+  default: all
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "`test.default` cannot be `all` when test only configures: "
+            "python. Missing: native"
+        ),
+    ):
+        load_config(config_path)
+
+
 def test_load_config_rejects_build_section_backend_mismatch(tmp_path: Path) -> None:
     """Legacy build sections still validate against the backend contract."""
     config_path = write_config(

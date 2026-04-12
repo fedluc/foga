@@ -34,8 +34,10 @@ ruff check .
 
 ```bash
 devkit validate
-devkit build --profile mpi
-devkit test --runner unit
+devkit build python
+devkit build all --profile mpi
+devkit test native
+devkit test python --runner unit
 devkit deploy --profile release --dry-run
 ```
 
@@ -51,9 +53,36 @@ configuration derived from the current `qupled` workflow.
 3. CLI overrides for the active command
 
 Current CLI overrides are execution-scoped rather than persistent config
-rewrites: `build --target` overrides configured native build targets for that
-invocation, while `test --runner` and `deploy --target` narrow the selected
+rewrites: `build python|native|all` and `test python|native|all` select the
+workflow kind for that invocation, `build --target` overrides configured native
+build targets, while `test --runner` and `deploy --target` narrow the selected
 configured workflows after profile application.
+
+You can also define defaults in configuration:
+
+```yaml
+build:
+  default: python
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+  python:
+    backend: python-build
+
+test:
+  default: native
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+    native-cpp:
+      backend: ctest
+      build_dir: build/tests
+```
+
+When omitted, `devkit build` and `devkit test` still run all configured
+workflows for backward compatibility.
 
 Profile overrides are validated before merge. They may override existing values
 and extend nested mappings, but they must preserve container shape for existing

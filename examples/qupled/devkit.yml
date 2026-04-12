@@ -27,6 +27,7 @@ profiles:
             - -DUSE_MPI=ON
 
 build:
+  default: all
   native:
     backend: cmake
     source_dir: src/qupled/native/src
@@ -42,17 +43,21 @@ build:
       USE_MPI: "OFF"
 
 test:
+  default: all
   runners:
     unit:
       backend: pytest
       path: tests
       marker: unit
       args: ["-v"]
+      kind: python
     integration:
       backend: tox
       tox_env: integration
+      kind: python
     native-cpp:
       backend: ctest
+      kind: native
       source_dir: src/qupled/native/src
       build_dir: dist-native-tests
       target: native_tests
