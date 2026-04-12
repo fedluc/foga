@@ -301,6 +301,7 @@ class DevkitConfig:
 
     Attributes:
         project_root: Directory containing the resolved configuration file.
+        active_profile: Profile name merged into the base config, if any.
         project: Parsed project metadata.
         build: Parsed build configuration.
         tests: Parsed test runner configuration and defaults.
@@ -310,6 +311,7 @@ class DevkitConfig:
     """
 
     project_root: Path
+    active_profile: str | None
     project: ProjectConfig
     build: BuildConfig
     tests: TestConfig
@@ -342,11 +344,13 @@ def load_config(
     if not isinstance(data, dict):
         raise ConfigError("Configuration root must be a mapping")
 
-    merged = apply_profile(data, profile)
-    return parse_config(merged, path.parent)
+    merged, active_profile = apply_profile(data, profile)
+    return parse_config(merged, path.parent, active_profile=active_profile)
 
 
-def apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
+def apply_profile(
+    data: dict[str, Any], profile: str | None
+) -> tuple[dict[str, Any], str | None]:
     """Merge an optional named profile into the base configuration.
 
     Args:
@@ -354,7 +358,8 @@ def apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
         profile: Optional profile name to apply.
 
     Returns:
-        Configuration mapping after profile application.
+        Configuration mapping after profile application and the active profile
+        name that produced it.
 
     Raises:
         ConfigError: If the profile configuration is malformed or missing.
@@ -369,17 +374,19 @@ def apply_profile(data: dict[str, Any], profile: str | None) -> dict[str, Any]:
         active_profile = "default"
 
     if active_profile is None:
-        return base
+        return base, None
     if active_profile not in profiles:
         raise ConfigError(f"Unknown profile: {active_profile}")
     profile_data = profiles[active_profile]
     if not isinstance(profile_data, dict):
         raise ConfigError(f"Profile `{active_profile}` must be a mapping")
     _validate_profile_override(base, profile_data, f"profiles.{active_profile}")
-    return deep_merge(base, profile_data)
+    return deep_merge(base, profile_data), active_profile
 
 
-def parse_config(data: dict[str, Any], project_root: Path) -> DevkitConfig:
+def parse_config(
+    data: dict[str, Any], project_root: Path, active_profile: str | None = None
+) -> DevkitConfig:
     """Parse raw configuration data into typed config objects.
 
     Args:
@@ -403,6 +410,7 @@ def parse_config(data: dict[str, Any], project_root: Path) -> DevkitConfig:
 
     return DevkitConfig(
         project_root=project_root,
+        active_profile=active_profile,
         project=ProjectConfig(name=str(project["name"])),
         build=build,
         tests=tests,

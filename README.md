@@ -12,7 +12,8 @@ This repository contains the first implementation pass with:
 - Profile-based overrides
 - Built-in adapters for CMake, `python -m build`, `pytest`, `tox`, `ctest`, and
   Twine uploads
-- CLI commands for `build`, `test`, `deploy`, `clean`, and `validate`
+- CLI commands for `build`, `test`, `deploy`, `clean`, `validate`, and
+  `inspect`
 
 ## Quick Start
 
@@ -34,6 +35,8 @@ ruff check .
 
 ```bash
 devkit validate
+devkit inspect --profile mpi
+devkit inspect build native --target native_tests
 devkit build python
 devkit build all --profile mpi
 devkit test native
@@ -88,6 +91,26 @@ Profile overrides are validated before merge. They may override existing values
 and extend nested mappings, but they must preserve container shape for existing
 paths and cannot change the backend identifier of an already configured build,
 test, or deploy entry.
+
+## Inspecting Resolved Configuration
+
+Use `devkit inspect` to print the effective YAML configuration after profile
+selection, without executing any workflow:
+
+```bash
+devkit inspect
+devkit inspect --profile mpi
+devkit inspect build native --target native_tests
+devkit inspect test python --runner unit
+devkit inspect deploy --target pypi
+```
+
+The output includes:
+
+- `active_profile` to show which profile was applied, if any
+- `context` to show the active inspect mode and selected runners or targets
+- `resolved_config` to show the merged configuration document, including active
+  build target overrides when provided to `inspect build`
 
 ## Devcontainer
 

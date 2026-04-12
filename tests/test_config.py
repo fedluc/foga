@@ -42,6 +42,7 @@ build:
 
     config = load_config(config_path)
 
+    assert config.active_profile == "default"
     assert config.build.native is not None
     assert config.build.native.configure_args == ["-DUSE_MPI=ON"]
 

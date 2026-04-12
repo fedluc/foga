@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import yaml
+
 from devkit import cli
 
 
@@ -72,6 +74,152 @@ def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
     captured = capsys.readouterr()
     assert exit_code == 0
     assert "Configuration valid" in captured.out
+
+
+def test_inspect_outputs_resolved_config(tmp_path: Path, capsys) -> None:
+    """Inspect prints the merged configuration document."""
+    config = write_config(tmp_path)
+
+    exit_code = cli.main(["--config", str(config), "inspect"])
+
+    captured = capsys.readouterr()
+    document = yaml.safe_load(captured.out)
+    assert exit_code == 0
+    assert document["active_profile"] is None
+    assert document["context"] == {"command": "inspect"}
+    assert document["resolved_config"]["project"]["name"] == "demo"
+
+
+def test_inspect_reports_active_profile_and_build_overrides(
+    tmp_path: Path, capsys
+) -> None:
+    """Inspect includes the active profile and build target overrides."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+profiles:
+  mpi:
+    build:
+      native:
+        targets: ["profile-target"]
+build:
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+    targets: ["base-target"]
+  python:
+    backend: python-build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "inspect",
+            "--profile",
+            "mpi",
+            "build",
+            "native",
+            "--target",
+            "cli-target",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    document = yaml.safe_load(captured.out)
+    assert exit_code == 0
+    assert document["active_profile"] == "mpi"
+    assert document["context"] == {
+        "command": "build",
+        "selection": "native",
+        "active_kinds": ["native"],
+        "selected_entries": ["native"],
+        "effective_targets": {"native": ["cli-target"]},
+    }
+    assert document["resolved_config"]["build"]["native"]["targets"] == ["cli-target"]
+
+
+def test_inspect_reports_selected_test_runners(tmp_path: Path, capsys) -> None:
+    """Inspect includes selected test runners after kind filtering."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+    integration:
+      backend: tox
+      tox_env: py311
+    native-cpp:
+      backend: ctest
+      build_dir: build/tests
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "inspect",
+            "test",
+            "python",
+            "--runner",
+            "integration",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    document = yaml.safe_load(captured.out)
+    assert exit_code == 0
+    assert document["context"] == {
+        "command": "test",
+        "selection": "python",
+        "active_kinds": ["python"],
+        "selected_runners": ["integration"],
+    }
+
+
+def test_inspect_build_rejects_target_override_for_python_selection(
+    tmp_path: Path, capsys
+) -> None:
+    """Inspect mirrors build target validation for python-only selections."""
+    config = write_config(tmp_path)
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "inspect",
+            "build",
+            "python",
+            "--target",
+            "wheel",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert (
+        "`inspect build --target` can only be used with native builds" in captured.err
+    )
 
 
 def test_build_dry_run_routes_to_executor(tmp_path: Path, monkeypatch) -> None:
