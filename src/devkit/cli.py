@@ -13,6 +13,7 @@ from .adapters.testing import plan_tests
 from .config import WORKFLOW_SELECTIONS, DevkitConfig, load_config
 from .errors import ConfigError, DevkitError
 from .executor import CommandExecutor
+from .inspect import add_inspect_parser, run_inspect
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -33,12 +34,15 @@ def main(argv: list[str] | None = None) -> int:
             parser.print_help()
             return 0
 
+        if args.command == "inspect":
+            return run_inspect(args.config, args)
+
         config = load_config(args.config, getattr(args, "profile", None))
-        executor = CommandExecutor(config.project_root)
 
         if args.command == "validate":
             print(f"Configuration valid for project `{config.project.name}`")
             return 0
+        executor = CommandExecutor(config.project_root)
         if args.command == "build":
             return _run_build(config, executor, args)
         if args.command == "test":
@@ -130,6 +134,8 @@ def build_parser() -> argparse.ArgumentParser:
         "validate", help="Validate the configuration file."
     )
     _add_profile_arg(validate_parser)
+
+    add_inspect_parser(subparsers)
 
     return parser
 
