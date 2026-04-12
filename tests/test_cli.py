@@ -93,7 +93,7 @@ def test_inspect_outputs_resolved_config(tmp_path: Path, capsys) -> None:
 def test_inspect_reports_active_profile_and_build_overrides(
     tmp_path: Path, capsys
 ) -> None:
-    """Inspect includes the active profile and build target overrides."""
+    """Inspect build defaults to a concise summary and effective config."""
     config = tmp_path / "devkit.yml"
     config.write_text(
         """
@@ -139,6 +139,71 @@ test:
     document = yaml.safe_load(captured.out)
     assert exit_code == 0
     assert document["active_profile"] == "mpi"
+    assert document["summary"] == {
+        "command": "build",
+        "selection": "native",
+        "active_kinds": ["native"],
+        "selected_entries": ["native"],
+        "effective_targets": {"native": ["cli-target"]},
+    }
+    assert document["effective_config"] == {
+        "build": {
+            "native": {
+                "backend": "cmake",
+                "source_dir": "cpp",
+                "build_dir": "build",
+                "targets": ["cli-target"],
+            },
+        }
+    }
+
+
+def test_inspect_build_full_outputs_resolved_config(tmp_path: Path, capsys) -> None:
+    """Inspect build can opt into the full resolved config output."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+profiles:
+  mpi:
+    build:
+      native:
+        targets: ["profile-target"]
+build:
+  default: all
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+    targets: ["base-target"]
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "inspect",
+            "--profile",
+            "mpi",
+            "build",
+            "--full",
+            "native",
+            "--target",
+            "cli-target",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    document = yaml.safe_load(captured.out)
+    assert exit_code == 0
     assert document["context"] == {
         "command": "build",
         "selection": "native",
@@ -150,7 +215,7 @@ test:
 
 
 def test_inspect_reports_selected_test_runners(tmp_path: Path, capsys) -> None:
-    """Inspect includes selected test runners after kind filtering."""
+    """Inspect test defaults to a concise summary and filtered config."""
     config = tmp_path / "devkit.yml"
     config.write_text(
         """
@@ -189,11 +254,21 @@ test:
     captured = capsys.readouterr()
     document = yaml.safe_load(captured.out)
     assert exit_code == 0
-    assert document["context"] == {
+    assert document["summary"] == {
         "command": "test",
         "selection": "python",
         "active_kinds": ["python"],
         "selected_runners": ["integration"],
+    }
+    assert document["effective_config"] == {
+        "test": {
+            "runners": {
+                "integration": {
+                    "backend": "tox",
+                    "tox_env": "py311",
+                }
+            }
+        }
     }
 
 

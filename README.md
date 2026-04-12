@@ -37,6 +37,7 @@ ruff check .
 devkit validate
 devkit inspect --profile mpi
 devkit inspect build native --target native_tests
+devkit inspect build --full native --target native_tests
 devkit build python
 devkit build all --profile mpi
 devkit test native
@@ -101,13 +102,26 @@ selection, without executing any workflow:
 devkit inspect
 devkit inspect --profile mpi
 devkit inspect build native --target native_tests
+devkit inspect build --full native --target native_tests
 devkit inspect test python --runner unit
 devkit inspect deploy --target pypi
 ```
 
-The output includes:
+Top-level `devkit inspect` still prints the full resolved configuration. The
+command-specific variants default to a concise summary plus the relevant config
+fragment for the selected build, test, or deploy scope. Add `--full` to any
+command-specific inspect invocation to print the full resolved configuration
+document instead.
+
+The concise command-specific output includes:
 
 - `active_profile` to show which profile was applied, if any
+- `summary` to show the active inspect mode and selected runners or targets
+- `effective_config` to show only the relevant config fragment for the selected
+  build, test, or deploy scope
+
+With `--full`, the output includes:
+
 - `context` to show the active inspect mode and selected runners or targets
 - `resolved_config` to show the merged configuration document, including active
   build target overrides when provided to `inspect build`

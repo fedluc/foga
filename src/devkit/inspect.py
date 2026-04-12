@@ -30,10 +30,20 @@ def add_inspect_parser(
         help="Show the resolved configuration and active command selections.",
     )
     inspect_parser.add_argument("--profile", help="Configuration profile to apply.")
+    inspect_parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Show the full resolved configuration document.",
+    )
     inspect_subparsers = inspect_parser.add_subparsers(dest="inspect_command")
 
     inspect_build_parser = inspect_subparsers.add_parser(
         "build", help="Inspect resolved build configuration."
+    )
+    inspect_build_parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Show the full resolved configuration document.",
     )
     inspect_build_parser.add_argument(
         "selection",
@@ -52,6 +62,11 @@ def add_inspect_parser(
         "test", help="Inspect resolved test configuration."
     )
     inspect_test_parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Show the full resolved configuration document.",
+    )
+    inspect_test_parser.add_argument(
         "selection",
         nargs="?",
         choices=WORKFLOW_SELECTIONS,
@@ -65,6 +80,11 @@ def add_inspect_parser(
 
     inspect_deploy_parser = inspect_subparsers.add_parser(
         "deploy", help="Inspect resolved deploy configuration."
+    )
+    inspect_deploy_parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Show the full resolved configuration document.",
     )
     inspect_deploy_parser.add_argument(
         "--target",
@@ -89,15 +109,54 @@ def run_inspect(config_path: str | Path, args: argparse.Namespace) -> int:
     """
     config = load_config(config_path, getattr(args, "profile", None))
     _validate_build_target_override(config, args)
+    active_profile = _resolve_active_profile_name(config_path, args.profile)
+    context = _build_context(config, args)
+    resolved_config = _build_resolved_config(config, args)
 
-    document = {
-        "project_root": str(config.project_root),
-        "active_profile": _resolve_active_profile_name(config_path, args.profile),
-        "context": _build_context(config, args),
-        "resolved_config": _build_resolved_config(config, args),
-    }
+    document = _build_output_document(
+        config=config,
+        args=args,
+        active_profile=active_profile,
+        context=context,
+        resolved_config=resolved_config,
+    )
     print(yaml.safe_dump(document, sort_keys=False), end="")
     return 0
+
+
+def _build_output_document(
+    config: DevkitConfig,
+    args: argparse.Namespace,
+    active_profile: str | None,
+    context: dict[str, object],
+    resolved_config: dict[str, object],
+) -> dict[str, object]:
+    """Build the inspect output document.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        active_profile: Active profile name for the current invocation.
+        context: Inspect context summary for the current invocation.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        User-facing inspect output document.
+    """
+    if getattr(args, "inspect_command", None) and not args.full:
+        return {
+            "project_root": str(config.project_root),
+            "active_profile": active_profile,
+            "summary": context,
+            "effective_config": _build_effective_config(config, args, resolved_config),
+        }
+
+    return {
+        "project_root": str(config.project_root),
+        "active_profile": active_profile,
+        "context": context,
+        "resolved_config": resolved_config,
+    }
 
 
 def _validate_build_target_override(
@@ -249,6 +308,129 @@ def _build_resolved_config(
         if isinstance(build_entry, dict):
             build_entry["targets"] = list(args.targets)
     return resolved
+
+
+def _build_effective_config(
+    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+) -> dict[str, object]:
+    """Build the concise effective config for subcommand inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Concise config fragment relevant to the selected inspect subcommand.
+    """
+    inspect_command = getattr(args, "inspect_command", None)
+    if inspect_command == "build":
+        return _build_effective_build_config(config, args, resolved_config)
+    if inspect_command == "test":
+        return _build_effective_test_config(config, args, resolved_config)
+    if inspect_command == "deploy":
+        return _build_effective_deploy_config(config, args, resolved_config)
+    return resolved_config
+
+
+def _build_effective_build_config(
+    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+) -> dict[str, object]:
+    """Build the concise config fragment for build inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Build-specific config fragment.
+    """
+    build_section = resolved_config.get("build")
+    if not isinstance(build_section, dict):
+        return {}
+
+    active_kinds = set(config.build.selected_kinds(args.selection))
+    selected_entries = {
+        name: entry
+        for name, entry in build_section.items()
+        if name == "default"
+        or (
+            name in config.build.entries
+            and build_kind(config.build.entries[name]) in active_kinds
+        )
+    }
+    return {"build": selected_entries}
+
+
+def _build_effective_test_config(
+    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+) -> dict[str, object]:
+    """Build the concise config fragment for test inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Test-specific config fragment.
+    """
+    test_section = resolved_config.get("test")
+    if not isinstance(test_section, dict):
+        return {}
+
+    selected_runners = _select_named_items(
+        config.tests.select_runners(args.selection),
+        args.runner,
+        "test runner",
+    )
+    runners_section = test_section.get("runners")
+    if not isinstance(runners_section, dict):
+        return {"test": {"default": test_section.get("default"), "runners": {}}}
+
+    effective_test = {"runners": {}}
+    if "default" in test_section:
+        effective_test["default"] = test_section["default"]
+    effective_test["runners"] = {
+        name: runners_section[name]
+        for name in selected_runners
+        if name in runners_section
+    }
+    return {"test": effective_test}
+
+
+def _build_effective_deploy_config(
+    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+) -> dict[str, object]:
+    """Build the concise config fragment for deploy inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Deploy-specific config fragment.
+    """
+    deploy_section = resolved_config.get("deploy")
+    if not isinstance(deploy_section, dict):
+        return {}
+
+    selected_targets = _select_named_items(config.deploy, args.targets, "deploy target")
+    targets_section = deploy_section.get("targets")
+    if not isinstance(targets_section, dict):
+        return {"deploy": {"targets": {}}}
+
+    return {
+        "deploy": {
+            "targets": {
+                name: targets_section[name]
+                for name in selected_targets
+                if name in targets_section
+            }
+        }
+    }
 
 
 def _resolve_active_profile_name(
