@@ -466,11 +466,10 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
         backend = _optional_str(build_data, "backend", f"build.{name}.backend")
         if backend is None:
             continue
-        if backend not in _supported_build_backends():
+        supported_backends = _supported_build_backends_for_entry(name)
+        if backend not in supported_backends:
             raise ConfigError(
-                _unsupported_backend_message(
-                    "build", backend, _supported_build_backends()
-                )
+                _unsupported_backend_message("build", backend, supported_backends)
             )
 
         config = _parse_build_backend(name, build_data, backend)
@@ -742,6 +741,15 @@ def _supported_build_backends() -> set[str]:
     from .adapters.build import supported_build_backends
 
     return supported_build_backends()
+
+
+def _supported_build_backends_for_entry(name: str) -> set[str]:
+    """Return the supported build backends for a specific build entry."""
+    if name == "native":
+        return {"cmake"}
+    if name == "python":
+        return {"python-build"}
+    return _supported_build_backends()
 
 
 def _unsupported_backend_message(

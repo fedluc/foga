@@ -300,7 +300,13 @@ build:
 """,
     )
 
-    with pytest.raises(ConfigError, match="build.native.*native build backend"):
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "Unsupported build backend: python-build. "
+            "Supported backends: cmake"
+        ),
+    ):
         load_config(config_path)
 
 
@@ -326,7 +332,7 @@ deploy:
 def test_load_config_lists_supported_build_backends_for_unknown_backend(
     tmp_path: Path,
 ) -> None:
-    """Unknown build backends report the registered backend names."""
+    """Unknown native build backends only list native-compatible backends."""
     config_path = write_config(
         tmp_path,
         """
@@ -340,10 +346,83 @@ build:
 
     with pytest.raises(
         ConfigError,
+        match=("Unsupported build backend: unknown. Supported backends: cmake"),
+    ):
+        load_config(config_path)
+
+
+def test_load_config_lists_supported_python_build_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown python build backends only list Python-compatible backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: unknown
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=("Unsupported build backend: unknown. Supported backends: python-build"),
+    ):
+        load_config(config_path)
+
+
+def test_load_config_lists_supported_test_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown test backends list the registered test backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+test:
+  runners:
+    unit:
+      backend: unknown
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
         match=(
-            "Unsupported build backend: unknown. "
-            "Supported backends: cmake, python-build"
+            "Unsupported test backend: unknown. Supported backends: ctest, pytest, tox"
         ),
+    ):
+        load_config(config_path)
+
+
+def test_load_config_lists_supported_deploy_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown deploy backends list the registered deploy backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+deploy:
+  targets:
+    pypi:
+      backend: unknown
+      artifacts: ["dist/*"]
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=("Unsupported deploy backend: unknown. Supported backends: twine"),
     ):
         load_config(config_path)
 
