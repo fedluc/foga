@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Annotated
 
+import typer
 import yaml
 
-from .config import DevkitConfig, load_config
-from .output import format_detail, format_status
+from ..config import DevkitConfig, load_config
+from ..output import format_detail, format_status
+from .common import config_path_from_context
 
 
 @dataclass(frozen=True)
@@ -21,6 +24,20 @@ class ValidationSummary:
     test_runners: list[str]
     deploy_targets: list[str]
     clean_paths: list[str]
+
+
+def validate_command(
+    ctx: typer.Context,
+    profile: Annotated[
+        str | None,
+        typer.Option(
+            "--profile",
+            help="Apply a named configuration profile before resolving the command.",
+        ),
+    ] = None,
+) -> int:
+    """Validate the configuration file."""
+    return run_validate(config_path_from_context(ctx), profile)
 
 
 def run_validate(config_path: str | Path, profile: str | None) -> int:
