@@ -2,107 +2,201 @@
 
 from __future__ import annotations
 
-import argparse
 import re
 import sys
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
+from typing import Annotated
 
+import typer
 import yaml
 
-from .config import (
-    WORKFLOW_SELECTIONS,
-    DevkitConfig,
-    build_kind,
-    deep_copy_mapping,
-    load_config,
-)
+from .config import DevkitConfig, build_kind, deep_copy_mapping, load_config
 from .errors import ConfigError
 from .output import style, supports_color
 
 
-def add_inspect_parser(
-    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
-) -> None:
-    """Register the inspect command and its subcommands.
+class WorkflowSelection(str, Enum):
+    """Supported workflow selection values for inspect subcommands."""
 
-    Args:
-        subparsers: Top-level subparser collection from the main CLI parser.
-    """
-    inspect_parser = subparsers.add_parser(
-        "inspect",
-        help="Show the resolved configuration and active command selections.",
-    )
-    inspect_parser.add_argument("--profile", help="Configuration profile to apply.")
-    inspect_parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Show the full resolved configuration document.",
-    )
-    inspect_subparsers = inspect_parser.add_subparsers(dest="inspect_command")
-
-    inspect_build_parser = inspect_subparsers.add_parser(
-        "build", help="Inspect resolved build configuration."
-    )
-    inspect_build_parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Show the full resolved configuration document.",
-    )
-    inspect_build_parser.add_argument(
-        "selection",
-        nargs="?",
-        choices=WORKFLOW_SELECTIONS,
-        help="Resolve the selected build kind.",
-    )
-    inspect_build_parser.add_argument(
-        "--target",
-        action="append",
-        dest="targets",
-        help="Show native build target overrides in the resolved config.",
-    )
-
-    inspect_test_parser = inspect_subparsers.add_parser(
-        "test", help="Inspect resolved test configuration."
-    )
-    inspect_test_parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Show the full resolved configuration document.",
-    )
-    inspect_test_parser.add_argument(
-        "selection",
-        nargs="?",
-        choices=WORKFLOW_SELECTIONS,
-        help="Resolve the selected test kind.",
-    )
-    inspect_test_parser.add_argument(
-        "--runner",
-        action="append",
-        help="Show only the named test runners in the selection summary.",
-    )
-
-    inspect_deploy_parser = inspect_subparsers.add_parser(
-        "deploy", help="Inspect resolved deploy configuration."
-    )
-    inspect_deploy_parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Show the full resolved configuration document.",
-    )
-    inspect_deploy_parser.add_argument(
-        "--target",
-        action="append",
-        dest="targets",
-        help="Show only the named deploy targets in the selection summary.",
-    )
+    NATIVE = "native"
+    PYTHON = "python"
+    ALL = "all"
 
 
-def run_inspect(config_path: str | Path, args: argparse.Namespace) -> int:
+WORKFLOW_SELECTION_METAVAR = "native|python|all"
+
+
+@dataclass(slots=True)
+class InspectArgs:
+    """Parsed arguments for the inspect command family."""
+
+    profile: str | None = None
+    full: bool = False
+    inspect_command: str | None = None
+    selection: str | None = None
+    targets: list[str] | None = None
+    runner: list[str] | None = None
+
+
+inspect_app = typer.Typer(
+    add_completion=False,
+    help="Show the resolved configuration and active command selections.",
+    no_args_is_help=False,
+    pretty_exceptions_enable=False,
+)
+
+
+def build_inspect_app() -> typer.Typer:
+    """Return the configured inspect sub-application."""
+    return inspect_app
+
+
+@inspect_app.callback(invoke_without_command=True)
+def inspect_callback(
+    ctx: typer.Context,
+    profile: Annotated[
+        str | None,
+        typer.Option("--profile", help="Configuration profile to apply."),
+    ] = None,
+    full: Annotated[
+        bool,
+        typer.Option("--full", help="Show the full resolved configuration document."),
+    ] = False,
+) -> int | None:
+    """Render inspect output or seed shared inspect state for subcommands."""
+    args = InspectArgs(profile=profile, full=full)
+    ctx.obj = args
+    if ctx.invoked_subcommand is None:
+        return run_inspect(_config_path_from_context(ctx), args)
+    return None
+
+
+@inspect_app.command("build")
+def inspect_build_command(
+    ctx: typer.Context,
+    full: Annotated[
+        bool,
+        typer.Option("--full", help="Show the full resolved configuration document."),
+    ] = False,
+    selection: Annotated[
+        WorkflowSelection | None,
+        typer.Argument(
+            help="Resolve the selected build kind.",
+            metavar=WORKFLOW_SELECTION_METAVAR,
+        ),
+    ] = None,
+    targets: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--target",
+            help="Show native build target overrides in the resolved config.",
+        ),
+    ] = None,
+) -> int:
+    """Inspect resolved build configuration."""
+    base_args = _inspect_args_from_context(ctx)
+    args = InspectArgs(
+        profile=base_args.profile,
+        full=base_args.full or full,
+        inspect_command="build",
+        selection=_selection_value(selection),
+        targets=targets,
+    )
+    return run_inspect(_config_path_from_context(ctx), args)
+
+
+@inspect_app.command("test")
+def inspect_test_command(
+    ctx: typer.Context,
+    full: Annotated[
+        bool,
+        typer.Option("--full", help="Show the full resolved configuration document."),
+    ] = False,
+    selection: Annotated[
+        WorkflowSelection | None,
+        typer.Argument(
+            help="Resolve the selected test kind.",
+            metavar=WORKFLOW_SELECTION_METAVAR,
+        ),
+    ] = None,
+    runner: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--runner",
+            help="Show only the named test runners in the selection summary.",
+        ),
+    ] = None,
+) -> int:
+    """Inspect resolved test configuration."""
+    base_args = _inspect_args_from_context(ctx)
+    args = InspectArgs(
+        profile=base_args.profile,
+        full=base_args.full or full,
+        inspect_command="test",
+        selection=_selection_value(selection),
+        runner=runner,
+    )
+    return run_inspect(_config_path_from_context(ctx), args)
+
+
+@inspect_app.command("deploy")
+def inspect_deploy_command(
+    ctx: typer.Context,
+    full: Annotated[
+        bool,
+        typer.Option("--full", help="Show the full resolved configuration document."),
+    ] = False,
+    targets: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--target",
+            help="Show only the named deploy targets in the selection summary.",
+        ),
+    ] = None,
+) -> int:
+    """Inspect resolved deploy configuration."""
+    base_args = _inspect_args_from_context(ctx)
+    args = InspectArgs(
+        profile=base_args.profile,
+        full=base_args.full or full,
+        inspect_command="deploy",
+        targets=targets,
+    )
+    return run_inspect(_config_path_from_context(ctx), args)
+
+
+def _selection_value(selection: WorkflowSelection | None) -> str | None:
+    """Normalize optional selection enums to raw config values."""
+    if selection is None:
+        return None
+    return selection.value
+
+
+def _inspect_args_from_context(ctx: typer.Context) -> InspectArgs:
+    """Return the shared inspect arguments set by the inspect callback."""
+    inspect_args = ctx.parent.obj if ctx.parent is not None else None
+    if not isinstance(inspect_args, InspectArgs):
+        raise RuntimeError("Inspect context was not initialized")
+    return inspect_args
+
+
+def _config_path_from_context(ctx: typer.Context) -> str | Path:
+    """Resolve the top-level ``--config`` option from the root CLI context."""
+    root_context = ctx.find_root()
+    config_path = getattr(root_context.obj, "config", None)
+    if not isinstance(config_path, str | Path):
+        raise RuntimeError("CLI context was not initialized")
+    return config_path
+
+
+def run_inspect(config_path: str | Path, args: InspectArgs) -> int:
     """Render the resolved configuration document for the inspect command.
 
     Args:
         config_path: Path to the configuration file to inspect.
-        args: Parsed CLI arguments for the inspect command.
+        args: Parsed inspect command arguments.
 
     Returns:
         Process exit code for the command.
@@ -110,7 +204,7 @@ def run_inspect(config_path: str | Path, args: argparse.Namespace) -> int:
     Raises:
         ConfigError: If inspect-specific option combinations are invalid.
     """
-    config = load_config(config_path, getattr(args, "profile", None))
+    config = load_config(config_path, args.profile)
     _validate_build_target_override(config, args)
     active_profile = _resolve_active_profile_name(config_path, args.profile)
     context = _build_context(config, args)
@@ -129,7 +223,7 @@ def run_inspect(config_path: str | Path, args: argparse.Namespace) -> int:
 
 def _build_output_document(
     config: DevkitConfig,
-    args: argparse.Namespace,
+    args: InspectArgs,
     active_profile: str | None,
     context: dict[str, object],
     resolved_config: dict[str, object],
@@ -146,7 +240,7 @@ def _build_output_document(
     Returns:
         User-facing inspect output document.
     """
-    if getattr(args, "inspect_command", None) and not args.full:
+    if args.inspect_command and not args.full:
         return {
             "project_root": str(config.project_root),
             "active_profile": active_profile,
@@ -162,9 +256,7 @@ def _build_output_document(
     }
 
 
-def _validate_build_target_override(
-    config: DevkitConfig, args: argparse.Namespace
-) -> None:
+def _validate_build_target_override(config: DevkitConfig, args: InspectArgs) -> None:
     """Validate inspect build target overrides.
 
     Args:
@@ -175,7 +267,7 @@ def _validate_build_target_override(
         ConfigError: If a build target override is used with a python-only selection.
     """
     if (
-        getattr(args, "inspect_command", None) == "build"
+        args.inspect_command == "build"
         and args.targets
         and config.build.selected_kinds(args.selection) == ["python"]
     ):
@@ -184,7 +276,7 @@ def _validate_build_target_override(
         )
 
 
-def _build_context(config: DevkitConfig, args: argparse.Namespace) -> dict[str, object]:
+def _build_context(config: DevkitConfig, args: InspectArgs) -> dict[str, object]:
     """Build the inspect metadata for the selected command context.
 
     Args:
@@ -194,19 +286,16 @@ def _build_context(config: DevkitConfig, args: argparse.Namespace) -> dict[str, 
     Returns:
         User-facing inspect metadata for the active command context.
     """
-    inspect_command = getattr(args, "inspect_command", None)
-    if inspect_command == "build":
+    if args.inspect_command == "build":
         return _build_build_context(config, args)
-    if inspect_command == "test":
+    if args.inspect_command == "test":
         return _build_test_context(config, args)
-    if inspect_command == "deploy":
+    if args.inspect_command == "deploy":
         return _build_deploy_context(config, args)
     return {"command": "inspect"}
 
 
-def _build_build_context(
-    config: DevkitConfig, args: argparse.Namespace
-) -> dict[str, object]:
+def _build_build_context(config: DevkitConfig, args: InspectArgs) -> dict[str, object]:
     """Build inspect metadata for the build subcommand.
 
     Args:
@@ -238,9 +327,7 @@ def _build_build_context(
     return summary
 
 
-def _build_test_context(
-    config: DevkitConfig, args: argparse.Namespace
-) -> dict[str, object]:
+def _build_test_context(config: DevkitConfig, args: InspectArgs) -> dict[str, object]:
     """Build inspect metadata for the test subcommand.
 
     Args:
@@ -262,9 +349,7 @@ def _build_test_context(
     }
 
 
-def _build_deploy_context(
-    config: DevkitConfig, args: argparse.Namespace
-) -> dict[str, object]:
+def _build_deploy_context(config: DevkitConfig, args: InspectArgs) -> dict[str, object]:
     """Build inspect metadata for the deploy subcommand.
 
     Args:
@@ -313,7 +398,7 @@ def _summarize_targets(
 
 
 def _build_resolved_config(
-    config: DevkitConfig, args: argparse.Namespace
+    config: DevkitConfig, args: InspectArgs
 ) -> dict[str, object]:
     """Return the resolved config mapping with inspect-time overrides applied.
 
@@ -325,7 +410,7 @@ def _build_resolved_config(
         Resolved configuration mapping for display.
     """
     resolved = deep_copy_mapping(config.raw)
-    if getattr(args, "inspect_command", None) != "build" or not args.targets:
+    if args.inspect_command != "build" or not args.targets:
         return resolved
 
     build_entries = resolved.get("build")
@@ -346,7 +431,7 @@ def _build_resolved_config(
 
 
 def _build_effective_config(
-    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+    config: DevkitConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
     """Build the concise effective config for subcommand inspection.
 
@@ -358,18 +443,17 @@ def _build_effective_config(
     Returns:
         Concise config fragment relevant to the selected inspect subcommand.
     """
-    inspect_command = getattr(args, "inspect_command", None)
-    if inspect_command == "build":
+    if args.inspect_command == "build":
         return _build_effective_build_config(config, args, resolved_config)
-    if inspect_command == "test":
+    if args.inspect_command == "test":
         return _build_effective_test_config(config, args, resolved_config)
-    if inspect_command == "deploy":
+    if args.inspect_command == "deploy":
         return _build_effective_deploy_config(config, args, resolved_config)
     return resolved_config
 
 
 def _build_effective_build_config(
-    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+    config: DevkitConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
     """Build the concise config fragment for build inspection.
 
@@ -399,7 +483,7 @@ def _build_effective_build_config(
 
 
 def _build_effective_test_config(
-    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+    config: DevkitConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
     """Build the concise config fragment for test inspection.
 
@@ -436,7 +520,7 @@ def _build_effective_test_config(
 
 
 def _build_effective_deploy_config(
-    config: DevkitConfig, args: argparse.Namespace, resolved_config: dict[str, object]
+    config: DevkitConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
     """Build the concise config fragment for deploy inspection.
 
@@ -526,51 +610,42 @@ def _select_named_items(
 
 
 def _emit_document(document: dict[str, object]) -> None:
-    """Print an inspect document, colorizing it for interactive terminals.
+    """Print the inspect document to stdout.
 
     Args:
-        document: YAML-serializable inspect output document.
+        document: Resolved inspect payload to render.
     """
-    text = yaml.safe_dump(document, sort_keys=False)
-    if supports_color(sys.stdout):
-        text = _colorize_yaml(text)
-    print(text, end="")
+    use_color = supports_color(sys.stdout)
+    rendered = yaml.safe_dump(document, sort_keys=False)
+    if not use_color:
+        print(rendered, end="")
+        return
+
+    print(_colorize_yaml(rendered), end="")
 
 
-def _colorize_yaml(text: str) -> str:
-    """Apply lightweight ANSI colors to YAML output for terminal readability.
+def _colorize_yaml(rendered: str) -> str:
+    """Apply light YAML-aware syntax highlighting to inspect output.
 
     Args:
-        text: Plain YAML text.
+        rendered: YAML document as a string.
 
     Returns:
-        Colorized YAML text.
+        Colorized YAML document.
     """
-    colored_lines = []
-    for line in text.splitlines():
-        colored_lines.append(_colorize_yaml_line(line))
-    return "\n".join(colored_lines) + ("\n" if text.endswith("\n") else "")
-
-
-def _colorize_yaml_line(line: str) -> str:
-    """Colorize a single YAML line.
-
-    Args:
-        line: Plain YAML line.
-
-    Returns:
-        Colorized line.
-    """
-    match = re.match(r"^(\s*)([^:\n][^:]*):(.*)$", line)
-    if not match:
-        return line
-
-    indent, key, rest = match.groups()
-    key_style = "heading" if not indent else "label"
-    if not rest:
-        return f"{indent}{style(key, key_style, sys.stdout)}:"
-
-    value = rest
-    if value.strip():
-        value = f" {style(value.strip(), 'success', sys.stdout)}"
-    return f"{indent}{style(key, key_style, sys.stdout)}:{value}"
+    lines: list[str] = []
+    key_pattern = re.compile(r"^(?P<indent>\s*)(?P<key>[^:#\n][^:\n]*):(?P<rest>.*)$")
+    list_key_pattern = re.compile(
+        r"^(?P<indent>\s*-\s)(?P<key>[^:#\n][^:\n]*):(?P<rest>.*)$"
+    )
+    for line in rendered.splitlines():
+        if match := key_pattern.match(line):
+            styled_key = style(match.group("key"), "heading")
+            lines.append(f"{match.group('indent')}{styled_key}:{match.group('rest')}")
+            continue
+        if match := list_key_pattern.match(line):
+            styled_key = style(match.group("key"), "heading")
+            lines.append(f"{match.group('indent')}{styled_key}:{match.group('rest')}")
+            continue
+        lines.append(line)
+    return "\n".join(lines) + ("\n" if rendered.endswith("\n") else "")

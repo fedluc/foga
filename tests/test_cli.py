@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import yaml
+from typer.testing import CliRunner
 
 from devkit import cli
 
@@ -819,18 +820,28 @@ test:
 
 def test_help_text_describes_common_profile_target_runner_and_dry_run_options() -> None:
     """Help text explains the common workflow-oriented CLI options."""
-    parser = cli.build_parser()
-    subparsers = next(action for action in parser._actions if action.dest == "command")
+    runner = CliRunner()
 
-    root_help = parser.format_help()
-    build_help = subparsers.choices["build"].format_help()
-    test_help = subparsers.choices["test"].format_help()
-    deploy_help = subparsers.choices["deploy"].format_help()
+    root_result = runner.invoke(cli.app, ["--help"])
+    build_result = runner.invoke(cli.app, ["build", "--help"])
+    test_result = runner.invoke(cli.app, ["test", "--help"])
+    deploy_result = runner.invoke(cli.app, ["deploy", "--help"])
 
-    assert "Apply a named configuration profile" in build_help
-    assert "Show the planned build commands without executing them." in build_help
-    assert "Run only the named test runner." in test_help
-    assert "multiple runners." in test_help
-    assert "Run only the named deploy target." in deploy_help
-    assert "multiple targets." in deploy_help
-    assert "Path to the devkit YAML configuration file to load." in root_help
+    assert root_result.exit_code == 0
+    assert build_result.exit_code == 0
+    assert test_result.exit_code == 0
+    assert deploy_result.exit_code == 0
+
+    assert "Apply a named configuration profile" in build_result.stdout
+    assert "Show the planned build commands without executing" in build_result.stdout
+    assert "them." in build_result.stdout
+    assert "Run only the named test runner." in test_result.stdout
+    assert "multiple runners." in test_result.stdout
+    assert "Run only the named deploy target." in deploy_result.stdout
+    assert "multiple targets." in deploy_result.stdout
+    assert "Path to the devkit YAML configuration file to load." in root_result.stdout
+    assert "[native|python|all]" in build_result.stdout
+    assert (
+        "[native|python|all]"
+        in runner.invoke(cli.app, ["inspect", "build", "--help"]).stdout
+    )

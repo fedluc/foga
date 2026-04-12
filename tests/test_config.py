@@ -302,10 +302,7 @@ build:
 
     with pytest.raises(
         ConfigError,
-        match=(
-            "Unsupported build backend: python-build. "
-            "Supported backends: cmake"
-        ),
+        match=("Unsupported build backend: python-build. Supported backends: cmake"),
     ):
         load_config(config_path)
 
