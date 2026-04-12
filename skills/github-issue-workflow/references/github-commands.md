@@ -18,11 +18,12 @@ gh issue view <issue-number>
 
 ## Create the Branch
 
-Start from `main` and create a dedicated issue branch:
+Start from the latest remote `main` and create a dedicated issue branch:
 
 ```bash
+git fetch origin
 git checkout main
-git pull --ff-only
+git merge --ff-only origin/main
 git checkout -b issue-<number>-<short-slug>
 ```
 

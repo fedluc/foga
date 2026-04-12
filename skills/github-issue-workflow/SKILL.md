@@ -11,15 +11,17 @@ Use this skill when work should start from the GitHub backlog rather than from a
 
 1. Inspect open issues with `gh` and choose the newest open issue by creation time unless the user names a different issue.
 2. Read the selected issue carefully and inspect the relevant code before editing anything.
-3. Create a fresh branch from `main` for that issue before making changes.
-4. Implement the change, run the required verification, and commit the work.
-5. Push the branch and open a pull request that references the issue.
-6. Stop after the PR is open and wait for the user's comments.
+3. Fetch the latest remote state and start from the most recent `origin/main` unless the user explicitly instructs otherwise.
+4. Create a fresh branch from that up-to-date mainline for the issue before making changes.
+5. Implement the change, run the required verification, and commit the work.
+6. Push the branch and open a pull request that references the issue.
+7. Stop after the PR is open and wait for the user's comments.
 
 ## Branch and PR Rules
 
 - Never do issue work directly on `main`.
 - Create one branch per issue.
+- Start that branch from the latest remote `main` (`origin/main`) unless the user explicitly asks to work from a different base.
 - Use a branch name that includes the issue number and a short slug.
 - Keep the PR scoped to the selected issue.
 - Include a concise PR summary, the verification run, and a closing reference such as `Closes #<issue>`.
@@ -35,7 +37,7 @@ Use this skill when work should start from the GitHub backlog rather than from a
 ## Execution Rules
 
 - Use `gh` for issue and PR operations.
-- Sync with the current default branch before creating the work branch when practical.
+- Fetch and sync with the latest remote `main` before creating the work branch unless the user explicitly says not to.
 - Use the repository's Python skill and repo guidance for implementation, formatting, linting, testing, and build checks.
 - Before opening the PR, ensure the local branch contains only changes for the chosen issue.
 - After opening the PR, provide the PR number and link, summarize the change, summarize verification, and wait for review comments.

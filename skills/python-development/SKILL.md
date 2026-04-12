@@ -14,12 +14,13 @@ Use this skill to keep Python changes small, typed, testable, and easy to verify
 3. Prefer small pure functions, explicit data flow, and standard-library solutions unless the repo already depends on something heavier.
 4. Add or update tests in the same change when behavior changes.
 5. Run formatting, linting, and relevant tests before finishing.
+6. Review any touched Python docstrings before finishing and keep them in valid Google style.
 
 ## Coding Standards
 
 - Target Python 3.10+ features already used by the repo.
 - Add type hints for public functions and for internal functions when they clarify behavior.
-- When docstrings are added or expanded, use Google-style docstrings with `Args:`, `Returns:`, `Raises:`, and `Attributes:` sections where they add value.
+- When Python docstrings are added or touched, keep them in valid Google style. Use `Args:`, `Returns:`, `Raises:`, and `Attributes:` sections where they add value, and do not leave touched public functions, helpers, or dataclasses with placeholder one-line docstrings when parameters, return values, exceptions, or fields need explanation.
 - Prefer `pathlib.Path`, `dataclass`, and straightforward collections over stringly-typed or deeply nested state.
 - Raise precise exceptions with actionable messages.
 - Keep functions focused. Split only when it improves readability or testability.

@@ -148,3 +148,56 @@ build:
         ),
     ):
         load_config(config_path)
+
+
+def test_load_config_rejects_profile_mapping_shape_changes(tmp_path: Path) -> None:
+    """Profile overrides must preserve mapping-shaped config sections."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+profiles:
+  default:
+    build:
+      native: broken
+build:
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`profiles.default.build.native` must remain a mapping",
+    ):
+        load_config(config_path)
+
+
+def test_load_config_rejects_profile_backend_changes(tmp_path: Path) -> None:
+    """Profiles cannot swap the backend for an existing configured workflow."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+profiles:
+  default:
+    build:
+      native:
+        backend: python-build
+build:
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`profiles.default.build.native.backend` cannot change backend",
+    ):
+        load_config(config_path)

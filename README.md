@@ -42,6 +42,24 @@ devkit deploy --profile release --dry-run
 See [`examples/qupled/devkit.yml`](examples/qupled/devkit.yml) for a concrete
 configuration derived from the current `qupled` workflow.
 
+## Override Precedence
+
+`devkit` applies configuration in this order:
+
+1. Base `devkit.yml`
+2. Selected profile overrides from `profiles.<name>`
+3. CLI overrides for the active command
+
+Current CLI overrides are execution-scoped rather than persistent config
+rewrites: `build --target` overrides configured native build targets for that
+invocation, while `test --runner` and `deploy --target` narrow the selected
+configured workflows after profile application.
+
+Profile overrides are validated before merge. They may override existing values
+and extend nested mappings, but they must preserve container shape for existing
+paths and cannot change the backend identifier of an already configured build,
+test, or deploy entry.
+
 ## Devcontainer
 
 The repository includes a devcontainer in [`.devcontainer/devcontainer.json`](/Users/flufsr/Documents/devkit/.devcontainer/devcontainer.json).
