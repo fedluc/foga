@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .errors import ExecutionError
+from .output import format_command
 
 
 @dataclass(frozen=True)
@@ -64,9 +65,13 @@ class CommandExecutor:
             ExecutionError: If the command exits with a non-zero status.
         """
         command_str = shlex.join(spec.command)
-        prefix = "[dry-run]" if dry_run else "[run]"
-        suffix = f" ({spec.description})" if spec.description else ""
-        print(f"{prefix} {command_str}{suffix}")
+        print(
+            format_command(
+                command_str,
+                dry_run=dry_run,
+                description=spec.description,
+            )
+        )
         if dry_run:
             return
 
@@ -80,4 +85,11 @@ class CommandExecutor:
                 check=True,
             )
         except subprocess.CalledProcessError as exc:
-            raise ExecutionError(f"Command failed: {command_str}") from exc
+            raise ExecutionError(
+                f"command exited with status {exc.returncode}",
+                details={
+                    "Command": command_str,
+                    "Step": spec.description or "unspecified",
+                    "Working directory": str(spec.cwd or self.project_root),
+                },
+            ) from exc

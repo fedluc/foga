@@ -68,7 +68,11 @@ def _build_contract(backend: str) -> BackendContract[BuildBackendConfig, BuildRe
     try:
         return BUILD_BACKENDS[backend]
     except KeyError as exc:
-        raise ConfigError(f"Unsupported build backend: {backend}") from exc
+        supported = ", ".join(sorted(BUILD_BACKENDS))
+        raise ConfigError(
+            f"Unsupported build backend: {backend}",
+            hint=f"Choose one of the supported build backends: {supported}.",
+        ) from exc
 
 
 def validate_build_backend(config: BuildBackendConfig) -> None:

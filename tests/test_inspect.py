@@ -7,6 +7,7 @@ from devkit import inspect as inspect_module
 
 def test_emit_document_colorizes_tty_output(monkeypatch, capsys) -> None:
     """Inspect output adds ANSI colors when writing to an interactive terminal."""
+    monkeypatch.delenv("NO_COLOR", raising=False)
     monkeypatch.setattr(inspect_module.sys.stdout, "isatty", lambda: True)
 
     inspect_module._emit_document(  # noqa: SLF001 - intentional module-level unit test

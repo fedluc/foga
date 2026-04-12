@@ -73,7 +73,68 @@ def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
 
     captured = capsys.readouterr()
     assert exit_code == 0
-    assert "Configuration valid" in captured.out
+    assert "Validation OK" in captured.out
+    assert "project `demo` is ready to use" in captured.out
+    assert "Build workflows" in captured.out
+    assert "Test runners" in captured.out
+    assert "Deploy targets" in captured.out
+    assert "Clean paths" in captured.out
+
+
+def test_validate_reports_yaml_syntax_errors_with_location(
+    tmp_path: Path, capsys
+) -> None:
+    """Validate surfaces YAML syntax errors with file and location details."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+deploy: [
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "validate"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "Configuration error" in captured.err
+    assert "invalid YAML syntax" in captured.err
+    assert "File" in captured.err
+    assert "Location" in captured.err
+    assert "Hint" in captured.err
+
+
+def test_validate_reports_precise_string_type_errors(tmp_path: Path, capsys) -> None:
+    """Validate points to the full path when a string field has the wrong type."""
+    config = tmp_path / "devkit.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  native:
+    backend: cmake
+    source_dir: cpp
+    build_dir: 42
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "validate"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "`build.native.build_dir` must be a string" in captured.err
 
 
 def test_inspect_outputs_resolved_config(tmp_path: Path, capsys) -> None:
@@ -695,7 +756,7 @@ test:
 
     captured = capsys.readouterr()
     assert exit_code == 0
-    assert "Configuration valid" in captured.out
+    assert "Validation OK" in captured.out
 
 
 def test_build_uses_default_selection_error_when_default_kind_is_missing(
@@ -754,3 +815,22 @@ test:
     captured = capsys.readouterr()
     assert exit_code == 1
     assert "No native test workflows configured" in captured.err
+
+
+def test_help_text_describes_common_profile_target_runner_and_dry_run_options() -> None:
+    """Help text explains the common workflow-oriented CLI options."""
+    parser = cli.build_parser()
+    subparsers = next(action for action in parser._actions if action.dest == "command")
+
+    root_help = parser.format_help()
+    build_help = subparsers.choices["build"].format_help()
+    test_help = subparsers.choices["test"].format_help()
+    deploy_help = subparsers.choices["deploy"].format_help()
+
+    assert "Apply a named configuration profile" in build_help
+    assert "Show the planned build commands without executing them." in build_help
+    assert "Run only the named test runner." in test_help
+    assert "multiple runners." in test_help
+    assert "Run only the named deploy target." in deploy_help
+    assert "multiple targets." in deploy_help
+    assert "Path to the devkit YAML configuration file to load." in root_help

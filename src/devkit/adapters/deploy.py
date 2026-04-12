@@ -51,7 +51,11 @@ def _deploy_contract(
     try:
         return DEPLOY_BACKENDS[backend]
     except KeyError as exc:
-        raise ConfigError(f"Unsupported deploy backend: {backend}") from exc
+        supported = ", ".join(sorted(DEPLOY_BACKENDS))
+        raise ConfigError(
+            f"Unsupported deploy backend: {backend}",
+            hint=f"Choose one of the supported deploy backends: {supported}.",
+        ) from exc
 
 
 def _twine_plan(
@@ -104,7 +108,14 @@ def _resolve_artifacts(project_root: Path, patterns: list[str]) -> list[str]:
         matches = sorted(project_root.glob(pattern))
         artifacts.extend(str(match) for match in matches if match.is_file())
     if not artifacts:
-        raise ConfigError("No artifacts matched the configured deploy patterns")
+        raise ConfigError(
+            "No artifacts matched the configured deploy patterns",
+            details={"Patterns": ", ".join(patterns)},
+            hint=(
+                "Build the package artifacts first or adjust "
+                "`deploy.targets.*.artifacts`."
+            ),
+        )
     return artifacts
 
 

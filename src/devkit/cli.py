@@ -7,6 +7,8 @@ import shutil
 import sys
 from pathlib import Path
 
+import yaml
+
 from .adapters.build import plan_build
 from .adapters.deploy import plan_deploy
 from .adapters.testing import plan_tests
@@ -14,6 +16,12 @@ from .config import WORKFLOW_SELECTIONS, DevkitConfig, load_config
 from .errors import ConfigError, DevkitError
 from .executor import CommandExecutor
 from .inspect import add_inspect_parser, run_inspect
+from .output import (
+    format_clean_action,
+    format_clean_summary,
+    format_error,
+    format_validation_summary,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -40,7 +48,19 @@ def main(argv: list[str] | None = None) -> int:
         config = load_config(args.config, getattr(args, "profile", None))
 
         if args.command == "validate":
-            print(f"Configuration valid for project `{config.project.name}`")
+            print(
+                format_validation_summary(
+                    config.project.name,
+                    active_profile=_resolve_active_profile_name(
+                        args.config, getattr(args, "profile", None)
+                    ),
+                    build_workflows=list(config.build.entries)
+                    or config.build.available_kinds(),
+                    test_runners=list(config.tests.runners),
+                    deploy_targets=list(config.deploy),
+                    clean_paths=config.clean.paths,
+                )
+            )
             return 0
         executor = CommandExecutor(config.project_root)
         if args.command == "build":
@@ -52,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "clean":
             return _run_clean(config)
     except DevkitError as exc:
-        print(str(exc), file=sys.stderr)
+        print(format_error(exc), file=sys.stderr)
         return 1
 
     parser.print_help()
@@ -71,7 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--config",
         default="devkit.yml",
-        help="Path to the devkit YAML configuration file.",
+        help="Path to the devkit YAML configuration file to load.",
     )
 
     subparsers = parser.add_subparsers(dest="command")
@@ -84,16 +104,18 @@ def build_parser() -> argparse.ArgumentParser:
         "selection",
         nargs="?",
         choices=WORKFLOW_SELECTIONS,
-        help="Run only the selected build kind.",
+        help="Run only the selected build kind: native, python, or all.",
     )
     build_parser.add_argument(
         "--target",
         action="append",
         dest="targets",
-        help="Override native build target.",
+        help="Build only the named native target. Repeat to include multiple targets.",
     )
     build_parser.add_argument(
-        "--dry-run", action="store_true", help="Print commands without executing them."
+        "--dry-run",
+        action="store_true",
+        help="Show the planned build commands without executing them.",
     )
 
     test_parser = subparsers.add_parser("test", help="Run configured test workflows.")
@@ -102,13 +124,17 @@ def build_parser() -> argparse.ArgumentParser:
         "selection",
         nargs="?",
         choices=WORKFLOW_SELECTIONS,
-        help="Run only the selected test kind.",
+        help="Run only the selected test kind: native, python, or all.",
     )
     test_parser.add_argument(
-        "--runner", action="append", help="Run only the named test runner."
+        "--runner",
+        action="append",
+        help="Run only the named test runner. Repeat to select multiple runners.",
     )
     test_parser.add_argument(
-        "--dry-run", action="store_true", help="Print commands without executing them."
+        "--dry-run",
+        action="store_true",
+        help="Show the planned test commands without executing them.",
     )
 
     deploy_parser = subparsers.add_parser(
@@ -119,10 +145,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--target",
         action="append",
         dest="targets",
-        help="Run only the named deploy target.",
+        help="Run only the named deploy target. Repeat to select multiple targets.",
     )
     deploy_parser.add_argument(
-        "--dry-run", action="store_true", help="Print commands without executing them."
+        "--dry-run",
+        action="store_true",
+        help="Show the planned deploy commands without executing them.",
     )
 
     clean_parser = subparsers.add_parser(
@@ -146,7 +174,10 @@ def _add_profile_arg(parser: argparse.ArgumentParser) -> None:
     Args:
         parser: Parser that should accept the ``--profile`` option.
     """
-    parser.add_argument("--profile", help="Configuration profile to apply.")
+    parser.add_argument(
+        "--profile",
+        help="Apply a named configuration profile before resolving the command.",
+    )
 
 
 def _run_build(
@@ -269,17 +300,41 @@ def _run_clean(config: DevkitConfig) -> int:
     Returns:
         Process exit code for the command.
     """
+    removed_any = False
     for path_str in config.clean.paths:
         path = Path(config.project_root, path_str)
         if not path.exists():
             continue
         if path.is_dir():
-            print(f"Removing directory {path}")
+            print(format_clean_action(str(path), is_dir=True))
             shutil.rmtree(path)
         else:
-            print(f"Removing file {path}")
+            print(format_clean_action(str(path), is_dir=False))
             path.unlink()
+        removed_any = True
+    print(format_clean_summary(removed_any))
     return 0
+
+
+def _resolve_active_profile_name(
+    config_path: str | Path, requested_profile: str | None
+) -> str | None:
+    """Resolve the active profile name for validate output."""
+    if requested_profile is not None:
+        return requested_profile
+
+    path = Path(config_path).resolve()
+    with path.open("r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or {}
+    if not isinstance(data, dict):
+        return None
+
+    profiles = data.get("profiles")
+    if not isinstance(profiles, dict):
+        return None
+    if "default" in profiles:
+        return "default"
+    return None
 
 
 if __name__ == "__main__":

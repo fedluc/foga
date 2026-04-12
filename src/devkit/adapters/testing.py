@@ -49,7 +49,11 @@ def test_backend_kind(backend: str) -> str:
     try:
         return TEST_BACKEND_KINDS[backend]
     except KeyError as exc:
-        raise ConfigError(f"Unsupported test backend: {backend}") from exc
+        supported = ", ".join(sorted(TEST_BACKEND_KINDS))
+        raise ConfigError(
+            f"Unsupported test backend: {backend}",
+            hint=f"Choose one of the supported test backends: {supported}.",
+        ) from exc
 
 
 def validate_test_backend(config: TestRunnerConfig) -> None:
@@ -64,7 +68,11 @@ def _test_contract(backend: str) -> BackendContract[TestRunnerConfig, None]:
     try:
         return TEST_BACKENDS[backend]
     except KeyError as exc:
-        raise ConfigError(f"Unsupported test backend: {backend}") from exc
+        supported = ", ".join(sorted(TEST_BACKENDS))
+        raise ConfigError(
+            f"Unsupported test backend: {backend}",
+            hint=f"Choose one of the supported test backends: {supported}.",
+        ) from exc
 
 
 def _pytest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:

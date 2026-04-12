@@ -17,6 +17,7 @@ from .config import (
     load_config,
 )
 from .errors import ConfigError
+from .output import style, supports_color
 
 
 def add_inspect_parser(
@@ -531,7 +532,7 @@ def _emit_document(document: dict[str, object]) -> None:
         document: YAML-serializable inspect output document.
     """
     text = yaml.safe_dump(document, sort_keys=False)
-    if sys.stdout.isatty():
+    if supports_color(sys.stdout):
         text = _colorize_yaml(text)
     print(text, end="")
 
@@ -565,12 +566,11 @@ def _colorize_yaml_line(line: str) -> str:
         return line
 
     indent, key, rest = match.groups()
-    key_color = "\033[1;36m" if not indent else "\033[34m"
-    reset = "\033[0m"
+    key_style = "heading" if not indent else "label"
     if not rest:
-        return f"{indent}{key_color}{key}{reset}:"
+        return f"{indent}{style(key, key_style, sys.stdout)}:"
 
     value = rest
     if value.strip():
-        value = f" \033[32m{value.strip()}{reset}"
-    return f"{indent}{key_color}{key}{reset}:{value}"
+        value = f" {style(value.strip(), 'success', sys.stdout)}"
+    return f"{indent}{style(key, key_style, sys.stdout)}:{value}"

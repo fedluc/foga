@@ -337,10 +337,28 @@ def load_config(
     if not path.exists():
         raise ConfigError(f"Configuration file not found: {path}")
 
-    with path.open("r", encoding="utf-8") as handle:
-        data = yaml.safe_load(handle) or {}
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            data = yaml.safe_load(handle) or {}
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        details: dict[str, str] = {"File": str(path)}
+        if mark is not None:
+            details["Location"] = f"line {mark.line + 1}, column {mark.column + 1}"
+        raise ConfigError(
+            "invalid YAML syntax in the configuration file",
+            details=details,
+            hint="Fix the YAML syntax error and rerun `devkit validate`.",
+        ) from exc
     if not isinstance(data, dict):
-        raise ConfigError("Configuration root must be a mapping")
+        raise ConfigError(
+            "configuration root must be a mapping",
+            details={"File": str(path)},
+            hint=(
+                "Start `devkit.yml` with a top-level mapping such as "
+                "`project:`, `build:`, or `test:`."
+            ),
+        )
 
     merged = apply_profile(data, profile)
     return parse_config(merged, path.parent)
@@ -437,7 +455,7 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
             continue
         if not isinstance(build_data, dict):
             raise ConfigError(f"`build.{name}` must be a mapping")
-        backend = _optional_str(build_data, "backend")
+        backend = _optional_str(build_data, "backend", f"build.{name}.backend")
         if backend is None:
             continue
         if backend not in _supported_build_backends():
@@ -492,7 +510,7 @@ def _parse_build_backend(
             backend=backend,
             source_dir=_required_str(data, "source_dir", f"{path}.source_dir"),
             build_dir=_required_str(data, "build_dir", f"{path}.build_dir"),
-            generator=_optional_str(data, "generator"),
+            generator=_optional_str(data, "generator", f"{path}.generator"),
             configure_args=_string_list(
                 data.get("configure_args"), f"{path}.configure_args"
             ),
@@ -539,7 +557,7 @@ def _parse_tests(data: dict[str, Any]) -> TestConfig:
     for name, runner_data in runners_data.items():
         if not isinstance(runner_data, dict):
             raise ConfigError(f"`test.runners.{name}` must be a mapping")
-        backend = _optional_str(runner_data, "backend")
+        backend = _optional_str(runner_data, "backend", f"test.runners.{name}.backend")
         if backend is None:
             continue
         if backend not in _supported_test_backends():
@@ -554,19 +572,27 @@ def _parse_tests(data: dict[str, Any]) -> TestConfig:
             args=_string_list(runner_data.get("args"), f"test.runners.{name}.args"),
             env=_string_mapping(runner_data.get("env"), f"test.runners.{name}.env"),
             hooks=_parse_hooks(runner_data.get("hooks"), f"test.runners.{name}.hooks"),
-            path=_optional_str(runner_data, "path"),
-            marker=_optional_str(runner_data, "marker"),
-            tox_env=_optional_str(runner_data, "tox_env"),
-            build_dir=_optional_str(runner_data, "build_dir"),
-            source_dir=_optional_str(runner_data, "source_dir"),
-            generator=_optional_str(runner_data, "generator"),
+            path=_optional_str(runner_data, "path", f"test.runners.{name}.path"),
+            marker=_optional_str(runner_data, "marker", f"test.runners.{name}.marker"),
+            tox_env=_optional_str(
+                runner_data, "tox_env", f"test.runners.{name}.tox_env"
+            ),
+            build_dir=_optional_str(
+                runner_data, "build_dir", f"test.runners.{name}.build_dir"
+            ),
+            source_dir=_optional_str(
+                runner_data, "source_dir", f"test.runners.{name}.source_dir"
+            ),
+            generator=_optional_str(
+                runner_data, "generator", f"test.runners.{name}.generator"
+            ),
             configure_args=_string_list(
                 runner_data.get("configure_args"), f"test.runners.{name}.configure_args"
             ),
             build_args=_string_list(
                 runner_data.get("build_args"), f"test.runners.{name}.build_args"
             ),
-            target=_optional_str(runner_data, "target"),
+            target=_optional_str(runner_data, "target", f"test.runners.{name}.target"),
         )
         _validate_test_runner(runners[name])
     test_config = TestConfig(default=default, runners=runners)
@@ -610,8 +636,14 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
             artifacts=_string_list(
                 target_data.get("artifacts"), f"deploy.targets.{name}.artifacts"
             ),
-            repository=_optional_str(target_data, "repository"),
-            repository_url=_optional_str(target_data, "repository_url"),
+            repository=_optional_str(
+                target_data, "repository", f"deploy.targets.{name}.repository"
+            ),
+            repository_url=_optional_str(
+                target_data,
+                "repository_url",
+                f"deploy.targets.{name}.repository_url",
+            ),
             args=_string_list(target_data.get("args"), f"deploy.targets.{name}.args"),
             env=_string_mapping(target_data.get("env"), f"deploy.targets.{name}.env"),
             hooks=_parse_hooks(
@@ -901,17 +933,22 @@ def _required_str(data: dict[str, Any], key: str, path: str) -> str:
         ConfigError: If the value is missing, empty, or not a string.
     """
     value = data.get(key)
-    if not isinstance(value, str) or not value.strip():
+    if value is None:
         raise ConfigError(f"`{path}` is required")
+    if not isinstance(value, str):
+        raise ConfigError(f"`{path}` must be a string")
+    if not value.strip():
+        raise ConfigError(f"`{path}` must not be empty")
     return value
 
 
-def _optional_str(data: dict[str, Any], key: str) -> str | None:
+def _optional_str(data: dict[str, Any], key: str, path: str) -> str | None:
     """Read an optional string field.
 
     Args:
         data: Source mapping.
         key: Mapping key to read.
+        path: Full configuration path used in validation errors.
 
     Returns:
         String value when present, otherwise ``None``.
@@ -923,7 +960,7 @@ def _optional_str(data: dict[str, Any], key: str) -> str | None:
     if value is None:
         return None
     if not isinstance(value, str):
-        raise ConfigError(f"`{key}` must be a string")
+        raise ConfigError(f"`{path}` must be a string")
     return value
 
 
