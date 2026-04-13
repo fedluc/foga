@@ -121,6 +121,7 @@ def parse_hooks(data: Any, path: str) -> HookConfig:
         return HookConfig()
     if not isinstance(data, dict):
         raise ConfigError(f"`{path}` must be a mapping")
+    reject_unknown_keys(data, path, {"pre", "post"})
     return HookConfig(
         pre=command_matrix(data.get("pre"), f"{path}.pre"),
         post=command_matrix(data.get("post"), f"{path}.post"),
@@ -194,6 +195,14 @@ def command_matrix(value: Any, path: str) -> list[list[str]]:
         raise ConfigError(f"`{path}` must be a list of command arrays")
     commands: list[list[str]] = []
     for index, item in enumerate(value):
+        if isinstance(item, str):
+            raise ConfigError(
+                f"`{path}[{index}]` must be a non-empty list of strings",
+                hint=(
+                    "Shell command strings are not supported in hooks; use a "
+                    'list such as `["python3", "script.py"]`.'
+                ),
+            )
         if (
             not isinstance(item, list)
             or not all(isinstance(part, str) for part in item)

@@ -48,6 +48,38 @@ devkit deploy --profile release --dry-run
 See [`examples/qupled/devkit.yml`](examples/qupled/devkit.yml) for a concrete
 configuration derived from the current `qupled` workflow.
 
+## Hooks And Escape Hatches
+
+`devkit` supports command hooks as a narrow escape hatch around built-in
+workflows. Hooks are intentionally limited: each hook entry must be a command
+array, and `devkit` executes that array directly without shell parsing.
+
+```yaml
+build:
+  python:
+    backend: python-build
+    hooks:
+      pre:
+        - ["python3", "tools/prepare_build.py"]
+      post:
+        - ["python3", "tools/cleanup_build.py"]
+```
+
+Supported boundaries:
+
+- `hooks.pre` and `hooks.post` are the only supported hook phases
+- each hook command must be expressed as `["tool", "arg"]`
+- hooks run before or after the generated workflow command for that backend
+
+Intentionally unsupported:
+
+- raw shell strings such as `make build && make test`
+- per-hook mappings such as `argv`, `shell`, `cwd`, or inline environment overrides
+
+If a workflow needs complex orchestration, keep that logic in a project script
+or tool and call it from a structured hook command instead of embedding shell
+logic into `devkit.yml`.
+
 ## Override Precedence
 
 `devkit` applies configuration in this order:

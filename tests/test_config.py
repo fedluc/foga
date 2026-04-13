@@ -169,6 +169,120 @@ test:
         load_config(config_path)
 
 
+def test_load_config_parses_hook_command_arrays(tmp_path: Path) -> None:
+    """Hook commands use direct command arrays."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+    hooks:
+      pre:
+        - ["python3", "tools/prepare.py"]
+      post:
+        - ["python3", "tools/cleanup.py"]
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.build.python is not None
+    assert config.build.python.hooks.pre == [["python3", "tools/prepare.py"]]
+    assert config.build.python.hooks.post == [["python3", "tools/cleanup.py"]]
+
+
+def test_load_config_rejects_shell_string_hook_commands(tmp_path: Path) -> None:
+    """Hook commands must use command arrays instead of shell strings."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+    hooks:
+      pre:
+        - python3 tools/prepare.py
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`build.python.hooks.pre\\[0\\]` must be a non-empty list of strings",
+    ):
+        load_config(config_path)
+
+
+def test_load_config_rejects_unknown_hook_keys(tmp_path: Path) -> None:
+    """Hook config only accepts explicit pre and post command lists."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+    hooks:
+      before:
+        - ["python3", "tools/prepare.py"]
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`build.python.hooks.before` is not a supported configuration key",
+    ):
+        load_config(config_path)
+
+
+def test_load_config_rejects_hook_entry_mappings(tmp_path: Path) -> None:
+    """Hook entries do not accept structured per-command mappings."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+    hooks:
+      pre:
+        - argv: ["python3", "tools/prepare.py"]
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`build.python.hooks.pre\\[0\\]` must be a non-empty list of strings",
+    ):
+        load_config(config_path)
+
+
 def test_load_config_parses_build_and_test_defaults(tmp_path: Path) -> None:
     """Workflow defaults are loaded for build and test selection."""
     config_path = write_config(
