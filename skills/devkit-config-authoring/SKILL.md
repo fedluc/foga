@@ -1,0 +1,52 @@
+---
+name: devkit-config-authoring
+description: Author or update `devkit.yml` files for repositories that use Python, native build systems, test runners, packaging, and deployment workflows. Use when Codex should inspect another repository, map its real build and test commands onto `devkit` backends such as `cmake`, `python-build`, `pytest`, `tox`, `ctest`, and `twine`, and produce a validated, reusable `devkit.yml` instead of guessing.
+---
+
+# Devkit Config Authoring
+
+Use this skill to translate an existing repository workflow into a working `devkit.yml`.
+
+## Workflow
+
+1. Confirm the available `devkit` schema and backends from the environment you are running in.
+   - First prefer local `devkit` help, examples, installed package files, or repository source if they are available.
+   - If working inside the `devkit` repository, reading `README.md`, `src/devkit/config.py`, and `examples/*/devkit.yml` is appropriate.
+   - If working outside the `devkit` repository, inspect the installed package, local docs, or `devkit validate` and `devkit inspect --help` output instead of assuming repo-local source files exist.
+2. Inspect the target repository before writing config. Start with `pyproject.toml`, `setup.py`, `tox.ini`, build scripts, CI workflows, `CMakeLists.txt`, and tests.
+3. Identify the real workflows separately:
+   - Python package build
+   - Native build
+   - Python tests
+   - Native tests
+   - Deploy steps, if requested
+4. Map each workflow to the narrowest `devkit` backend that expresses it directly. Prefer `pytest`, `ctest`, `cmake`, and `python-build` over wrapper layers when those wrappers add little value.
+5. Add hooks only for repository-specific setup that the direct backend cannot express, such as copying fixture files or preparing working directories.
+6. Add profiles only when the target repo has real environment variants such as MPI, debug/release toggles, platform-specific environment variables, or alternate native options.
+7. Validate the generated file with the locally available `devkit` CLI before finishing.
+
+## Authoring Rules
+
+- Do not infer commands from project type alone. Derive them from the target repo's actual files.
+- Keep Python and native workflows separate when the repository treats them separately.
+- Use `build.native.targets` only when the repository has a stable named target worth selecting explicitly.
+- For `ctest`, set `source_dir`, `build_dir`, configure arguments, and optional `target` when test binaries must be prepared before `ctest` runs.
+- Prefer `pytest` runners over `tox` when `tox` mostly forwards to pytest and `devkit` can represent the same behavior directly.
+- Keep environment variables close to the workflow that needs them. Use profiles when the values vary by mode rather than by command type.
+- If tests rely on side effects from CI or tox setup, reproduce only the minimal missing behavior with hooks.
+
+## Validation
+
+- Prefer the installed CLI entrypoint when available, for example `devkit validate --config <path>/devkit.yml` or the equivalent local invocation supported by the environment.
+- Run a validation command against the generated file.
+- Run an inspect command against the generated file.
+- If possible, note the intended `devkit build ...` and `devkit test ...` commands for the target repo.
+
+## References
+
+- Read [references/checklist.md](references/checklist.md) for the inspection checklist and mapping heuristics.
+
+## Work Log
+
+- 2026-04-12: Derived `examples/qupled/devkit.yml` by inspecting `qupled` build scripts, `tox.ini`, native CMake files, and pytest markers instead of assuming a generic Python package layout.
+- 2026-04-12: Recorded reusable guidance from that work: prefer direct backends over thin wrappers, model standalone native test builds separately from extension-module builds when the repo does, and use hooks only for missing setup behavior such as integration-test fixture staging.

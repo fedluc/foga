@@ -1,31 +1,6 @@
 project:
   name: qupled
 
-profiles:
-  default:
-    build:
-      native:
-        env:
-          OpenMP_ROOT: /opt/homebrew/opt/libomp
-    test:
-      runners:
-        native-cpp:
-          env:
-            OpenMP_ROOT: /opt/homebrew/opt/libomp
-  mpi:
-    build:
-      native:
-        configure_args:
-          - -DUSE_MPI=ON
-      python:
-        env:
-          USE_MPI: "ON"
-    test:
-      runners:
-        native-cpp:
-          configure_args:
-            - -DUSE_MPI=ON
-
 build:
   default: all
   native:
@@ -38,8 +13,8 @@ build:
   python:
     backend: python-build
     env:
-      BUILD_NATIVE_TESTS: "OFF"
       USE_MPI: "OFF"
+      BUILD_NATIVE_TESTS: "OFF"
 
 test:
   default: all
@@ -48,32 +23,71 @@ test:
       backend: pytest
       path: tests
       marker: unit
-      args: ["-v"]
+      args:
+        - -v
+    native-bindings:
+      backend: pytest
+      path: tests
+      marker: native
+      args:
+        - -v
     integration:
-      backend: tox
-      tox_env: integration
+      backend: pytest
+      path: tests
+      marker: integration
+      args:
+        - -v
+      hooks:
+        pre:
+          - [
+              "python3",
+              "-c",
+              "from pathlib import Path; import shutil; src = Path('examples/docs'); dst = Path('docs'); dst.mkdir(exist_ok=True); [shutil.copy2(path, dst / path.name) for path in src.glob('*.py')]",
+            ]
+        post:
+          - [
+              "python3",
+              "-c",
+              "from pathlib import Path; src = Path('examples/docs'); dst = Path('docs'); [(dst / path.name).unlink() for path in src.glob('*.py') if (dst / path.name).exists()]",
+            ]
     native-cpp:
       backend: ctest
       source_dir: src/qupled/native/src
       build_dir: dist-native-tests
-      target: native_tests
       configure_args:
         - -DBUILD_NATIVE_TESTS=ON
         - -DUSE_MPI=OFF
+      target: native_tests
+      args:
+        - -V
 
-deploy:
-  targets:
-    pypi:
-      backend: twine
-      artifacts:
-        - dist/*
-      repository: pypi
-
-clean:
-  paths:
-    - dist
-    - dist-native
-    - dist-native-tests
-    - src/qupled.egg-info
-    - docs/_build
-    - docs/_generated
+profiles:
+  mpi:
+    build:
+      native:
+        configure_args:
+          - -DBUILD_NATIVE_TESTS=OFF
+          - -DUSE_MPI=ON
+      python:
+        env:
+          USE_MPI: "ON"
+          BUILD_NATIVE_TESTS: "OFF"
+    test:
+      runners:
+        native-cpp:
+          configure_args:
+            - -DBUILD_NATIVE_TESTS=ON
+            - -DUSE_MPI=ON
+  macos-homebrew:
+    build:
+      native:
+        env:
+          OpenMP_ROOT: /opt/homebrew/opt/libomp
+      python:
+        env:
+          OpenMP_ROOT: /opt/homebrew/opt/libomp
+    test:
+      runners:
+        native-cpp:
+          env:
+            OpenMP_ROOT: /opt/homebrew/opt/libomp

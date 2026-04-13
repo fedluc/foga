@@ -1,0 +1,3 @@
+interface:
+  display_name: "Devkit Config Authoring"
+  short_description: "Inspect a repo and translate its workflows into devkit.yml"
