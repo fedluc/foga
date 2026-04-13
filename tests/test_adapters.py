@@ -9,7 +9,6 @@ from devkit.adapters.deploy import plan_deploy
 from devkit.adapters.testing import plan_tests
 from devkit.config.models import (
     BuildConfig,
-    CustomCommandConfig,
     DeployTargetConfig,
     HookConfig,
     NativeBuildConfig,
@@ -31,7 +30,7 @@ def test_plan_build_generates_cmake_and_python_commands() -> None:
             build_args=["--verbose"],
             targets=["native_tests"],
             env={"CC": "clang"},
-            hooks=HookConfig(pre=[CustomCommandConfig(argv=["echo", "prep"])]),
+            hooks=HookConfig(pre=[["echo", "prep"]]),
         ),
         python=PythonBuildConfig(
             backend="python-build",

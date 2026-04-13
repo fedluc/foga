@@ -15,27 +15,16 @@ from .constants import (
 
 
 @dataclass(frozen=True)
-class CustomCommandConfig:
-    """Structured custom command configuration.
-
-    Attributes:
-        argv: Command and arguments executed without shell parsing.
-    """
-
-    argv: list[str]
-
-
-@dataclass(frozen=True)
 class HookConfig:
     """Pre- and post-command hooks for a workflow step.
 
     Attributes:
-        pre: Structured commands executed before the main workflow command.
-        post: Structured commands executed after the main workflow command.
+        pre: Commands executed before the main workflow command.
+        post: Commands executed after the main workflow command.
     """
 
-    pre: list[CustomCommandConfig] = field(default_factory=list)
-    post: list[CustomCommandConfig] = field(default_factory=list)
+    pre: list[list[str]] = field(default_factory=list)
+    post: list[list[str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

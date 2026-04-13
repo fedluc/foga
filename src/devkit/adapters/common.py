@@ -12,11 +12,11 @@ def split_hooks(
     """Build command specs for pre- and post-hooks separately."""
 
     pre = [
-        CommandSpec(command=command.argv, description=f"{prefix} pre-hook")
+        CommandSpec(command=command, description=f"{prefix} pre-hook")
         for command in hooks.pre
     ]
     post = [
-        CommandSpec(command=command.argv, description=f"{prefix} post-hook")
+        CommandSpec(command=command, description=f"{prefix} post-hook")
         for command in hooks.post
     ]
     return pre, post

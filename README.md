@@ -51,9 +51,8 @@ configuration derived from the current `qupled` workflow.
 ## Hooks And Escape Hatches
 
 `devkit` supports command hooks as a narrow escape hatch around built-in
-workflows. Hooks are intentionally structured: each hook entry must be a mapping
-with an `argv` list, and `devkit` executes that argv directly without shell
-parsing.
+workflows. Hooks are intentionally limited: each hook entry must be a command
+array, and `devkit` executes that array directly without shell parsing.
 
 ```yaml
 build:
@@ -61,22 +60,21 @@ build:
     backend: python-build
     hooks:
       pre:
-        - argv: ["python3", "tools/prepare_build.py"]
+        - ["python3", "tools/prepare_build.py"]
       post:
-        - argv: ["python3", "tools/cleanup_build.py"]
+        - ["python3", "tools/cleanup_build.py"]
 ```
 
 Supported boundaries:
 
 - `hooks.pre` and `hooks.post` are the only supported hook phases
-- each hook command must be expressed as `argv: ["tool", "arg"]`
+- each hook command must be expressed as `["tool", "arg"]`
 - hooks run before or after the generated workflow command for that backend
 
 Intentionally unsupported:
 
 - raw shell strings such as `make build && make test`
-- raw command arrays such as `- ["python3", "script.py"]`
-- extra per-hook keys such as `shell`, `cwd`, or inline environment overrides`
+- per-hook mappings such as `argv`, `shell`, `cwd`, or inline environment overrides
 
 If a workflow needs complex orchestration, keep that logic in a project script
 or tool and call it from a structured hook command instead of embedding shell

@@ -39,19 +39,17 @@ test:
         - -v
       hooks:
         pre:
-          - argv:
-              [
-                "python3",
-                "-c",
-                "from pathlib import Path; import shutil; src = Path('examples/docs'); dst = Path('docs'); dst.mkdir(exist_ok=True); [shutil.copy2(path, dst / path.name) for path in src.glob('*.py')]",
-              ]
+          - [
+              "python3",
+              "-c",
+              "from pathlib import Path; import shutil; src = Path('examples/docs'); dst = Path('docs'); dst.mkdir(exist_ok=True); [shutil.copy2(path, dst / path.name) for path in src.glob('*.py')]",
+            ]
         post:
-          - argv:
-              [
-                "python3",
-                "-c",
-                "from pathlib import Path; src = Path('examples/docs'); dst = Path('docs'); [(dst / path.name).unlink() for path in src.glob('*.py') if (dst / path.name).exists()]",
-              ]
+          - [
+              "python3",
+              "-c",
+              "from pathlib import Path; src = Path('examples/docs'); dst = Path('docs'); [(dst / path.name).unlink() for path in src.glob('*.py') if (dst / path.name).exists()]",
+            ]
     native-cpp:
       backend: ctest
       source_dir: src/qupled/native/src

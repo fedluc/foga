@@ -6,7 +6,7 @@ from typing import Any
 
 from ..errors import ConfigError
 from .constants import WORKFLOW_SELECTIONS
-from .models import CustomCommandConfig, HookConfig
+from .models import HookConfig
 
 
 def reject_unknown_keys(
@@ -123,8 +123,8 @@ def parse_hooks(data: Any, path: str) -> HookConfig:
         raise ConfigError(f"`{path}` must be a mapping")
     reject_unknown_keys(data, path, {"pre", "post"})
     return HookConfig(
-        pre=custom_command_list(data.get("pre"), f"{path}.pre"),
-        post=custom_command_list(data.get("post"), f"{path}.post"),
+        pre=command_matrix(data.get("pre"), f"{path}.pre"),
+        post=command_matrix(data.get("post"), f"{path}.post"),
     )
 
 
@@ -175,44 +175,41 @@ def string_mapping(value: Any, path: str) -> dict[str, str]:
     return mapping
 
 
-def custom_command_list(value: Any, path: str) -> list[CustomCommandConfig]:
-    """Validate a list of structured custom commands.
+def command_matrix(value: Any, path: str) -> list[list[str]]:
+    """Validate a list of non-empty command arrays.
 
     Args:
         value: Raw configuration value.
         path: Full configuration path used in validation errors.
 
     Returns:
-        Validated custom commands.
+        Validated command matrix.
 
     Raises:
-        ConfigError: If the value is not a list of supported custom commands.
+        ConfigError: If the value is not a list of non-empty command arrays.
     """
 
     if value is None:
         return []
     if not isinstance(value, list):
-        raise ConfigError(f"`{path}` must be a list of custom command mappings")
-    commands: list[CustomCommandConfig] = []
+        raise ConfigError(f"`{path}` must be a list of command arrays")
+    commands: list[list[str]] = []
     for index, item in enumerate(value):
-        item_path = f"{path}[{index}]"
-        if not isinstance(item, dict):
+        if isinstance(item, str):
             raise ConfigError(
-                f"`{item_path}` must be a mapping with an `argv` list",
+                f"`{path}[{index}]` must be a non-empty list of strings",
                 hint=(
-                    'Use `argv: ["tool", "arg"]` for each custom command; '
-                    "raw command arrays are not supported."
+                    "Shell command strings are not supported in hooks; use a "
+                    'list such as `["python3", "script.py"]`.'
                 ),
             )
-        reject_unknown_keys(item, item_path, {"argv"})
-        argv = item.get("argv")
         if (
-            not isinstance(argv, list)
-            or not all(isinstance(part, str) for part in argv)
-            or not argv
+            not isinstance(item, list)
+            or not all(isinstance(part, str) for part in item)
+            or not item
         ):
-            raise ConfigError(f"`{item_path}.argv` must be a non-empty list of strings")
-        commands.append(CustomCommandConfig(argv=list(argv)))
+            raise ConfigError(f"`{path}[{index}]` must be a non-empty list of strings")
+        commands.append(list(item))
     return commands
 
 
