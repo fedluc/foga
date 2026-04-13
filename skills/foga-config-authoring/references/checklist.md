@@ -36,8 +36,9 @@ Set:
 - `configure_args`
 - `build_args`
 - `targets` only when a stable named target should be the default
+- `build_args` when resource limits or tool behavior require explicit parallelism or other build flags
 
-Do not collapse standalone native builds into `python-build` just because the package also compiles a native extension during wheel creation.
+Do not collapse standalone native builds into `python-build` just because the package also compiles a native extension during wheel creation. If the repo documents stable top-level CMake targets, prefer those targets over inventing a `ctest` runner.
 
 ## Test Mapping
 
@@ -85,11 +86,13 @@ Good uses:
 - stage example files needed by integration tests
 - create or remove temporary directories the test suite assumes
 - reproduce one small tox or CI preparation step
+- bridge one missing repo-specific setup step that is not already handled by the devcontainer or project bootstrap
 
 Bad uses:
 
 - wrapping the entire build or test workflow in custom shell commands
 - hiding the real backend command from `foga`
+- repeatedly reinstalling dependencies in hooks when the environment is already provisioned
 
 ## Profiles
 
@@ -100,7 +103,7 @@ Add profiles only for real modes present in the target repo, such as:
 - platform-specific environment variables
 - alternate deploy targets
 
-Prefer profile overrides when the same repository supports multiple valid workflows and the difference is not just one ad hoc command invocation.
+Prefer profile overrides when the same repository supports multiple valid workflows and the difference is not just one ad hoc command invocation. Keep example configs small: add only the profiles that correspond to documented or stable variants.
 
 ## Final Checks
 
@@ -110,4 +113,6 @@ Before finishing:
 2. Confirm each path is relative to the target repository root where `foga.yml` will live.
 3. Validate with `foga validate`.
 4. Inspect with `foga inspect`.
-5. Explain any assumptions that could still depend on the target machine, such as external libraries or platform-specific env vars.
+5. Explain any assumptions that could still depend on the target machine, such as external libraries, platform-specific env vars, or memory-sensitive build parallelism.
+6. If profiles were added, inspect at least one representative profile to confirm the override merges as intended.
+7. Keep `clean.paths` aligned with any profile-specific build directories you introduced.

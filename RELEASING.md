@@ -19,16 +19,14 @@ The workflow uses GitHub OIDC, so no long-lived PyPI API token is required.
 ## Release Checklist
 
 1. Make sure the intended release changes are merged to `main`.
-2. Update the version in [`pyproject.toml`](pyproject.toml).
-3. Run the standard verification commands locally:
+2. Run the standard verification commands locally:
 
 ```bash
 python -m pytest
 python -m build
 ```
 
-4. Commit the version bump on a normal branch and merge it to `main`.
-5. Create a release tag from the release commit:
+3. Create a release tag from the release commit:
 
 ```bash
 git checkout main
@@ -37,31 +35,33 @@ git tag v0.2.0
 git push origin v0.2.0
 ```
 
-6. Watch the `Publish` workflow in GitHub Actions.
-7. Confirm the release appears on PyPI.
+4. Watch the `Publish` workflow in GitHub Actions.
+5. Confirm the release appears on PyPI.
 
 ## Versioning
 
-Use semantic version tags that match the package version in `pyproject.toml`.
+Use semantic version tags such as `v0.2.0`.
 
 Examples:
 
-- package version `0.2.0` -> Git tag `v0.2.0`
-- package version `1.0.1` -> Git tag `v1.0.1`
+- release tag `v0.2.0` -> package version `0.2.0`
+- release tag `v1.0.1` -> package version `1.0.1`
 
-Do not create a tag whose version differs from `pyproject.toml`.
+The package version is derived from Git tags at build time, so there is no
+separate version bump in `pyproject.toml` for normal releases.
 
 ## What The Workflow Does
 
 When a matching tag is pushed, the workflow:
 
 1. checks out the tagged commit
-2. installs the project with development dependencies
-3. runs `ruff check .`
-4. runs `pytest`
-5. runs `python -m build`
-6. uploads the built distributions between jobs
-7. publishes the distributions to PyPI
+2. derives the package version from the Git tag
+3. installs the project with development dependencies
+4. runs `ruff check .`
+5. runs `pytest`
+6. runs `python -m build`
+7. uploads the built distributions between jobs
+8. publishes the distributions to PyPI
 
 The workflow also supports manual dispatch if a maintainer needs to rerun it.
 
@@ -70,7 +70,7 @@ The workflow also supports manual dispatch if a maintainer needs to rerun it.
 After the workflow completes:
 
 - check the GitHub Actions run for the tagged release
-- confirm the package version is visible on PyPI
+- confirm the package version derived from the tag is visible on PyPI
 - optionally install the new version in a clean environment:
 
 ```bash
@@ -89,5 +89,5 @@ If the workflow fails before publishing:
 If the package was already published to PyPI:
 
 - do not try to overwrite the same version
-- prepare a new patch release instead, for example `0.2.1`
-- update `pyproject.toml`, tag the new version, and publish again
+- prepare a new patch release instead, for example `v0.2.1`
+- tag the new version and publish again

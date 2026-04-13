@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Application code lives under `src/foga/`. Keep CLI entrypoints in `src/foga/cli.py`, shared config handling in `src/foga/config.py`, execution helpers in `src/foga/executor.py`, and backend-specific command builders in `src/foga/adapters/`. Tests live in `tests/` and currently cover config loading, adapter behavior, and CLI routing. Example user configuration lives in `examples/qupled/foga.yml`. Use `README.md` for end-user setup. Track unfinished product work in GitHub issues and milestones.
+Application code lives under `src/foga/`. Keep CLI entrypoints in `src/foga/cli.py`, shared config handling in `src/foga/config.py`, execution helpers in `src/foga/executor.py`, and backend-specific command builders in `src/foga/adapters/`. Tests live in `tests/` and currently cover config loading, adapter behavior, and CLI routing. Example user configuration lives in `examples/qupled/foga.yml` and `examples/pybind11/`. Use `README.md` for end-user setup. Track unfinished product work in GitHub issues and milestones.
 
 ## Build, Test, and Development Commands
 
@@ -66,4 +66,4 @@ When picking up work from GitHub issues, always create a dedicated branch before
 
 ## Configuration Notes
 
-`foga` expects a root-level `foga.yml`. When adding new configuration fields or adapter behavior, update `README.md` and the example in `examples/qupled/foga.yml` so the documented workflow stays accurate.
+`foga` expects a root-level `foga.yml`. When adding new configuration fields or adapter behavior, update `README.md` and the examples in `examples/qupled/foga.yml` and `examples/pybind11/` so the documented workflow stays accurate.
