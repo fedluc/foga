@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from devkit import inspect as inspect_module
+from devkit.cli import inspect as inspect_module
 
 
 def test_emit_document_colorizes_tty_output(monkeypatch, capsys) -> None:
