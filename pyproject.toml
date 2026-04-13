@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling>=1.27"]
+requires = ["hatch-vcs>=0.4", "hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "foga"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Unified developer CLI for Python packages with C and C++ bindings."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,6 +33,16 @@ foga = "foga.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/foga"]
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.1.0"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/foga/_version.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

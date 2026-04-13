@@ -13,6 +13,7 @@ site/
 *.egg-info/
 .eggs/
 pip-wheel-metadata/
+src/foga/_version.py
 
 # Virtual environments
 .venv/
