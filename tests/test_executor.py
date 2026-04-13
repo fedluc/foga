@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from devkit.errors import ExecutionError
-from devkit.executor import CommandExecutor, CommandSpec
+from foga.errors import ExecutionError
+from foga.executor import CommandExecutor, CommandSpec
 
 
 def test_run_dry_run_prints_structured_command_output(tmp_path: Path, capsys) -> None:

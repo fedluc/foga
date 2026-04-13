@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Application code lives under `src/devkit/`. Keep CLI entrypoints in `src/devkit/cli.py`, shared config handling in `src/devkit/config.py`, execution helpers in `src/devkit/executor.py`, and backend-specific command builders in `src/devkit/adapters/`. Tests live in `tests/` and currently cover config loading, adapter behavior, and CLI routing. Example user configuration lives in `examples/qupled/devkit.yml`. Use `README.md` for end-user setup. Track unfinished product work in GitHub issues and milestones.
+Application code lives under `src/foga/`. Keep CLI entrypoints in `src/foga/cli.py`, shared config handling in `src/foga/config.py`, execution helpers in `src/foga/executor.py`, and backend-specific command builders in `src/foga/adapters/`. Tests live in `tests/` and currently cover config loading, adapter behavior, and CLI routing. Example user configuration lives in `examples/qupled/foga.yml`. Use `README.md` for end-user setup. Track unfinished product work in GitHub issues and milestones.
 
 ## Build, Test, and Development Commands
 
@@ -36,7 +36,7 @@ Validate packaging metadata with:
 python -m build
 ```
 
-Exercise the CLI during development with commands such as `devkit validate`, `devkit build --profile mpi`, and `devkit deploy --dry-run`. When using the devcontainer, `.devcontainer/post-create.sh` installs the same editable development environment automatically.
+Exercise the CLI during development with commands such as `foga validate`, `foga build --profile mpi`, and `foga deploy --dry-run`. When using the devcontainer, `.devcontainer/post-create.sh` installs the same editable development environment automatically.
 
 Shared Python implementation guidance lives in `skills/python-development/`. Use that skill when editing Python code, tests, packaging metadata, or developer-tooling configuration in this repository.
 Shared GitHub execution guidance lives in `skills/github-issue-workflow/`. Use that skill when starting work from GitHub issues or when the task should end with an opened pull request.
@@ -62,8 +62,8 @@ Development flow: work locally on a dedicated branch. One subprocess implements 
 
 Pull request flow: after the PR is open, the human user is the reviewer. The human reviews on GitHub, leaves comments, and Codex resumes local development to address that feedback. Repeat the local edit plus internal review loop until the human is satisfied, then the human approves and merges.
 
-When picking up work from GitHub issues, always create a dedicated branch before making changes and open a pull request when the work is complete. Pull requests should explain the user-facing change, note any config or CLI behavior differences, and list the verification performed, for example `ruff format .`, `ruff check .`, `pytest`, `python -m build`, or a representative `devkit ... --dry-run` command. Include sample output only when it clarifies behavior. After opening the PR, stop and wait for user feedback instead of continuing automatically.
+When picking up work from GitHub issues, always create a dedicated branch before making changes and open a pull request when the work is complete. Pull requests should explain the user-facing change, note any config or CLI behavior differences, and list the verification performed, for example `ruff format .`, `ruff check .`, `pytest`, `python -m build`, or a representative `foga ... --dry-run` command. Include sample output only when it clarifies behavior. After opening the PR, stop and wait for user feedback instead of continuing automatically.
 
 ## Configuration Notes
 
-`devkit` expects a root-level `devkit.yml`. When adding new configuration fields or adapter behavior, update `README.md` and the example in `examples/qupled/devkit.yml` so the documented workflow stays accurate.
+`foga` expects a root-level `foga.yml`. When adding new configuration fields or adapter behavior, update `README.md` and the example in `examples/qupled/foga.yml` so the documented workflow stays accurate.

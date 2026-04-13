@@ -5,12 +5,12 @@ from pathlib import Path
 import yaml
 from typer.testing import CliRunner
 
-from devkit import cli
+from foga import cli
 
 
 def write_config(path: Path) -> Path:
-    """Write a minimal valid devkit configuration for CLI tests."""
-    config = path / "devkit.yml"
+    """Write a minimal valid foga configuration for CLI tests."""
+    config = path / "foga.yml"
     config.write_text(
         """
 project:
@@ -38,7 +38,7 @@ clean:
 
 def test_validate_rejects_python_build_command_override(tmp_path: Path, capsys) -> None:
     """Validation rejects redundant python-build command overrides."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -86,7 +86,7 @@ def test_validate_reports_yaml_syntax_errors_with_location(
     tmp_path: Path, capsys
 ) -> None:
     """Validate surfaces YAML syntax errors with file and location details."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -117,7 +117,7 @@ deploy: [
 
 def test_validate_reports_precise_string_type_errors(tmp_path: Path, capsys) -> None:
     """Validate points to the full path when a string field has the wrong type."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -156,7 +156,7 @@ def test_inspect_reports_active_profile_and_build_overrides(
     tmp_path: Path, capsys
 ) -> None:
     """Inspect build defaults to a concise summary and effective config."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -220,7 +220,7 @@ test:
 
 def test_inspect_build_full_outputs_resolved_config(tmp_path: Path, capsys) -> None:
     """Inspect build can opt into the full resolved config output."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -274,7 +274,7 @@ test:
 
 def test_inspect_reports_selected_test_runners(tmp_path: Path, capsys) -> None:
     """Inspect test defaults to a concise summary and filtered config."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -363,7 +363,7 @@ def test_build_dry_run_routes_to_executor(tmp_path: Path, monkeypatch) -> None:
         captured["count"] = len(specs)
         captured["dry_run"] = dry_run
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "build", "--dry-run"])
 
@@ -382,7 +382,7 @@ def test_test_dry_run_routes_planned_specs_to_executor(
         captured["count"] = len(specs)
         captured["dry_run"] = dry_run
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "test", "--dry-run"])
 
@@ -394,7 +394,7 @@ def test_build_cli_target_overrides_profile_and_base_targets(
     tmp_path: Path, monkeypatch
 ) -> None:
     """CLI target selection takes precedence over profile and base targets."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -419,7 +419,7 @@ build:
         captured["commands"] = [spec.command for spec in specs]
         captured["dry_run"] = dry_run
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(
         [
@@ -446,7 +446,7 @@ def test_build_selection_runs_only_selected_workflow_kind(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Explicit build selection narrows execution to the requested kind."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -471,7 +471,7 @@ test:
     def fake_run_specs(self, specs, dry_run=False):
         captured["commands"] = [spec.command for spec in specs]
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "build", "python", "--dry-run"])
 
@@ -483,7 +483,7 @@ def test_build_uses_default_selection_when_cli_selection_is_omitted(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Build defaults apply when the CLI does not specify a selection."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -509,7 +509,7 @@ test:
     def fake_run_specs(self, specs, dry_run=False):
         captured["commands"] = [spec.command for spec in specs]
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "build", "--dry-run"])
 
@@ -521,7 +521,7 @@ def test_test_selection_runs_only_selected_runner_kind(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Explicit test selection narrows execution to matching runner kinds."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -545,7 +545,7 @@ test:
     def fake_run_specs(self, specs, dry_run=False):
         captured["descriptions"] = [spec.description for spec in specs]
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "test", "native", "--dry-run"])
 
@@ -557,7 +557,7 @@ def test_build_all_selection_runs_all_configured_workflows(
     tmp_path: Path, monkeypatch
 ) -> None:
     """The explicit all build selection includes every configured build kind."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -582,7 +582,7 @@ test:
     def fake_run_specs(self, specs, dry_run=False):
         captured["descriptions"] = [spec.description for spec in specs]
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "build", "all", "--dry-run"])
 
@@ -598,7 +598,7 @@ def test_test_uses_default_selection_when_cli_selection_is_omitted(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Test defaults apply when the CLI does not specify a selection."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -623,7 +623,7 @@ test:
     def fake_run_specs(self, specs, dry_run=False):
         captured["descriptions"] = [spec.description for spec in specs]
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "test", "--dry-run"])
 
@@ -635,7 +635,7 @@ def test_test_all_selection_runs_all_configured_runner_kinds(
     tmp_path: Path, monkeypatch
 ) -> None:
     """The explicit all test selection includes python and native runners."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -659,7 +659,7 @@ test:
     def fake_run_specs(self, specs, dry_run=False):
         captured["descriptions"] = [spec.description for spec in specs]
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "test", "all", "--dry-run"])
 
@@ -674,7 +674,7 @@ def test_test_runner_filter_applies_after_kind_selection(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Runner filtering only considers runners from the selected kind."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -701,7 +701,7 @@ test:
     def fake_run_specs(self, specs, dry_run=False):
         captured["descriptions"] = [spec.description for spec in specs]
 
-    monkeypatch.setattr("devkit.executor.CommandExecutor.run_specs", fake_run_specs)
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(
         [
@@ -723,7 +723,7 @@ def test_validate_accepts_example_style_profile_overrides_without_backend(
     tmp_path: Path, capsys
 ) -> None:
     """Validation ignores profile-only build or test fragments without backend."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -764,7 +764,7 @@ def test_build_uses_default_selection_error_when_default_kind_is_missing(
     tmp_path: Path, capsys
 ) -> None:
     """Build reports the default kind when it points to no configured workflow."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -793,7 +793,7 @@ def test_test_uses_default_selection_error_when_default_kind_is_missing(
     tmp_path: Path, capsys
 ) -> None:
     """Test reports the default kind when it points to no configured workflow."""
-    config = tmp_path / "devkit.yml"
+    config = tmp_path / "foga.yml"
     config.write_text(
         """
 project:
@@ -839,7 +839,7 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
     assert "multiple runners." in test_result.stdout
     assert "Run only the named deploy target." in deploy_result.stdout
     assert "multiple targets." in deploy_result.stdout
-    assert "Path to the devkit YAML configuration file to load." in root_result.stdout
+    assert "Path to the foga YAML configuration file to load." in root_result.stdout
     assert "[native|python|all]" in build_result.stdout
     assert (
         "[native|python|all]"

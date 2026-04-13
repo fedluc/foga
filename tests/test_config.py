@@ -4,13 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from devkit.config.loading import load_config
-from devkit.errors import ConfigError
+from foga.config.loading import load_config
+from foga.errors import ConfigError
 
 
 def write_config(path: Path, contents: str) -> Path:
-    """Write configuration contents to a test-local devkit file."""
-    config_path = path / "devkit.yml"
+    """Write configuration contents to a test-local foga file."""
+    config_path = path / "foga.yml"
     config_path.write_text(contents, encoding="utf-8")
     return config_path
 

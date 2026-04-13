@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from devkit.adapters.build import plan_build
-from devkit.adapters.deploy import plan_deploy
-from devkit.adapters.testing import plan_tests
-from devkit.config.models import (
+from foga.adapters.build import plan_build
+from foga.adapters.deploy import plan_deploy
+from foga.adapters.testing import plan_tests
+from foga.config.models import (
     BuildConfig,
     DeployTargetConfig,
     HookConfig,
@@ -15,7 +15,7 @@ from devkit.config.models import (
     PythonBuildConfig,
     TestRunnerConfig,
 )
-from devkit.errors import ConfigError
+from foga.errors import ConfigError
 
 
 def test_plan_build_generates_cmake_and_python_commands() -> None:

@@ -1,6 +1,6 @@
-# devkit
+# foga
 
-`devkit` is a Python package and CLI for developers maintaining Python packages
+`foga` is a Python package and CLI for developers maintaining Python packages
 with native C or C++ bindings. It centralizes build, test, deploy, and cleanup
 workflows behind a single YAML configuration file.
 
@@ -8,7 +8,7 @@ workflows behind a single YAML configuration file.
 
 This repository contains the first implementation pass with:
 
-- YAML configuration via `devkit.yml`
+- YAML configuration via `foga.yml`
 - Profile-based overrides
 - Built-in adapters for CMake, `python -m build`, `pytest`, `tox`, `ctest`, and
   Twine uploads
@@ -29,30 +29,30 @@ pip install -e .[dev]
 ruff check .
 ```
 
-3. Add a `devkit.yml` file to your project.
+3. Add a `foga.yml` file to your project.
 
 4. Run commands such as:
 
 ```bash
-devkit validate
-devkit inspect --profile mpi
-devkit inspect build native --target native_tests
-devkit inspect build --full native --target native_tests
-devkit build python
-devkit build all --profile mpi
-devkit test native
-devkit test python --runner unit
-devkit deploy --profile release --dry-run
+foga validate
+foga inspect --profile mpi
+foga inspect build native --target native_tests
+foga inspect build --full native --target native_tests
+foga build python
+foga build all --profile mpi
+foga test native
+foga test python --runner unit
+foga deploy --profile release --dry-run
 ```
 
-See [`examples/qupled/devkit.yml`](examples/qupled/devkit.yml) for a concrete
+See [`examples/qupled/foga.yml`](examples/qupled/foga.yml) for a concrete
 configuration derived from the current `qupled` workflow.
 
 ## Hooks And Escape Hatches
 
-`devkit` supports command hooks as a narrow escape hatch around built-in
+`foga` supports command hooks as a narrow escape hatch around built-in
 workflows. Hooks are intentionally limited: each hook entry must be a command
-array, and `devkit` executes that array directly without shell parsing.
+array, and `foga` executes that array directly without shell parsing.
 
 ```yaml
 build:
@@ -78,13 +78,13 @@ Intentionally unsupported:
 
 If a workflow needs complex orchestration, keep that logic in a project script
 or tool and call it from a structured hook command instead of embedding shell
-logic into `devkit.yml`.
+logic into `foga.yml`.
 
 ## Override Precedence
 
-`devkit` applies configuration in this order:
+`foga` applies configuration in this order:
 
-1. Base `devkit.yml`
+1. Base `foga.yml`
 2. Selected profile overrides from `profiles.<name>`
 3. CLI overrides for the active command
 
@@ -117,7 +117,7 @@ test:
       build_dir: build/tests
 ```
 
-When omitted, `devkit build` and `devkit test` still run all configured
+When omitted, `foga build` and `foga test` still run all configured
 workflows for backward compatibility.
 
 Profile overrides are validated before merge. They may override existing values
@@ -127,19 +127,19 @@ test, or deploy entry.
 
 ## Inspecting Resolved Configuration
 
-Use `devkit inspect` to print the effective YAML configuration after profile
+Use `foga inspect` to print the effective YAML configuration after profile
 selection, without executing any workflow:
 
 ```bash
-devkit inspect
-devkit inspect --profile mpi
-devkit inspect build native --target native_tests
-devkit inspect build --full native --target native_tests
-devkit inspect test python --runner unit
-devkit inspect deploy --target pypi
+foga inspect
+foga inspect --profile mpi
+foga inspect build native --target native_tests
+foga inspect build --full native --target native_tests
+foga inspect test python --runner unit
+foga inspect deploy --target pypi
 ```
 
-Top-level `devkit inspect` still prints the full resolved configuration. The
+Top-level `foga inspect` still prints the full resolved configuration. The
 command-specific variants default to a concise summary plus the relevant config
 fragment for the selected build, test, or deploy scope. Add `--full` to any
 command-specific inspect invocation to print the full resolved configuration
@@ -165,11 +165,11 @@ With `--full`, the output includes:
 
 ## Devcontainer
 
-The repository includes a devcontainer in [`.devcontainer/devcontainer.json`](/Users/flufsr/Documents/devkit/.devcontainer/devcontainer.json).
+The repository includes a devcontainer in [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json).
 When opened in a compatible environment, it installs:
 
 - Python 3.11
-- `devkit` in editable mode with the `dev` extra, including `ruff`
+- `foga` in editable mode with the `dev` extra, including `ruff`
 - common native-tooling dependencies used by package workflows:
   `build-essential`, `clang`, `cmake`, `ninja-build`, `pkg-config`, and `gdb`
 - GitHub CLI (`gh`) for authenticated GitHub API and repository operations

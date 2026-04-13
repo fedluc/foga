@@ -3,7 +3,7 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
-name = "devkit"
+name = "foga"
 version = "0.1.0"
 description = "Unified developer CLI for Python packages with C and C++ bindings."
 readme = "README.md"
@@ -29,10 +29,10 @@ dev = [
 ]
 
 [project.scripts]
-devkit = "devkit.cli:main"
+foga = "foga.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/devkit"]
+packages = ["src/foga"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
