@@ -27,22 +27,6 @@ Install `foga` as a normal user with:
 pip install foga
 ```
 
-If you are developing this repository itself, install it in editable mode with
-the development dependencies:
-
-```bash
-pip install -e .[dev]
-```
-
-For day-to-day validation of changes in this repository, the standard checks
-are:
-
-```bash
-ruff check .
-pytest
-python -m build
-```
-
 ## Quick Start
 
 1. Add a root-level `foga.yml` file to your project.
@@ -496,6 +480,24 @@ Good candidates to keep outside `foga`:
 
 Use it as a reference when authoring a new config, but keep your own config as
 small as possible at first.
+
+## Repository Development
+
+If you are developing this repository itself, install it in editable mode with
+the development dependencies:
+
+```bash
+pip install -e .[dev]
+```
+
+For day-to-day validation of changes in this repository, the standard checks
+are:
+
+```bash
+ruff check .
+pytest
+python -m build
+```
 
 ## Devcontainer
 
