@@ -20,6 +20,11 @@ dependencies = [
 test = [
     "pytest>=8.0",
 ]
+docs = [
+    "furo>=2024.8.6",
+    "myst-parser>=4.0",
+    "sphinx>=8.0",
+]
 dev = [
     "build>=1.2",
     "pytest>=8.0",
