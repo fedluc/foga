@@ -1,0 +1,165 @@
+project:
+  name: pybind11
+
+build:
+  default: all
+  native:
+    backend: cmake
+    source_dir: .
+    build_dir: build-foga
+    generator: Ninja
+    configure_args:
+      - -DCMAKE_BUILD_TYPE=Debug
+      - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - -DDOWNLOAD_CATCH=ON
+      - -DDOWNLOAD_EIGEN=ON
+      - -DPYBIND11_FINDPYTHON=NEW
+      - -DPYBIND11_WERROR=ON
+    build_args:
+      - "2"
+    targets:
+      - check
+  python:
+    backend: python-build
+
+test:
+  default: python
+  runners:
+    packaging:
+      backend: pytest
+      path: tests/extra_python_package
+      args:
+        - -v
+
+clean:
+  paths:
+    - build-foga
+    - build-foga-release
+    - build-foga-relwithdebinfo
+    - build-foga-venv
+    - build-foga-tidy
+    - build-foga-tidy-relaxed
+    - build-foga-tidy-cpptest
+    - build-foga-focused
+    - dist
+
+profiles:
+  release:
+    build:
+      native:
+        build_dir: build-foga-release
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=Release
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DDOWNLOAD_CATCH=ON
+          - -DDOWNLOAD_EIGEN=ON
+          - -DPYBIND11_FINDPYTHON=NEW
+          - -DPYBIND11_WERROR=ON
+
+  relwithdebinfo:
+    build:
+      native:
+        build_dir: build-foga-relwithdebinfo
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DDOWNLOAD_CATCH=ON
+          - -DDOWNLOAD_EIGEN=ON
+          - -DPYBIND11_FINDPYTHON=NEW
+          - -DPYBIND11_WERROR=ON
+
+  venv:
+    build:
+      native:
+        build_dir: build-foga-venv
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=Debug
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DDOWNLOAD_CATCH=ON
+          - -DDOWNLOAD_EIGEN=ON
+          - -DPYBIND11_FINDPYTHON=NEW
+          - -DPYBIND11_WERROR=ON
+          - -DPYBIND11_CREATE_WITH_UV=python3
+
+  tidy:
+    build:
+      native:
+        build_dir: build-foga-tidy
+        build_args:
+          - "1"
+        targets: []
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=Debug
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DDOWNLOAD_CATCH=ON
+          - -DDOWNLOAD_EIGEN=ON
+          - -DPYBIND11_FINDPYTHON=NEW
+          - -DPYBIND11_WERROR=ON
+          - -DCMAKE_CXX_STANDARD=17
+          - -DCMAKE_CXX_CLANG_TIDY=clang-tidy;--use-color;--warnings-as-errors=*
+
+  tidy-relaxed:
+    build:
+      native:
+        build_dir: build-foga-tidy-relaxed
+        build_args:
+          - "1"
+        targets: []
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=Debug
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DDOWNLOAD_CATCH=ON
+          - -DDOWNLOAD_EIGEN=ON
+          - -DPYBIND11_FINDPYTHON=NEW
+          - -DPYBIND11_WERROR=ON
+          - -DCMAKE_CXX_STANDARD=17
+          - -DCMAKE_CXX_CLANG_TIDY=clang-tidy;--use-color
+
+  tidy-cpptest:
+    build:
+      native:
+        build_dir: build-foga-tidy-cpptest
+        build_args:
+          - "1"
+        targets:
+          - cpptest
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=Debug
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DDOWNLOAD_CATCH=ON
+          - -DDOWNLOAD_EIGEN=ON
+          - -DPYBIND11_FINDPYTHON=NEW
+          - -DPYBIND11_WERROR=ON
+          - -DCMAKE_CXX_STANDARD=17
+          - -DCMAKE_CXX_CLANG_TIDY=clang-tidy;--use-color
+
+  cpptest:
+    build:
+      native:
+        targets:
+          - cpptest
+
+  pytest-target:
+    build:
+      native:
+        targets:
+          - pytest
+
+  cmake-build-tests:
+    build:
+      native:
+        targets:
+          - test_cmake_build
+
+  focused-callbacks-pickling:
+    build:
+      native:
+        build_dir: build-foga-focused
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=Debug
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DDOWNLOAD_CATCH=ON
+          - -DDOWNLOAD_EIGEN=ON
+          - -DPYBIND11_FINDPYTHON=NEW
+          - -DPYBIND11_WERROR=ON
+          - -DPYBIND11_TEST_OVERRIDE=test_callbacks;test_pickling

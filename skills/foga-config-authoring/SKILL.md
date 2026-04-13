@@ -21,19 +21,19 @@ Use this skill to translate an existing repository workflow into a working `foga
    - Native tests
    - Deploy steps, if requested
 4. Map each workflow to the narrowest `foga` backend that expresses it directly. Prefer `pytest`, `ctest`, `cmake`, and `python-build` over wrapper layers when those wrappers add little value.
-5. Add hooks only for repository-specific setup that the direct backend cannot express, such as copying fixture files or preparing working directories.
-6. Add profiles only when the target repo has real environment variants such as MPI, debug/release toggles, platform-specific environment variables, or alternate native options.
+5. Add hooks only for repository-specific setup that the direct backend cannot express, such as copying fixture files or preparing working directories. Prefer zero-hook configs when the environment is already provisioned by a devcontainer, CI image, or repo bootstrap step.
+6. Add profiles only when the target repo has real environment variants such as MPI, debug/release toggles, platform-specific environment variables, alternate native options, or documented named target subsets. Keep the profile set minimal for example configs.
 7. Validate the generated file with the locally available `foga` CLI before finishing.
 
 ## Authoring Rules
 
 - Do not infer commands from project type alone. Derive them from the target repo's actual files.
 - Keep Python and native workflows separate when the repository treats them separately.
-- Use `build.native.targets` only when the repository has a stable named target worth selecting explicitly.
+- Use `build.native.targets` only when the repository has a stable named target worth selecting explicitly. If the project documents top-level CMake targets such as `check`, `cpptest`, `pytest`, or `test_cmake_build`, prefer modelling those targets directly instead of inventing a `ctest` runner.
 - For `ctest`, set `source_dir`, `build_dir`, configure arguments, and optional `target` when test binaries must be prepared before `ctest` runs.
 - Prefer `pytest` runners over `tox` when `tox` mostly forwards to pytest and `foga` can represent the same behavior directly.
 - Keep environment variables close to the workflow that needs them. Use profiles when the values vary by mode rather than by command type.
-- If tests rely on side effects from CI or tox setup, reproduce only the minimal missing behavior with hooks.
+- If tests rely on side effects from CI or tox setup, reproduce only the minimal missing behavior with hooks. If the repo already provisions its environment separately, remove setup hooks rather than encoding package installation into every workflow.
 
 ## Validation
 
@@ -47,6 +47,8 @@ Use this skill to translate an existing repository workflow into a working `foga
 - Read [references/checklist.md](references/checklist.md) for the inspection checklist and mapping heuristics.
 
 ## Work Log
+
+- 2026-04-13: Derived `pybind11/foga.yml` from the checked-in contributing guide, `CMakePresets.json`, and test targets. Recorded three reusable heuristics: prefer direct CMake targets over `ctest` when the repo exposes stable targets like `check` or `cpptest`; start with a hook-free config when the environment is already provisioned; and keep profiles minimal but aligned with documented variants such as `release`, `venv`, or `tidy`.
 
 - 2026-04-12: Derived `examples/qupled/foga.yml` by inspecting `qupled` build scripts, `tox.ini`, native CMake files, and pytest markers instead of assuming a generic Python package layout.
 - 2026-04-12: Recorded reusable guidance from that work: prefer direct backends over thin wrappers, model standalone native test builds separately from extension-module builds when the repo does, and use hooks only for missing setup behavior such as integration-test fixture staging.
