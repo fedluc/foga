@@ -194,20 +194,8 @@ removes.
 
 #### `cmake`
 
-`build.native.backend: cmake` supports:
-
-- `source_dir`
-- `build_dir`
-- `generator`
-- `configure_args`
-- `build_args`
-- `targets`
-- `env`
-- `hooks`
-
-It generates a configure step and one or more `cmake --build` steps.
-
-Field meanings:
+`build.native.backend: cmake` generates a configure step and one or more
+`cmake --build` steps. Its fields mean:
 
 - `source_dir`: source tree passed to `cmake -S`
 - `build_dir`: build tree passed to `cmake -B` and reused for `cmake --build`
@@ -226,7 +214,7 @@ extra `args`, plus optional `env` and `hooks`.
 `foga` intentionally does not allow overriding the full build command for this
 backend. Use `args` for extra flags.
 
-Field meanings:
+Its fields mean:
 
 - `args`: extra flags appended to `python3 -m build`
 - `env`: environment variables added to the build command
@@ -236,15 +224,7 @@ Field meanings:
 
 #### `pytest`
 
-Supports:
-
-- `path`
-- `marker`
-- `args`
-- `env`
-- `hooks`
-
-Field meanings:
+This backend runs `pytest`. Its fields mean:
 
 - `path`: test path passed to `pytest`; this is required for the `pytest` backend
 - `marker`: optional `pytest -m` selector
@@ -254,14 +234,7 @@ Field meanings:
 
 #### `tox`
 
-Supports:
-
-- `tox_env`
-- `args`
-- `env`
-- `hooks`
-
-Field meanings:
+This backend runs `tox -e <env>`. Its fields mean:
 
 - `tox_env`: environment name passed to `tox -e`; this is required for the
   `tox` backend
@@ -271,21 +244,8 @@ Field meanings:
 
 #### `ctest`
 
-Supports:
-
-- `source_dir`
-- `build_dir`
-- `generator`
-- `configure_args`
-- `build_args`
-- `target`
-- `args`
-- `env`
-- `hooks`
-
-This backend can configure and build native tests before running `ctest`.
-
-Field meanings:
+This backend can configure and build native tests before running `ctest`. Its
+fields mean:
 
 - `build_dir`: build tree used by `ctest --test-dir`; this is required
 - `source_dir`: optional source tree; when present, `foga` also runs a CMake
@@ -302,16 +262,7 @@ Field meanings:
 
 #### `twine`
 
-Supports:
-
-- `artifacts`
-- `repository`
-- `repository_url`
-- `args`
-- `env`
-- `hooks`
-
-Field meanings:
+This backend runs `twine upload`. Its fields mean:
 
 - `artifacts`: glob patterns resolved relative to the project root; this is
   required and must match built package files
