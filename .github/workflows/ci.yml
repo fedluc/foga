@@ -33,4 +33,4 @@ jobs:
         run: python -m build
 
       - name: Validate example configuration
-        run: foga validate --config examples/qupled/foga.yml
+        run: foga --config examples/qupled/foga.yml validate
