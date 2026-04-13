@@ -499,7 +499,7 @@ pytest
 python -m build
 ```
 
-## Devcontainer
+### Devcontainer
 
 The repository includes a devcontainer in
 [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json). When
