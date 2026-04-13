@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/foga.svg" alt="foga" width="280">
+</p>
+
 # foga
 
 `foga` is a Python package and CLI for developers maintaining Python packages
