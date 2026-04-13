@@ -29,13 +29,21 @@ pip install foga
 
 ## Quick Start
 
-1. Add a root-level `foga.yml` file to your project.
-2. Start with a minimal configuration.
-3. Validate it.
-4. Inspect the resolved config.
-5. Run build or test workflows.
+1. Install the package in editable mode:
 
-Minimal example:
+```bash
+pip install -e .[dev]
+```
+
+2. Lint the code during development:
+
+```bash
+ruff check .
+```
+
+3. Add a `foga.yml` file to your project.
+
+4. Start with a minimal configuration:
 
 ```yaml
 project:
@@ -52,18 +60,27 @@ test:
       path: tests
 ```
 
-Typical commands:
+5. Run commands such as:
 
-These examples assume you are running `foga` from a project root that contains
-`foga.yml`:
+   These examples assume you are running `foga` from a project root that
+   contains `foga.yml`:
 
-```bash
-foga validate                  # Check that foga.yml is well-formed
-foga inspect                   # Print the resolved configuration
-foga build --dry-run           # Show planned build commands without executing
-foga test --dry-run            # Show planned test commands without executing
-foga deploy --target pypi --dry-run # Preview the deploy command
-```
+   ```bash
+   foga validate                  # Check that foga.yml is well-formed
+   foga inspect                   # Print the resolved configuration
+   foga build --dry-run           # Show planned build commands without executing
+   foga test --dry-run            # Show planned test commands without executing
+   foga deploy --target pypi --dry-run # Preview the deploy command
+   ```
+
+See [`examples/`](examples/README.md) for concrete configurations and example
+setups derived from real projects.
+
+## Hooks And Escape Hatches
+
+`foga` supports command hooks as a narrow escape hatch around built-in
+workflows. Hooks are intentionally limited: each hook entry must be a command
+array, and `foga` executes that array directly without shell parsing.
 
 ## End-To-End Workflow
 
