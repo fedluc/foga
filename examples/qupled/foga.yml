@@ -91,3 +91,15 @@ profiles:
         native-cpp:
           env:
             OpenMP_ROOT: /opt/homebrew/opt/libomp
+
+deploy:
+  targets:
+    pypi:
+      backend: twine
+      artifacts:
+        - fixtures/artifacts/demo-artifact.txt
+
+clean:
+  paths:
+    - dist-native
+    - dist-native-tests
