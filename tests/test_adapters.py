@@ -258,6 +258,54 @@ def test_plan_format_builds_registered_formatter_commands(tmp_path: Path) -> Non
     ]
 
 
+def test_plan_format_expands_glob_patterns(tmp_path: Path) -> None:
+    """Format planning expands glob patterns relative to the project root."""
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    first = source_dir / "alpha.cpp"
+    second = source_dir / "beta.cpp"
+    first.write_text("int alpha();\n", encoding="utf-8")
+    second.write_text("int beta();\n", encoding="utf-8")
+
+    targets = [
+        FormatTargetConfig(
+            name="cpp-style",
+            backend="clang-format",
+            paths=["src/*.cpp"],
+            args=["--style=file"],
+        )
+    ]
+
+    plan = plan_format(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        [
+            "clang-format",
+            "-i",
+            "--style=file",
+            "src/alpha.cpp",
+            "src/beta.cpp",
+        ]
+    ]
+
+
+def test_plan_format_rejects_unmatched_glob_patterns(tmp_path: Path) -> None:
+    """Format planning rejects wildcard patterns that match no paths."""
+    targets = [
+        FormatTargetConfig(
+            name="cpp-style",
+            backend="clang-format",
+            paths=["src/*.cpp"],
+        )
+    ]
+
+    with pytest.raises(
+        ConfigError,
+        match="No format paths matched the configured glob pattern",
+    ):
+        plan_format(tmp_path, targets)
+
+
 def test_plan_lint_builds_registered_linter_commands(tmp_path: Path) -> None:
     """Lint planning includes backend-specific commands in order."""
     targets = [

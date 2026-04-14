@@ -109,7 +109,7 @@ fields mean:
 `format.targets.<name>.backend: black` runs `black` on the configured paths.
 Its fields mean:
 
-- `paths`: paths passed to `black`; this is required
+- `paths`: literal paths or glob patterns resolved before `black` runs; this is required
 - `args`: extra flags appended before the paths
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter
@@ -119,7 +119,7 @@ Its fields mean:
 `format.targets.<name>.backend: ruff-format` runs `ruff format` on the
 configured paths. Its fields mean:
 
-- `paths`: paths passed to `ruff format`; this is required
+- `paths`: literal paths or glob patterns resolved before `ruff format` runs; this is required
 - `args`: extra flags appended before the paths
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter
@@ -129,7 +129,7 @@ configured paths. Its fields mean:
 `format.targets.<name>.backend: clang-format` runs `clang-format -i` on the
 configured paths. Its fields mean:
 
-- `paths`: paths passed to `clang-format`; this is required
+- `paths`: literal paths or glob patterns resolved before `clang-format` runs; this is required
 - `args`: extra flags appended after `-i` and before the paths
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter

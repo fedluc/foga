@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from functools import partial
+from glob import has_magic
 from pathlib import Path
 
-from ..config.constants import FORMAT_SECTION
+from ..config.constants import FORMAT_SECTION, TARGETS_KEY
 from ..config.models import FormatTargetConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
@@ -61,9 +62,10 @@ def _plan_path_target(
     """
 
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
+    resolved_paths = _resolve_format_paths(request.project_root, config)
     specs = pre_hooks + [
         CommandSpec(
-            command=[*command_prefix, *config.args, *config.paths],
+            command=[*command_prefix, *config.args, *resolved_paths],
             cwd=request.project_root,
             env=config.env,
             description=description_template.format(name=config.name),
@@ -71,6 +73,87 @@ def _plan_path_target(
     ]
     specs.extend(post_hooks)
     return specs
+
+
+def _resolve_format_paths(project_root: Path, config: FormatTargetConfig) -> list[str]:
+    """Resolve configured format paths, expanding glob patterns when present.
+
+    Args:
+        project_root: Project root used to resolve glob patterns.
+        config: Parsed formatter target configuration.
+
+    Returns:
+        Ordered formatter paths with glob matches expanded.
+
+    Raises:
+        ConfigError: If a configured glob pattern matches no filesystem paths.
+    """
+
+    resolved_paths: list[str] = []
+    seen_paths: set[str] = set()
+
+    for pattern in config.paths:
+        expanded_paths = _expand_path_pattern(project_root, config.name, pattern)
+        for path in expanded_paths:
+            if path in seen_paths:
+                continue
+            resolved_paths.append(path)
+            seen_paths.add(path)
+
+    return resolved_paths
+
+
+def _expand_path_pattern(
+    project_root: Path, target_name: str, pattern: str
+) -> list[str]:
+    """Expand one configured formatter path or glob pattern.
+
+    Args:
+        project_root: Project root used to resolve glob patterns.
+        target_name: Formatter target name used in validation errors.
+        pattern: Configured path or glob pattern.
+
+    Returns:
+        Literal path when no glob syntax is present, otherwise sorted glob
+        matches rendered relative to the project root when possible.
+
+    Raises:
+        ConfigError: If a glob pattern matches no filesystem paths.
+    """
+
+    if not has_magic(pattern):
+        return [pattern]
+
+    matches = sorted(project_root.glob(pattern))
+    if not matches:
+        raise ConfigError(
+            "No format paths matched the configured glob pattern",
+            details={"Pattern": pattern},
+            hint=(
+                f"Adjust `{FORMAT_SECTION}.{TARGETS_KEY}.{target_name}.paths` "
+                "or ensure matching files exist."
+            ),
+        )
+
+    return [_display_path(project_root, match) for match in matches]
+
+
+def _display_path(project_root: Path, path: Path) -> str:
+    """Render a resolved formatter path for command-line use.
+
+    Args:
+        project_root: Project root used as the command working directory.
+        path: Resolved filesystem path.
+
+    Returns:
+        Path relative to the project root when possible, otherwise the absolute
+        path string.
+    """
+
+    try:
+        return str(path.relative_to(project_root))
+    except ValueError:
+        return str(path)
 
 
 def _validate_paths(config: FormatTargetConfig, *, workflow: str) -> None:
