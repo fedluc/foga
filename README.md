@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="assets/foga.svg" alt="foga" width="280">
+  <img src="assets/foga.svg" alt="foga" width="400">
 </p>
-
-# foga
 
 `foga` is a Python package and CLI for developers maintaining Python packages
 with native C or C++ bindings. It replaces ad-hoc repository scripts with a
@@ -62,13 +60,3 @@ Start with:
 - [Configuration Overview](docs/configuration/index.md)
 - [CLI Reference](docs/cli.md)
 - [Examples](docs/examples/index.md)
-
-## Development
-
-```bash
-pip install -e .[dev,docs]
-ruff check .
-pytest
-python -m build
-sphinx-build -W --keep-going -b html docs docs/_build/html
-```
