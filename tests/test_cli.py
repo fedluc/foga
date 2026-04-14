@@ -28,6 +28,12 @@ deploy:
     pypi:
       backend: twine
       artifacts: ["dist/*"]
+docs:
+  targets:
+    python-api:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build/html
 format:
   targets:
     python-style:
@@ -88,6 +94,7 @@ def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
     assert "project `demo` is ready to use" in captured.out
     assert "Build workflows" in captured.out
     assert "Test runners" in captured.out
+    assert "Docs targets" in captured.out
     assert "Format targets" in captured.out
     assert "Lint targets" in captured.out
     assert "Deploy targets" in captured.out
@@ -414,6 +421,25 @@ def test_format_dry_run_routes_planned_specs_to_executor(
     monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "format", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured == {"count": 1, "dry_run": True}
+
+
+def test_docs_dry_run_routes_planned_specs_to_executor(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The docs command routes the workflow plan to the executor."""
+    config = write_config(tmp_path)
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["count"] = len(specs)
+        captured["dry_run"] = dry_run
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "docs", "--dry-run"])
 
     assert exit_code == 0
     assert captured == {"count": 1, "dry_run": True}
@@ -813,6 +839,49 @@ format:
     assert captured["descriptions"] == ["black formatter `black-style`"]
 
 
+def test_docs_target_filter_selects_named_docs_target(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Docs target filtering only runs the selected docs target."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+docs:
+  targets:
+    python-api:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build/html
+    cpp-api:
+      backend: doxygen
+      config_file: Doxyfile
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["descriptions"] = [spec.description for spec in specs]
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "docs",
+            "--target",
+            "cpp-api",
+            "--dry-run",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["descriptions"] == ["docs target `cpp-api`"]
+
+
 def test_lint_uses_default_selection_when_cli_selection_is_omitted(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -845,6 +914,27 @@ lint:
 
     assert exit_code == 0
     assert captured["descriptions"] == ["clang-tidy target `cpp-style`"]
+
+
+def test_docs_reports_missing_workflows(tmp_path: Path, capsys) -> None:
+    """Docs reports a clear error when no docs targets are configured."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "docs", "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "No docs workflows configured" in captured.err
 
 
 def test_validate_accepts_example_style_profile_overrides_without_backend(
@@ -1005,6 +1095,7 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
     root_result = runner.invoke(cli.app, ["--help"])
     build_result = runner.invoke(cli.app, ["build", "--help"])
     test_result = runner.invoke(cli.app, ["test", "--help"])
+    docs_result = runner.invoke(cli.app, ["docs", "--help"])
     format_result = runner.invoke(cli.app, ["format", "--help"])
     lint_result = runner.invoke(cli.app, ["lint", "--help"])
     deploy_result = runner.invoke(cli.app, ["deploy", "--help"])
@@ -1012,6 +1103,7 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
     assert root_result.exit_code == 0
     assert build_result.exit_code == 0
     assert test_result.exit_code == 0
+    assert docs_result.exit_code == 0
     assert format_result.exit_code == 0
     assert lint_result.exit_code == 0
     assert deploy_result.exit_code == 0
@@ -1021,6 +1113,7 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
     assert "them." in build_result.stdout
     assert "Run only the named test runner." in test_result.stdout
     assert "multiple runners." in test_result.stdout
+    assert "Run only the named docs target." in docs_result.stdout
     assert "Run only the named format target." in format_result.stdout
     assert "Run only the named lint target." in lint_result.stdout
     assert "Run only the named deploy target." in deploy_result.stdout

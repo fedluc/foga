@@ -182,6 +182,28 @@ deploy:
         load_config(config_path)
 
 
+def test_load_config_rejects_unknown_docs_keys(tmp_path: Path) -> None:
+    """Docs config only accepts the targets key."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+docs:
+  adas:
+    backend: sphinx
+    source_dir: docs
+    build_dir: docs/_build/html
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`docs.adas` is not a supported configuration key",
+    ):
+        load_config(config_path)
+
+
 def test_load_config_rejects_python_build_command_override(tmp_path: Path) -> None:
     """The python-build backend uses a fixed command and only accepts args."""
     config_path = write_config(
@@ -632,6 +654,84 @@ deploy:
         match=("Unsupported deploy backend: unknown. Supported backends: twine"),
     ):
         load_config(config_path)
+
+
+def test_load_config_lists_supported_docs_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown docs backends list the registered docs backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+docs:
+  targets:
+    api:
+      backend: unknown
+      source_dir: docs
+      build_dir: docs/_build/html
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "Unsupported docs backend: unknown. Supported backends: doxygen, "
+            "mkdocs, sphinx"
+        ),
+    ):
+        load_config(config_path)
+
+
+def test_load_config_validates_docs_backend_fields(tmp_path: Path) -> None:
+    """Docs targets still validate backend-specific required fields."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+docs:
+  targets:
+    api:
+      backend: sphinx
+      source_dir: docs
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`docs.targets.api.build_dir` is required",
+    ):
+        load_config(config_path)
+
+
+def test_load_config_parses_docs_targets(tmp_path: Path) -> None:
+    """Docs targets are loaded into the parsed config."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+docs:
+  targets:
+    python-api:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build/html
+      builder: dirhtml
+    site:
+      backend: mkdocs
+      config_file: mkdocs.yml
+      build_dir: site
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert list(config.docs.targets) == ["python-api", "site"]
+    assert config.docs.targets["python-api"].builder == "dirhtml"
+    assert config.docs.targets["site"].config_file == "mkdocs.yml"
 
 
 def test_load_config_rejects_profile_mapping_shape_changes(tmp_path: Path) -> None:

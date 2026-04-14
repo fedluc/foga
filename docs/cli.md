@@ -33,6 +33,16 @@ foga test cpp --dry-run                        # Preview only C++ test workflows
 foga test --profile mpi --dry-run              # Preview test commands with the mpi profile
 ```
 
+## Docs
+
+Use `foga docs` to run configured documentation targets:
+
+```bash
+foga docs --dry-run                              # Preview all configured docs targets
+foga docs --target python-api --dry-run          # Preview one docs target explicitly
+foga docs --profile release --dry-run            # Preview docs generation with a profile
+```
+
 ## Format
 
 Use `foga format` to run configured format targets:
@@ -95,6 +105,7 @@ Available dry-run commands:
 
 - `foga build --dry-run`
 - `foga test --dry-run`
+- `foga docs --dry-run`
 - `foga deploy --dry-run`
 - `foga format --dry-run`
 - `foga lint --dry-run`

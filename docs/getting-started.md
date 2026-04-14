@@ -44,6 +44,10 @@ foga validate                  # Check that foga.yml is well-formed
 foga inspect                   # Print the resolved configuration
 foga build --dry-run           # Show planned build commands without executing
 foga test --dry-run            # Show planned test commands without executing
+foga docs --dry-run            # Show planned docs commands without executing
+foga format --dry-run          # Show planned format commands without executing
+foga lint --dry-run            # Show planned lint commands without executing
+foga deploy --target pypi --dry-run # Preview the deploy command
 ```
 
 ## Adoption workflow

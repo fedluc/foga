@@ -13,6 +13,7 @@ Use this skill to translate an existing repository workflow into a working `foga
    - First prefer local `foga` help, examples, installed package files, or repository source if they are available.
    - If working inside the `foga` repository, reading `README.md`, `src/foga/config.py`, and `examples/*/foga.yml` is appropriate.
    - If working outside the `foga` repository, inspect the installed package, local docs, or `foga validate` and `foga inspect --help` output instead of assuming repo-local source files exist.
+   - The published documentation is available at https://fedluc.github.io/foga/.
 2. Inspect the target repository before writing config. Start with `pyproject.toml`, `setup.py`, `tox.ini`, build scripts, CI workflows, `CMakeLists.txt`, and tests.
 3. Identify the real workflows separately:
    - Python package build

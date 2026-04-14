@@ -410,6 +410,39 @@ class DeployTargetConfig(NamedBackendConfig):
 
 
 @dataclass(frozen=True)
+class DocsTargetConfig(NamedBackendConfig):
+    """Configuration for an individual documentation target.
+
+    Attributes:
+        name: Docs target name from the configuration file.
+        backend: Docs backend identifier.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around docs steps.
+        source_dir: Source directory used by documentation generators.
+        build_dir: Output directory used by documentation generators.
+        builder: Optional output builder name for Sphinx.
+        config_file: Optional backend-specific config file path.
+    """
+
+    source_dir: str | None = None
+    build_dir: str | None = None
+    builder: str | None = None
+    config_file: str | None = None
+
+
+@dataclass(frozen=True)
+class DocsConfig:
+    """Aggregate docs configuration for configured documentation workflows.
+
+    Attributes:
+        targets: Parsed docs targets keyed by target name.
+    """
+
+    targets: dict[str, DocsTargetConfig] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class CleanConfig:
     """Configuration for removable build artifact paths.
 
@@ -440,6 +473,7 @@ class FogaConfig:
         project: Parsed project metadata.
         build: Parsed build configuration.
         tests: Parsed test runner configuration and defaults.
+        docs: Parsed documentation target configuration.
         formatters: Parsed format target configuration and defaults.
         linters: Parsed lint target configuration and defaults.
         deploy: Parsed deploy configuration keyed by target name.
@@ -451,6 +485,7 @@ class FogaConfig:
     project: ProjectConfig
     build: BuildConfig
     tests: TestConfig
+    docs: DocsConfig
     formatters: FormatConfig
     linters: LintConfig
     deploy: dict[str, DeployTargetConfig]

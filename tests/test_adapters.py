@@ -6,6 +6,7 @@ import pytest
 
 from foga.adapters.build import plan_build
 from foga.adapters.deploy import plan_deploy
+from foga.adapters.docs import plan_docs
 from foga.adapters.formatting import plan_format
 from foga.adapters.linting import plan_lint
 from foga.adapters.testing import plan_tests
@@ -13,6 +14,7 @@ from foga.config.models import (
     BuildConfig,
     CppBuildConfig,
     DeployTargetConfig,
+    DocsTargetConfig,
     FormatTargetConfig,
     HookConfig,
     LintTargetConfig,
@@ -170,6 +172,48 @@ def test_plan_deploy_resolves_matching_artifacts(tmp_path: Path) -> None:
         "--repository",
         "testpypi",
         str(wheel),
+    ]
+
+
+def test_plan_docs_builds_registered_backend_commands(tmp_path: Path) -> None:
+    """Docs planning includes hooks and backend-specific commands."""
+    targets = [
+        DocsTargetConfig(
+            name="python-api",
+            backend="sphinx",
+            source_dir="docs",
+            build_dir="docs/_build/html",
+            args=["-W", "--keep-going"],
+            hooks=HookConfig(pre=[["echo", "prep"]]),
+        ),
+        DocsTargetConfig(
+            name="site",
+            backend="mkdocs",
+            config_file="mkdocs.yml",
+            build_dir="site",
+        ),
+        DocsTargetConfig(
+            name="cpp-api",
+            backend="doxygen",
+            config_file="Doxyfile",
+        ),
+    ]
+
+    plan = plan_docs(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["echo", "prep"],
+        [
+            "sphinx-build",
+            "-b",
+            "html",
+            "docs",
+            "docs/_build/html",
+            "-W",
+            "--keep-going",
+        ],
+        ["mkdocs", "build", "--config-file", "mkdocs.yml", "--site-dir", "site"],
+        ["doxygen", "Doxyfile"],
     ]
 
 

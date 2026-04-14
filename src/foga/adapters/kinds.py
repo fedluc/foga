@@ -14,6 +14,11 @@ TEST_PYTEST = "pytest"
 TEST_TOX = "tox"
 TEST_CTEST = "ctest"
 
+# Docs backend names
+DOCS_SPHINX = "sphinx"
+DOCS_MKDOCS = "mkdocs"
+DOCS_DOXYGEN = "doxygen"
+
 # Format backend names
 FORMAT_BLACK = "black"
 FORMAT_RUFF = "ruff-format"

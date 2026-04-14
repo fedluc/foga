@@ -8,6 +8,7 @@ from typing import Any, Callable, TypeVar
 from ..adapters.build import BUILD_BACKENDS
 from ..adapters.contracts import registered_backends, require_backend_contract
 from ..adapters.deploy import DEPLOY_BACKENDS
+from ..adapters.docs import DOCS_BACKENDS
 from ..adapters.formatting import FORMAT_BACKENDS
 from ..adapters.kinds import BUILD_CMAKE, BUILD_PYTHON
 from ..adapters.linting import LINT_BACKENDS
@@ -18,6 +19,7 @@ from .constants import (
     CLEAN_SECTION,
     CPP_WORKFLOW_KIND,
     DEPLOY_SECTION,
+    DOCS_SECTION,
     FORMAT_SECTION,
     LINT_SECTION,
     PROJECT_SECTION,
@@ -32,6 +34,8 @@ from .models import (
     CleanConfig,
     CppBuildConfig,
     DeployTargetConfig,
+    DocsConfig,
+    DocsTargetConfig,
     FogaConfig,
     FormatConfig,
     FormatTargetConfig,
@@ -77,6 +81,7 @@ def _parse_config(data: dict[str, Any], project_root: Path) -> FogaConfig:
 
     build = _parse_build(data.get(BUILD_SECTION) or {})
     tests = _parse_tests(data.get(TEST_SECTION) or {})
+    docs = _parse_docs(data.get(DOCS_SECTION) or {})
     formatters = _parse_format(data.get(FORMAT_SECTION) or {})
     linters = _parse_lint(data.get(LINT_SECTION) or {})
     deploy = _parse_deploy(data.get(DEPLOY_SECTION) or {})
@@ -87,6 +92,7 @@ def _parse_config(data: dict[str, Any], project_root: Path) -> FogaConfig:
         project=ProjectConfig(name=str(project["name"])),
         build=build,
         tests=tests,
+        docs=docs,
         formatters=formatters,
         linters=linters,
         deploy=deploy,
@@ -213,7 +219,7 @@ def _parse_named_workflow_config(
     build_target: Callable[[str, dict[str, Any], str, str], WorkflowTargetT],
     build_config: Callable[[str | None, dict[str, WorkflowTargetT]], WorkflowConfigT],
 ) -> WorkflowConfigT:
-    """Parse workflow sections that map names to backend-configured targets.
+    """Parse workflow sections that map names to backend-configured entries.
 
     Args:
         data: Raw workflow section mapping.
@@ -262,6 +268,66 @@ def _parse_named_workflow_config(
         targets[name] = target
 
     return build_config(default, targets)
+
+
+def _parse_named_targets(
+    data: dict[str, Any],
+    *,
+    section: str,
+    registry: dict[str, Any],
+    build_target: Callable[[str, dict[str, Any], str, str], WorkflowTargetT],
+    allow_missing_backend: bool = False,
+) -> dict[str, WorkflowTargetT]:
+    """Parse named target mappings shared by docs and deploy workflows.
+
+    Args:
+        data: Raw workflow section mapping.
+        section: Top-level workflow section name.
+        registry: Backend contract registry for the workflow family.
+        build_target: Callable that parses one named target entry.
+        allow_missing_backend: Whether profile-only fragments may omit a backend.
+
+    Returns:
+        Parsed workflow targets keyed by configured target name.
+
+    Raises:
+        ConfigError: If the section or one of its targets is malformed.
+    """
+
+    if not isinstance(data, dict):
+        raise ConfigError(f"`{section}` must be a mapping")
+
+    reject_unknown_keys(data, section, {TARGETS_KEY})
+    targets_data = data.get(TARGETS_KEY) or {}
+    if not isinstance(targets_data, dict):
+        raise ConfigError(f"`{section}.{TARGETS_KEY}` must be a mapping")
+
+    supported_backends = registered_backends(registry)
+    targets: dict[str, WorkflowTargetT] = {}
+    for name, target_data in targets_data.items():
+        if not isinstance(target_data, dict):
+            raise ConfigError(f"`{section}.{TARGETS_KEY}.{name}` must be a mapping")
+
+        backend_path = f"{section}.{TARGETS_KEY}.{name}.backend"
+        backend = (
+            optional_str(target_data, "backend", backend_path)
+            if allow_missing_backend
+            else required_str(target_data, "backend", backend_path)
+        )
+        if backend is None:
+            continue
+        if backend not in supported_backends:
+            raise ConfigError(
+                unsupported_backend_message(section, backend, supported_backends)
+            )
+
+        target = build_target(
+            name, target_data, backend, f"{section}.{TARGETS_KEY}.{name}"
+        )
+        require_backend_contract(section, backend, registry).validate(target)
+        targets[name] = target
+
+    return targets
 
 
 def _parse_path_target(
@@ -332,6 +398,71 @@ def _parse_test_runner(
     )
 
 
+def _parse_docs_target(
+    name: str,
+    data: dict[str, Any],
+    backend: str,
+    path: str,
+) -> DocsTargetConfig:
+    """Parse a named docs target configuration.
+
+    Args:
+        name: Configured target name.
+        data: Raw target mapping.
+        backend: Validated backend identifier.
+        path: Dotted config path used in validation errors.
+
+    Returns:
+        Parsed docs target configuration.
+    """
+
+    return DocsTargetConfig(
+        name=name,
+        backend=backend,
+        args=string_list(data.get("args"), f"{path}.args"),
+        env=string_mapping(data.get("env"), f"{path}.env"),
+        hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
+        source_dir=optional_str(data, "source_dir", f"{path}.source_dir"),
+        build_dir=optional_str(data, "build_dir", f"{path}.build_dir"),
+        builder=optional_str(data, "builder", f"{path}.builder"),
+        config_file=optional_str(data, "config_file", f"{path}.config_file"),
+    )
+
+
+def _parse_deploy_target(
+    name: str,
+    data: dict[str, Any],
+    backend: str,
+    path: str,
+) -> DeployTargetConfig:
+    """Parse a named deploy target configuration.
+
+    Args:
+        name: Configured target name.
+        data: Raw target mapping.
+        backend: Validated backend identifier.
+        path: Dotted config path used in validation errors.
+
+    Returns:
+        Parsed deploy target configuration.
+    """
+
+    return DeployTargetConfig(
+        name=name,
+        backend=backend,
+        artifacts=string_list(data.get("artifacts"), f"{path}.artifacts"),
+        repository=optional_str(data, "repository", f"{path}.repository"),
+        repository_url=optional_str(
+            data,
+            "repository_url",
+            f"{path}.repository_url",
+        ),
+        args=string_list(data.get("args"), f"{path}.args"),
+        env=string_mapping(data.get("env"), f"{path}.env"),
+        hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
+    )
+
+
 def _parse_tests(data: dict[str, Any]) -> TestConfig:
     """Parse test runner configuration.
 
@@ -355,6 +486,30 @@ def _parse_tests(data: dict[str, Any]) -> TestConfig:
             default=default,
             runners=runners,
         ),
+    )
+
+
+def _parse_docs(data: dict[str, Any]) -> DocsConfig:
+    """Parse docs target configuration.
+
+    Args:
+        data: Raw docs configuration mapping.
+
+    Returns:
+        Parsed docs configuration.
+
+    Raises:
+        ConfigError: If the docs section is malformed.
+    """
+
+    return DocsConfig(
+        targets=_parse_named_targets(
+            data,
+            section=DOCS_SECTION,
+            registry=DOCS_BACKENDS,
+            build_target=_parse_docs_target,
+            allow_missing_backend=True,
+        )
     )
 
 
@@ -427,66 +582,12 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
         ConfigError: If the deploy section is malformed.
     """
 
-    if not isinstance(data, dict):
-        raise ConfigError(f"`{DEPLOY_SECTION}` must be a mapping")
-
-    reject_unknown_keys(data, DEPLOY_SECTION, {TARGETS_KEY})
-    targets_data = data.get(TARGETS_KEY) or {}
-    if not isinstance(targets_data, dict):
-        raise ConfigError(f"`{DEPLOY_SECTION}.{TARGETS_KEY}` must be a mapping")
-
-    supported_backends = registered_backends(DEPLOY_BACKENDS)
-    targets: dict[str, DeployTargetConfig] = {}
-    for name, target_data in targets_data.items():
-        if not isinstance(target_data, dict):
-            raise ConfigError(
-                f"`{DEPLOY_SECTION}.{TARGETS_KEY}.{name}` must be a mapping"
-            )
-
-        backend = required_str(
-            target_data,
-            "backend",
-            f"{DEPLOY_SECTION}.{TARGETS_KEY}.{name}.backend",
-        )
-        if backend not in supported_backends:
-            raise ConfigError(
-                unsupported_backend_message(DEPLOY_SECTION, backend, supported_backends)
-            )
-
-        target = DeployTargetConfig(
-            name=name,
-            backend=backend,
-            artifacts=string_list(
-                target_data.get("artifacts"),
-                f"{DEPLOY_SECTION}.{TARGETS_KEY}.{name}.artifacts",
-            ),
-            repository=optional_str(
-                target_data,
-                "repository",
-                f"{DEPLOY_SECTION}.{TARGETS_KEY}.{name}.repository",
-            ),
-            repository_url=optional_str(
-                target_data,
-                "repository_url",
-                f"{DEPLOY_SECTION}.{TARGETS_KEY}.{name}.repository_url",
-            ),
-            args=string_list(
-                target_data.get("args"), f"{DEPLOY_SECTION}.{TARGETS_KEY}.{name}.args"
-            ),
-            env=string_mapping(
-                target_data.get("env"), f"{DEPLOY_SECTION}.{TARGETS_KEY}.{name}.env"
-            ),
-            hooks=parse_hooks(
-                target_data.get("hooks"),
-                f"{DEPLOY_SECTION}.{TARGETS_KEY}.{name}.hooks",
-            ),
-        )
-        require_backend_contract(
-            DEPLOY_SECTION, target.backend, DEPLOY_BACKENDS
-        ).validate(target)
-        targets[name] = target
-
-    return targets
+    return _parse_named_targets(
+        data,
+        section=DEPLOY_SECTION,
+        registry=DEPLOY_BACKENDS,
+        build_target=_parse_deploy_target,
+    )
 
 
 def _parse_clean(data: dict[str, Any]) -> CleanConfig:

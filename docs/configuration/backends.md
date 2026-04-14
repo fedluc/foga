@@ -70,6 +70,38 @@ fields mean:
 - `env`: environment variables added to generated commands
 - `hooks`: pre/post commands run around the C++ test workflow
 
+## Docs backends
+
+### `sphinx`
+
+`docs.targets.<name>.backend: sphinx` runs `sphinx-build`. Its fields mean:
+
+- `source_dir`: source tree passed to `sphinx-build`; this is required
+- `build_dir`: output tree passed to `sphinx-build`; this is required
+- `builder`: optional Sphinx builder name such as `html` or `dirhtml`
+- `args`: extra flags appended after the positional arguments
+- `env`: environment variables added to the docs command
+- `hooks`: pre/post commands run around the docs workflow
+
+### `mkdocs`
+
+`docs.targets.<name>.backend: mkdocs` runs `mkdocs build`. Its fields mean:
+
+- `config_file`: MkDocs config file passed as `--config-file`; this is required
+- `build_dir`: optional site output directory passed as `--site-dir`
+- `args`: extra flags appended after the base command
+- `env`: environment variables added to the docs command
+- `hooks`: pre/post commands run around the docs workflow
+
+### `doxygen`
+
+`docs.targets.<name>.backend: doxygen` runs `doxygen`. Its fields mean:
+
+- `config_file`: Doxygen config file passed to `doxygen`; this is required
+- `args`: extra flags appended after the config file
+- `env`: environment variables added to the docs command
+- `hooks`: pre/post commands run around the docs workflow
+
 ## Format backends
 
 ### `black`

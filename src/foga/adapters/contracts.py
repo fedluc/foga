@@ -38,7 +38,7 @@ class DeployRequest:
 
 @dataclass(frozen=True)
 class ToolRequest:
-    """Options used when planning format or lint commands.
+    """Options used when planning docs, format, or lint commands.
 
     Attributes:
         project_root: Project root used as the default working directory.

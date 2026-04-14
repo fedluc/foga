@@ -10,6 +10,7 @@ Optional sections:
 
 - `build`: build workflows
 - `test`: test workflows
+- `docs`: docs workflows
 - `format`: format workflows
 - `lint`: lint workflows
 - `deploy`: deployment workflows
@@ -37,6 +38,13 @@ test:
     unit:
       backend: pytest
       path: tests
+
+docs:
+  targets:
+    python-api:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build/html
 
 format:
   targets:
@@ -98,12 +106,13 @@ such as `pytest`, `tox`, or `ctest`.
 `test` is optional, but `test.runners` is the important nested section when you
 want `foga test` to run anything.
 
-### `deploy`
+### `docs`
 
-`deploy.targets` is a mapping keyed by target name. Each target currently uses
-the `twine` backend to upload matched artifacts.
+`docs.targets` is a mapping keyed by target name. Each target chooses a backend
+such as `sphinx`, `mkdocs`, or `doxygen`.
 
-`deploy` is optional. Configure it only if you want `foga deploy`.
+`docs` is optional, but `docs.targets` is the important nested section when you
+want `foga docs` to run anything.
 
 ### `format`
 
@@ -124,6 +133,13 @@ such as `ruff-check`, `pylint`, or `clang-tidy`.
 
 `lint` is optional, but `lint.targets` is the important nested section when you
 want `foga lint` to run anything.
+
+### `deploy`
+
+`deploy.targets` is a mapping keyed by target name. Each target currently uses
+the `twine` backend to upload matched artifacts.
+
+`deploy` is optional. Configure it only if you want `foga deploy`.
 
 ### `clean`
 
