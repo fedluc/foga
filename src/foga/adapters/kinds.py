@@ -5,19 +5,29 @@ from __future__ import annotations
 from ..config.constants import CPP_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND
 from ..errors import ConfigError
 
+# Build backend names
 BUILD_CMAKE = "cmake"
 BUILD_PYTHON = "python-build"
+
+# Test backend names
 TEST_PYTEST = "pytest"
 TEST_TOX = "tox"
 TEST_CTEST = "ctest"
+
+# Format backend names
 FORMAT_BLACK = "black"
 FORMAT_RUFF = "ruff-format"
 FORMAT_CLANG = "clang-format"
+
+# Lint backend names
 LINT_RUFF = "ruff-check"
 LINT_PYLINT = "pylint"
 LINT_CLANG = "clang-tidy"
+
+# Deploy backend names
 DEPLOY_TWINE = "twine"
 
+# Workflow-kind mappings
 TEST_BACKEND_KINDS: dict[str, str] = {
     TEST_PYTEST: PYTHON_WORKFLOW_KIND,
     TEST_TOX: PYTHON_WORKFLOW_KIND,
