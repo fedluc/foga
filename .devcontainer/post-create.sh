@@ -4,7 +4,7 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Install the native development toolchain that `devkit` users commonly need
+# Install the development toolchain that `foga` users commonly need
 # when building and testing Python packages with C/C++ bindings.
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
@@ -25,7 +25,7 @@ sudo rm -rf /var/lib/apt/lists/*
 python3 -m pip install --upgrade pip
 
 # Install this repository in editable mode together with the development
-# dependencies used to build, test, and publish `devkit` itself.
+# dependencies used to build, test, and publish `foga` itself.
 python3 -m pip install -e ".[dev]"
 
 # Install Codex in the container so the development environment matches the

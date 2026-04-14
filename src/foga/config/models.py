@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Mapping, TypeVar
 
-from ..adapters.kinds import test_backend_kind
+from ..adapters.kinds import format_backend_kind, lint_backend_kind, test_backend_kind
 from .constants import (
     ALL_WORKFLOW_SELECTION,
     CPP_WORKFLOW_KIND,
@@ -25,6 +25,75 @@ class HookConfig:
 
     pre: list[list[str]] = field(default_factory=list)
     post: list[list[str]] = field(default_factory=list)
+
+
+WorkflowEntryT = TypeVar("WorkflowEntryT", bound="NamedBackendConfig")
+
+
+@dataclass(frozen=True)
+class WorkflowSelectionConfig:
+    """Shared selection behavior for workflow families with kind defaults.
+
+    Attributes:
+        default: Default workflow kind selected when the CLI does not provide
+            an explicit choice.
+    """
+
+    default: str | None = None
+
+    def available_kinds(self) -> list[str]:
+        """Return the configured workflow kinds in stable execution order.
+
+        Returns:
+            Ordered workflow kinds configured for the concrete workflow family.
+        """
+
+        raise NotImplementedError
+
+    def selected_kinds(self, selection: str | None = None) -> list[str]:
+        """Resolve the active workflow kinds for an invocation.
+
+        Args:
+            selection: Optional explicit workflow kind selected by the CLI.
+
+        Returns:
+            Active workflow kinds for the current invocation.
+        """
+
+        selected = selection or self.default or ALL_WORKFLOW_SELECTION
+        if selected == ALL_WORKFLOW_SELECTION:
+            return self.available_kinds()
+        return [selected]
+
+
+@dataclass(frozen=True)
+class NamedBackendConfig:
+    """Shared command target fields used by named backend-backed workflows.
+
+    Attributes:
+        name: Configured target or runner name.
+        backend: Backend identifier selected for the entry.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around workflow steps.
+    """
+
+    name: str
+    backend: str
+    args: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
+    hooks: HookConfig = field(default_factory=HookConfig)
+
+
+@dataclass(frozen=True)
+class PathTargetConfig(NamedBackendConfig):
+    """Shared path-based target fields used by formatter and linter entries.
+
+    Attributes:
+        paths: Paths passed to the backend command.
+    """
+
+    paths: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -72,7 +141,7 @@ class PythonBuildConfig:
 
 
 @dataclass(frozen=True)
-class BuildConfig:
+class BuildConfig(WorkflowSelectionConfig):
     """Aggregate build configuration for configured build workflows.
 
     Attributes:
@@ -84,7 +153,6 @@ class BuildConfig:
         python: Optional Python build configuration.
     """
 
-    default: str | None = None
     entries: dict[str, CppBuildConfig | PythonBuildConfig] = field(default_factory=dict)
     cpp: CppBuildConfig | None = None
     python: PythonBuildConfig | None = None
@@ -136,24 +204,9 @@ class BuildConfig:
             kinds.append(PYTHON_WORKFLOW_KIND)
         return kinds
 
-    def selected_kinds(self, selection: str | None = None) -> list[str]:
-        """Resolve the active build kinds for an invocation.
-
-        Args:
-            selection: Optional explicit build kind from the CLI.
-
-        Returns:
-            Ordered build kinds that should run for the invocation.
-        """
-
-        selected = selection or self.default or ALL_WORKFLOW_SELECTION
-        if selected == ALL_WORKFLOW_SELECTION:
-            return self.available_kinds()
-        return [selected]
-
 
 @dataclass(frozen=True)
-class TestConfig:
+class TestConfig(WorkflowSelectionConfig):
     """Aggregate test configuration for configured test workflows.
 
     Attributes:
@@ -162,7 +215,8 @@ class TestConfig:
         runners: Parsed test runners keyed by runner name.
     """
 
-    default: str | None = None
+    __test__ = False
+
     runners: dict[str, TestRunnerConfig] = field(default_factory=dict)
 
     def available_kinds(self) -> list[str]:
@@ -172,24 +226,7 @@ class TestConfig:
             Ordered test kinds present in the configured runners.
         """
 
-        return _ordered_unique(
-            test_backend_kind(runner.backend) for runner in self.runners.values()
-        )
-
-    def selected_kinds(self, selection: str | None = None) -> list[str]:
-        """Resolve the active test kinds for an invocation.
-
-        Args:
-            selection: Optional explicit test kind from the CLI.
-
-        Returns:
-            Ordered test kinds that should run for the invocation.
-        """
-
-        selected = selection or self.default or ALL_WORKFLOW_SELECTION
-        if selected == ALL_WORKFLOW_SELECTION:
-            return self.available_kinds()
-        return [selected]
+        return _available_kinds_for_entries(self.runners, test_backend_kind)
 
     def select_runners(
         self, selection: str | None = None
@@ -203,16 +240,15 @@ class TestConfig:
             Runner mapping filtered to the active test kinds.
         """
 
-        active_kinds = set(self.selected_kinds(selection))
-        return {
-            name: runner
-            for name, runner in self.runners.items()
-            if test_backend_kind(runner.backend) in active_kinds
-        }
+        return _select_entries_by_kind(
+            self.runners,
+            active_kinds=set(self.selected_kinds(selection)),
+            kind_resolver=test_backend_kind,
+        )
 
 
 @dataclass(frozen=True)
-class TestRunnerConfig:
+class TestRunnerConfig(NamedBackendConfig):
     """Configuration for an individual test runner.
 
     Attributes:
@@ -232,11 +268,8 @@ class TestRunnerConfig:
         target: Optional build target for ctest preparation.
     """
 
-    name: str
-    backend: str
-    args: list[str] = field(default_factory=list)
-    env: dict[str, str] = field(default_factory=dict)
-    hooks: HookConfig = field(default_factory=HookConfig)
+    __test__ = False
+
     path: str | None = None
     marker: str | None = None
     tox_env: str | None = None
@@ -249,7 +282,115 @@ class TestRunnerConfig:
 
 
 @dataclass(frozen=True)
-class DeployTargetConfig:
+class FormatTargetConfig(PathTargetConfig):
+    """Configuration for an individual format target.
+
+    Attributes:
+        name: Target name from the configuration file.
+        backend: Format backend identifier.
+        paths: Paths passed to the formatter command.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around formatter steps.
+    """
+
+
+@dataclass(frozen=True)
+class FormatConfig(WorkflowSelectionConfig):
+    """Aggregate format configuration for configured format workflows.
+
+    Attributes:
+        default: Default format kind selection used when the CLI does not
+            request an explicit format mode.
+        targets: Parsed format targets keyed by target name.
+    """
+
+    targets: dict[str, FormatTargetConfig] = field(default_factory=dict)
+
+    def available_kinds(self) -> list[str]:
+        """Return the configured format kinds in stable execution order.
+
+        Returns:
+            Ordered format kinds derived from configured target backends.
+        """
+
+        return _available_kinds_for_entries(self.targets, format_backend_kind)
+
+    def select_targets(
+        self, selection: str | None = None
+    ) -> dict[str, FormatTargetConfig]:
+        """Return format targets matching the active selection.
+
+        Args:
+            selection: Optional explicit format kind selection.
+
+        Returns:
+            Format targets matching the active format kind set.
+        """
+
+        return _select_entries_by_kind(
+            self.targets,
+            active_kinds=set(self.selected_kinds(selection)),
+            kind_resolver=format_backend_kind,
+        )
+
+
+@dataclass(frozen=True)
+class LintTargetConfig(PathTargetConfig):
+    """Configuration for an individual lint target.
+
+    Attributes:
+        name: Target name from the configuration file.
+        backend: Lint backend identifier.
+        paths: Paths passed to the linter command.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around lint steps.
+    """
+
+
+@dataclass(frozen=True)
+class LintConfig(WorkflowSelectionConfig):
+    """Aggregate lint configuration for configured lint workflows.
+
+    Attributes:
+        default: Default lint kind selection used when the CLI does not
+            request an explicit lint mode.
+        targets: Parsed lint targets keyed by target name.
+    """
+
+    targets: dict[str, LintTargetConfig] = field(default_factory=dict)
+
+    def available_kinds(self) -> list[str]:
+        """Return the configured lint kinds in stable execution order.
+
+        Returns:
+            Ordered lint kinds derived from configured target backends.
+        """
+
+        return _available_kinds_for_entries(self.targets, lint_backend_kind)
+
+    def select_targets(
+        self, selection: str | None = None
+    ) -> dict[str, LintTargetConfig]:
+        """Return lint targets matching the active selection.
+
+        Args:
+            selection: Optional explicit lint kind selection.
+
+        Returns:
+            Lint targets matching the active lint kind set.
+        """
+
+        return _select_entries_by_kind(
+            self.targets,
+            active_kinds=set(self.selected_kinds(selection)),
+            kind_resolver=lint_backend_kind,
+        )
+
+
+@dataclass(frozen=True)
+class DeployTargetConfig(NamedBackendConfig):
     """Configuration for an individual deploy target.
 
     Attributes:
@@ -263,14 +404,9 @@ class DeployTargetConfig:
         hooks: Commands executed around deploy steps.
     """
 
-    name: str
-    backend: str
-    artifacts: list[str]
+    artifacts: list[str] = field(default_factory=list)
     repository: str | None = None
     repository_url: str | None = None
-    args: list[str] = field(default_factory=list)
-    env: dict[str, str] = field(default_factory=dict)
-    hooks: HookConfig = field(default_factory=HookConfig)
 
 
 @dataclass(frozen=True)
@@ -304,6 +440,8 @@ class FogaConfig:
         project: Parsed project metadata.
         build: Parsed build configuration.
         tests: Parsed test runner configuration and defaults.
+        formatters: Parsed format target configuration and defaults.
+        linters: Parsed lint target configuration and defaults.
         deploy: Parsed deploy configuration keyed by target name.
         clean: Parsed clean configuration.
         raw: Raw merged configuration mapping after profile application.
@@ -313,6 +451,8 @@ class FogaConfig:
     project: ProjectConfig
     build: BuildConfig
     tests: TestConfig
+    formatters: FormatConfig
+    linters: LintConfig
     deploy: dict[str, DeployTargetConfig]
     clean: CleanConfig
     raw: dict[str, Any] = field(repr=False)
@@ -348,3 +488,44 @@ def _ordered_unique(values: Any) -> list[str]:
         if value not in ordered:
             ordered.append(value)
     return ordered
+
+
+def _available_kinds_for_entries(
+    entries: Mapping[str, WorkflowEntryT],
+    kind_resolver: Callable[[str], str],
+) -> list[str]:
+    """Return unique workflow kinds for named backend-backed entries.
+
+    Args:
+        entries: Mapping of configured workflow entries.
+        kind_resolver: Function that resolves a backend identifier to a kind.
+
+    Returns:
+        Ordered unique workflow kinds for the configured entries.
+    """
+
+    return _ordered_unique(kind_resolver(entry.backend) for entry in entries.values())
+
+
+def _select_entries_by_kind(
+    entries: Mapping[str, WorkflowEntryT],
+    *,
+    active_kinds: set[str],
+    kind_resolver: Callable[[str], str],
+) -> dict[str, WorkflowEntryT]:
+    """Filter named entries down to the active workflow kind set.
+
+    Args:
+        entries: Mapping of configured workflow entries.
+        active_kinds: Workflow kinds that should remain active.
+        kind_resolver: Function that resolves a backend identifier to a kind.
+
+    Returns:
+        Entries whose backend kind belongs to the active kind set.
+    """
+
+    return {
+        name: entry
+        for name, entry in entries.items()
+        if kind_resolver(entry.backend) in active_kinds
+    }

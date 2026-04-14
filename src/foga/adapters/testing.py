@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from ..config.constants import RUNNERS_KEY, TEST_SECTION
 from ..config.models import TestRunnerConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
 from .common import split_hooks
-from .contracts import BackendContract, WorkflowPlan
+from .contracts import BackendContract, WorkflowPlan, require_backend_contract
+from .kinds import TEST_CTEST, TEST_PYTEST, TEST_TOX
 
 
 def plan_tests(runners: list[TestRunnerConfig]) -> WorkflowPlan:
@@ -21,35 +23,10 @@ def plan_tests(runners: list[TestRunnerConfig]) -> WorkflowPlan:
 
     specs: list[CommandSpec] = []
     for runner in runners:
-        contract = _test_contract(runner.backend)
+        contract = require_backend_contract(TEST_SECTION, runner.backend, TEST_BACKENDS)
         contract.validate(runner)
         specs.extend(contract.plan(runner, None))
     return WorkflowPlan(specs=specs)
-
-
-def supported_test_backends() -> set[str]:
-    """Return the registered test backend names."""
-
-    return set(TEST_BACKENDS)
-
-
-def validate_test_backend(config: TestRunnerConfig) -> None:
-    """Validate a configured test backend through the registry contract."""
-
-    _test_contract(config.backend).validate(config)
-
-
-def _test_contract(backend: str) -> BackendContract[TestRunnerConfig, None]:
-    """Resolve a registered test backend contract."""
-
-    try:
-        return TEST_BACKENDS[backend]
-    except KeyError as exc:
-        supported = ", ".join(sorted(TEST_BACKENDS))
-        raise ConfigError(
-            f"Unsupported test backend: {backend}",
-            hint=f"Choose one of the supported test backends: {supported}.",
-        ) from exc
 
 
 def _pytest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
@@ -151,41 +128,67 @@ def _ctest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
 
 
 def _validate_pytest(config: TestRunnerConfig) -> None:
-    """Validate pytest runner configuration."""
+    """Validate pytest runner configuration.
+
+    Args:
+        config: Parsed pytest runner configuration.
+
+    Raises:
+        ConfigError: If the pytest path is missing.
+    """
 
     if not config.path:
-        raise ConfigError(f"`test.runners.{config.name}.path` is required for pytest")
+        raise ConfigError(
+            f"`{TEST_SECTION}.{RUNNERS_KEY}.{config.name}.path` is required for pytest"
+        )
 
 
 def _validate_tox(config: TestRunnerConfig) -> None:
-    """Validate tox runner configuration."""
+    """Validate tox runner configuration.
+
+    Args:
+        config: Parsed tox runner configuration.
+
+    Raises:
+        ConfigError: If the tox environment is missing.
+    """
 
     if not config.tox_env:
-        raise ConfigError(f"`test.runners.{config.name}.tox_env` is required for tox")
+        raise ConfigError(
+            f"`{TEST_SECTION}.{RUNNERS_KEY}.{config.name}.tox_env` is required for tox"
+        )
 
 
 def _validate_ctest(config: TestRunnerConfig) -> None:
-    """Validate ctest runner configuration."""
+    """Validate ctest runner configuration.
+
+    Args:
+        config: Parsed ctest runner configuration.
+
+    Raises:
+        ConfigError: If the ctest build directory is missing.
+    """
 
     if not config.build_dir:
         raise ConfigError(
-            f"`test.runners.{config.name}.build_dir` is required for ctest"
+            f"`{TEST_SECTION}.{RUNNERS_KEY}.{config.name}.build_dir` "
+            "is required for ctest"
         )
 
 
 TEST_BACKENDS: dict[str, BackendContract[TestRunnerConfig, None]] = {
-    "pytest": BackendContract(
-        name="pytest",
+    TEST_PYTEST: BackendContract(
+        name=TEST_PYTEST,
         validate=_validate_pytest,
         plan=_pytest_plan,
     ),
-    "tox": BackendContract(
-        name="tox",
+    TEST_TOX: BackendContract(
+        name=TEST_TOX,
         validate=_validate_tox,
         plan=_tox_plan,
     ),
-    "ctest": BackendContract(
-        name="ctest",
+    TEST_CTEST: BackendContract(
+        name=TEST_CTEST,
         validate=_validate_ctest,
         plan=_ctest_plan,
     ),

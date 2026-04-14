@@ -61,6 +61,39 @@ test:
       args:
         - -V
 
+format:
+  default: all
+  targets:
+    python-style:
+      backend: ruff-format
+      paths:
+        - src
+        - tests
+    cpp-style:
+      backend: clang-format
+      paths:
+        - src/qupled/cpp/src
+
+lint:
+  default: all
+  targets:
+    python-style:
+      backend: ruff-check
+      paths:
+        - src
+        - tests
+    python-static:
+      backend: pylint
+      paths:
+        - src
+    cpp-style:
+      backend: clang-tidy
+      args:
+        - -p
+        - dist-cpp
+      paths:
+        - src/qupled/cpp/src
+
 profiles:
   mpi:
     build:

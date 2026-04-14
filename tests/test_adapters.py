@@ -6,12 +6,16 @@ import pytest
 
 from foga.adapters.build import plan_build
 from foga.adapters.deploy import plan_deploy
+from foga.adapters.formatting import plan_format
+from foga.adapters.linting import plan_lint
 from foga.adapters.testing import plan_tests
 from foga.config.models import (
     BuildConfig,
     CppBuildConfig,
     DeployTargetConfig,
+    FormatTargetConfig,
     HookConfig,
+    LintTargetConfig,
     PythonBuildConfig,
     TestRunnerConfig,
 )
@@ -181,6 +185,62 @@ def test_plan_tests_combines_selected_runner_contracts() -> None:
     assert [spec.command for spec in plan.specs] == [
         ["pytest", "tests/unit"],
         ["tox", "-e", "py311"],
+    ]
+
+
+def test_plan_format_builds_registered_formatter_commands(tmp_path: Path) -> None:
+    """Format planning includes hooks and backend-specific commands."""
+    targets = [
+        FormatTargetConfig(
+            name="python-style",
+            backend="ruff-format",
+            paths=["src", "tests"],
+            hooks=HookConfig(pre=[["echo", "prep"]]),
+        ),
+        FormatTargetConfig(
+            name="cpp-style",
+            backend="clang-format",
+            paths=["src/demo.cpp"],
+            args=["--style=file"],
+        ),
+    ]
+
+    plan = plan_format(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["echo", "prep"],
+        ["ruff", "format", "src", "tests"],
+        ["clang-format", "-i", "--style=file", "src/demo.cpp"],
+    ]
+
+
+def test_plan_lint_builds_registered_linter_commands(tmp_path: Path) -> None:
+    """Lint planning includes backend-specific commands in order."""
+    targets = [
+        LintTargetConfig(
+            name="python-style",
+            backend="ruff-check",
+            paths=["src", "tests"],
+        ),
+        LintTargetConfig(
+            name="python-static",
+            backend="pylint",
+            paths=["src"],
+        ),
+        LintTargetConfig(
+            name="cpp-style",
+            backend="clang-tidy",
+            paths=["src/demo.cpp"],
+            args=["-p", "build"],
+        ),
+    ]
+
+    plan = plan_lint(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["ruff", "check", "src", "tests"],
+        ["pylint", "src"],
+        ["clang-tidy", "-p", "build", "src/demo.cpp"],
     ]
 
 

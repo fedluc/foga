@@ -115,6 +115,48 @@ test:
         load_config(config_path)
 
 
+def test_load_config_rejects_unknown_format_keys(tmp_path: Path) -> None:
+    """Format config only accepts the default and targets keys."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+format:
+  adas:
+    backend: ruff-format
+    paths: ["src"]
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`format.adas` is not a supported configuration key",
+    ):
+        load_config(config_path)
+
+
+def test_load_config_rejects_unknown_lint_keys(tmp_path: Path) -> None:
+    """Lint config only accepts the default and targets keys."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+lint:
+  adas:
+    backend: ruff-check
+    paths: ["src"]
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`lint.adas` is not a supported configuration key",
+    ):
+        load_config(config_path)
+
+
 def test_load_config_rejects_unknown_deploy_keys(tmp_path: Path) -> None:
     """Deploy config only accepts the targets key."""
     config_path = write_config(
@@ -514,6 +556,60 @@ test:
         load_config(config_path)
 
 
+def test_load_config_lists_supported_format_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown format backends list the registered format backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+format:
+  targets:
+    python-style:
+      backend: unknown
+      paths: ["src"]
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "Unsupported format backend: unknown. Supported backends: black, "
+            "clang-format, ruff-format"
+        ),
+    ):
+        load_config(config_path)
+
+
+def test_load_config_lists_supported_lint_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown lint backends list the registered lint backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+lint:
+  targets:
+    python-style:
+      backend: unknown
+      paths: ["src"]
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "Unsupported lint backend: unknown. Supported backends: clang-tidy, "
+            "pylint, ruff-check"
+        ),
+    ):
+        load_config(config_path)
+
+
 def test_load_config_lists_supported_deploy_backends_for_unknown_backend(
     tmp_path: Path,
 ) -> None:
@@ -560,6 +656,70 @@ build:
     with pytest.raises(
         ConfigError,
         match="`profiles.default.build.cpp` must remain a mapping",
+    ):
+        load_config(config_path)
+
+
+def test_load_config_parses_format_and_lint_defaults(tmp_path: Path) -> None:
+    """Workflow defaults are loaded for format and lint selection."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+format:
+  default: python
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+    cpp-style:
+      backend: clang-format
+      paths: ["src/demo.cpp"]
+lint:
+  default: cpp
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
+    python-static:
+      backend: pylint
+      paths: ["src"]
+    cpp-style:
+      backend: clang-tidy
+      paths: ["src/demo.cpp"]
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.formatters.default == "python"
+    assert config.linters.default == "cpp"
+    assert config.linters.targets["python-static"].backend == "pylint"
+
+
+def test_load_config_validates_format_and_lint_paths(tmp_path: Path) -> None:
+    """Format and lint targets require at least one configured path."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+lint:
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src"]
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`format.targets.python-style.paths` must not be empty",
     ):
         load_config(config_path)
 

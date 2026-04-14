@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
-from ..config.constants import CPP_WORKFLOW_KIND
+from ..config.constants import BUILD_SECTION, CPP_WORKFLOW_KIND
 from ..config.models import BuildConfig, CppBuildConfig, PythonBuildConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
 from .common import split_hooks
-from .contracts import BackendContract, BuildRequest, WorkflowPlan
+from .contracts import (
+    BackendContract,
+    BuildRequest,
+    WorkflowPlan,
+    require_backend_contract,
+)
+from .kinds import BUILD_CMAKE, BUILD_PYTHON
 
 BuildBackendConfig = CppBuildConfig | PythonBuildConfig
 PYTHON_BUILD_COMMAND = ["python3", "-m", "build"]
@@ -32,8 +38,10 @@ def plan_build(
 
     specs: list[CommandSpec] = []
     for build_config in config.configured_backends(selection):
-        validate_build_backend(build_config)
-        contract = _build_contract(build_config.backend)
+        contract = require_backend_contract(
+            BUILD_SECTION, build_config.backend, BUILD_BACKENDS
+        )
+        contract.validate(build_config)
         specs.extend(
             contract.plan(
                 build_config,
@@ -41,52 +49,6 @@ def plan_build(
             )
         )
     return WorkflowPlan(specs=specs)
-
-
-def supported_build_backends() -> set[str]:
-    """Return the registered build backend names.
-
-    Returns:
-        Set of backend names accepted under the build configuration.
-    """
-
-    return set(BUILD_BACKENDS)
-
-
-def _build_contract(backend: str) -> BackendContract[BuildBackendConfig, BuildRequest]:
-    """Resolve a registered build backend contract.
-
-    Args:
-        backend: Configured build backend name.
-
-    Returns:
-        Registered backend contract for the requested backend.
-
-    Raises:
-        ConfigError: If the backend name is not registered.
-    """
-
-    try:
-        return BUILD_BACKENDS[backend]
-    except KeyError as exc:
-        supported = ", ".join(sorted(BUILD_BACKENDS))
-        raise ConfigError(
-            f"Unsupported build backend: {backend}",
-            hint=f"Choose one of the supported build backends: {supported}.",
-        ) from exc
-
-
-def validate_build_backend(config: BuildBackendConfig) -> None:
-    """Validate a configured build backend through the registry contract.
-
-    Args:
-        config: Parsed build backend configuration.
-
-    Raises:
-        ConfigError: If the configuration does not match the backend contract.
-    """
-
-    _build_contract(config.backend).validate(config)
 
 
 def _cmake_plan(config: CppBuildConfig, request: BuildRequest) -> list[CommandSpec]:
@@ -199,13 +161,13 @@ def _validate_python_build(config: BuildBackendConfig) -> None:
 
 
 BUILD_BACKENDS: dict[str, BackendContract[BuildBackendConfig, BuildRequest]] = {
-    "cmake": BackendContract(
-        name="cmake",
+    BUILD_CMAKE: BackendContract(
+        name=BUILD_CMAKE,
         validate=_validate_cpp_build,
         plan=_cmake_plan,
     ),
-    "python-build": BackendContract(
-        name="python-build",
+    BUILD_PYTHON: BackendContract(
+        name=BUILD_PYTHON,
         validate=_validate_python_build,
         plan=_python_build_plan,
     ),

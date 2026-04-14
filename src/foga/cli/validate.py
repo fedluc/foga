@@ -17,12 +17,25 @@ from .common import config_path_from_context
 
 @dataclass(frozen=True)
 class ValidationSummary:
-    """User-facing validation summary details."""
+    """User-facing validation summary details.
+
+    Attributes:
+        project_name: Configured project name.
+        active_profile: Active profile name, if one was resolved.
+        build_workflows: Configured build workflow names or kinds.
+        test_runners: Configured test runner names.
+        format_targets: Configured format target names.
+        lint_targets: Configured lint target names.
+        deploy_targets: Configured deploy target names.
+        clean_paths: Configured cleanup paths.
+    """
 
     project_name: str
     active_profile: str | None
     build_workflows: list[str]
     test_runners: list[str]
+    format_targets: list[str]
+    lint_targets: list[str]
     deploy_targets: list[str]
     clean_paths: list[str]
 
@@ -37,7 +50,15 @@ def validate_command(
         ),
     ] = None,
 ) -> int:
-    """Validate the configuration file."""
+    """Validate the configuration file.
+
+    Args:
+        ctx: Typer context carrying the resolved config path.
+        profile: Optional profile name applied during validation.
+
+    Returns:
+        Process exit code for the validation command.
+    """
     return run_validate(config_path_from_context(ctx), profile)
 
 
@@ -75,6 +96,8 @@ def _build_validation_summary(
         active_profile=_resolve_active_profile_name(config_path, requested_profile),
         build_workflows=list(config.build.entries) or config.build.available_kinds(),
         test_runners=list(config.tests.runners),
+        format_targets=list(config.formatters.targets),
+        lint_targets=list(config.linters.targets),
         deploy_targets=list(config.deploy),
         clean_paths=config.clean.paths,
     )
@@ -103,6 +126,14 @@ def _format_validation_summary(summary: ValidationSummary) -> str:
         format_detail(
             "Test runners",
             ", ".join(summary.test_runners) if summary.test_runners else "none",
+        ),
+        format_detail(
+            "Format targets",
+            ", ".join(summary.format_targets) if summary.format_targets else "none",
+        ),
+        format_detail(
+            "Lint targets",
+            ", ".join(summary.lint_targets) if summary.lint_targets else "none",
         ),
         format_detail(
             "Deploy targets",
