@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, TypeVar
 
-from ..adapters.build import validate_build_backend
-from ..adapters.deploy import supported_deploy_backends, validate_deploy_backend
-from ..adapters.formatting import supported_format_backends, validate_format_backend
-from ..adapters.linting import supported_lint_backends, validate_lint_backend
-from ..adapters.testing import supported_test_backends, validate_test_backend
+from ..adapters.build import BUILD_BACKENDS
+from ..adapters.contracts import registered_backends, require_backend_contract
+from ..adapters.deploy import DEPLOY_BACKENDS
+from ..adapters.formatting import FORMAT_BACKENDS
+from ..adapters.kinds import BUILD_CMAKE, BUILD_PYTHON
+from ..adapters.linting import LINT_BACKENDS
+from ..adapters.testing import TEST_BACKENDS
 from ..errors import ConfigError
 from .constants import CPP_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND, WORKFLOW_KINDS
 from .models import (
@@ -37,6 +39,9 @@ from .values import (
     string_mapping,
     unsupported_backend_message,
 )
+
+WorkflowTargetT = TypeVar("WorkflowTargetT")
+WorkflowConfigT = TypeVar("WorkflowConfigT")
 
 
 def _parse_config(data: dict[str, Any], project_root: Path) -> FogaConfig:
@@ -123,7 +128,9 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
             )
 
         config = _parse_build_backend(name, build_data, backend)
-        validate_build_backend(config)
+        require_backend_contract("build", config.backend, BUILD_BACKENDS).validate(
+            config
+        )
         entries[name] = config
         if name == CPP_WORKFLOW_KIND and isinstance(config, CppBuildConfig):
             cpp_build = config
@@ -153,7 +160,7 @@ def _parse_build_backend(
     """
 
     path = f"build.{name}"
-    if backend == "cmake":
+    if backend == BUILD_CMAKE:
         return CppBuildConfig(
             backend=backend,
             source_dir=required_str(data, "source_dir", f"{path}.source_dir"),
@@ -168,10 +175,10 @@ def _parse_build_backend(
             hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
         )
 
-    if backend == "python-build":
+    if backend == BUILD_PYTHON:
         if "command" in data:
             raise ConfigError(
-                f"`{path}.command` is not supported for the `python-build` backend; "
+                f"`{path}.command` is not supported for the `{BUILD_PYTHON}` backend; "
                 "use `args` to pass extra flags"
             )
         return PythonBuildConfig(
@@ -182,6 +189,98 @@ def _parse_build_backend(
         )
 
     raise ConfigError(f"Unsupported build backend: {backend}")
+
+
+def _parse_named_workflow_config(
+    data: dict[str, Any],
+    *,
+    section: str,
+    entries_key: str,
+    registry: dict[str, Any],
+    build_target: Callable[[str, dict[str, Any], str, str], WorkflowTargetT],
+    build_config: Callable[[str | None, dict[str, WorkflowTargetT]], WorkflowConfigT],
+) -> WorkflowConfigT:
+    """Parse workflow sections that map names to backend-configured targets."""
+
+    if not isinstance(data, dict):
+        raise ConfigError(f"`{section}` must be a mapping")
+
+    reject_unknown_keys(data, section, {"default", entries_key})
+    entries_data = data.get(entries_key) or {}
+    if not isinstance(entries_data, dict):
+        raise ConfigError(f"`{section}.{entries_key}` must be a mapping")
+
+    default = parse_workflow_selection(data.get("default"), f"{section}.default")
+    supported_backends = registered_backends(registry)
+    targets: dict[str, WorkflowTargetT] = {}
+
+    for name, target_data in entries_data.items():
+        if not isinstance(target_data, dict):
+            raise ConfigError(f"`{section}.{entries_key}.{name}` must be a mapping")
+
+        backend_path = f"{section}.{entries_key}.{name}.backend"
+        backend = optional_str(target_data, "backend", backend_path)
+        if backend is None:
+            continue
+        if backend not in supported_backends:
+            raise ConfigError(
+                unsupported_backend_message(section, backend, supported_backends)
+            )
+
+        target = build_target(
+            name, target_data, backend, f"{section}.{entries_key}.{name}"
+        )
+        require_backend_contract(section, backend, registry).validate(target)
+        targets[name] = target
+
+    return build_config(default, targets)
+
+
+def _parse_path_target(
+    target_type: Callable[..., WorkflowTargetT],
+    name: str,
+    data: dict[str, Any],
+    backend: str,
+    path: str,
+) -> WorkflowTargetT:
+    """Parse a path-based format or lint target."""
+
+    return target_type(
+        name=name,
+        backend=backend,
+        paths=string_list(data.get("paths"), f"{path}.paths"),
+        args=string_list(data.get("args"), f"{path}.args"),
+        env=string_mapping(data.get("env"), f"{path}.env"),
+        hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
+    )
+
+
+def _parse_test_runner(
+    name: str,
+    data: dict[str, Any],
+    backend: str,
+    path: str,
+) -> TestRunnerConfig:
+    """Parse a named test runner configuration."""
+
+    return TestRunnerConfig(
+        name=name,
+        backend=backend,
+        args=string_list(data.get("args"), f"{path}.args"),
+        env=string_mapping(data.get("env"), f"{path}.env"),
+        hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
+        path=optional_str(data, "path", f"{path}.path"),
+        marker=optional_str(data, "marker", f"{path}.marker"),
+        tox_env=optional_str(data, "tox_env", f"{path}.tox_env"),
+        build_dir=optional_str(data, "build_dir", f"{path}.build_dir"),
+        source_dir=optional_str(data, "source_dir", f"{path}.source_dir"),
+        generator=optional_str(data, "generator", f"{path}.generator"),
+        configure_args=string_list(
+            data.get("configure_args"), f"{path}.configure_args"
+        ),
+        build_args=string_list(data.get("build_args"), f"{path}.build_args"),
+        target=optional_str(data, "target", f"{path}.target"),
+    )
 
 
 def _parse_tests(data: dict[str, Any]) -> TestConfig:
@@ -197,63 +296,17 @@ def _parse_tests(data: dict[str, Any]) -> TestConfig:
         ConfigError: If the test section is malformed.
     """
 
-    if not isinstance(data, dict):
-        raise ConfigError("`test` must be a mapping")
-
-    reject_unknown_keys(data, "test", {"default", "runners"})
-    runners_data = data.get("runners") or {}
-    if not isinstance(runners_data, dict):
-        raise ConfigError("`test.runners` must be a mapping")
-
-    default = parse_workflow_selection(data.get("default"), "test.default")
-    supported_backends = supported_test_backends()
-    runners: dict[str, TestRunnerConfig] = {}
-
-    for name, runner_data in runners_data.items():
-        if not isinstance(runner_data, dict):
-            raise ConfigError(f"`test.runners.{name}` must be a mapping")
-
-        backend = optional_str(runner_data, "backend", f"test.runners.{name}.backend")
-        if backend is None:
-            continue
-        if backend not in supported_backends:
-            raise ConfigError(
-                unsupported_backend_message("test", backend, supported_backends)
-            )
-
-        runner = TestRunnerConfig(
-            name=name,
-            backend=backend,
-            args=string_list(runner_data.get("args"), f"test.runners.{name}.args"),
-            env=string_mapping(runner_data.get("env"), f"test.runners.{name}.env"),
-            hooks=parse_hooks(runner_data.get("hooks"), f"test.runners.{name}.hooks"),
-            path=optional_str(runner_data, "path", f"test.runners.{name}.path"),
-            marker=optional_str(runner_data, "marker", f"test.runners.{name}.marker"),
-            tox_env=optional_str(
-                runner_data, "tox_env", f"test.runners.{name}.tox_env"
-            ),
-            build_dir=optional_str(
-                runner_data, "build_dir", f"test.runners.{name}.build_dir"
-            ),
-            source_dir=optional_str(
-                runner_data, "source_dir", f"test.runners.{name}.source_dir"
-            ),
-            generator=optional_str(
-                runner_data, "generator", f"test.runners.{name}.generator"
-            ),
-            configure_args=string_list(
-                runner_data.get("configure_args"),
-                f"test.runners.{name}.configure_args",
-            ),
-            build_args=string_list(
-                runner_data.get("build_args"), f"test.runners.{name}.build_args"
-            ),
-            target=optional_str(runner_data, "target", f"test.runners.{name}.target"),
-        )
-        validate_test_backend(runner)
-        runners[name] = runner
-
-    return TestConfig(default=default, runners=runners)
+    return _parse_named_workflow_config(
+        data,
+        section="test",
+        entries_key="runners",
+        registry=TEST_BACKENDS,
+        build_target=_parse_test_runner,
+        build_config=lambda default, runners: TestConfig(
+            default=default,
+            runners=runners,
+        ),
+    )
 
 
 def _parse_format(data: dict[str, Any]) -> FormatConfig:
@@ -269,42 +322,19 @@ def _parse_format(data: dict[str, Any]) -> FormatConfig:
         ConfigError: If the format section is malformed.
     """
 
-    if not isinstance(data, dict):
-        raise ConfigError("`format` must be a mapping")
-
-    reject_unknown_keys(data, "format", {"default", "targets"})
-    targets_data = data.get("targets") or {}
-    if not isinstance(targets_data, dict):
-        raise ConfigError("`format.targets` must be a mapping")
-
-    default = parse_workflow_selection(data.get("default"), "format.default")
-    supported_backends = supported_format_backends()
-    targets: dict[str, FormatTargetConfig] = {}
-
-    for name, target_data in targets_data.items():
-        if not isinstance(target_data, dict):
-            raise ConfigError(f"`format.targets.{name}` must be a mapping")
-
-        backend = optional_str(target_data, "backend", f"format.targets.{name}.backend")
-        if backend is None:
-            continue
-        if backend not in supported_backends:
-            raise ConfigError(
-                unsupported_backend_message("format", backend, supported_backends)
-            )
-
-        target = FormatTargetConfig(
-            name=name,
-            backend=backend,
-            paths=string_list(target_data.get("paths"), f"format.targets.{name}.paths"),
-            args=string_list(target_data.get("args"), f"format.targets.{name}.args"),
-            env=string_mapping(target_data.get("env"), f"format.targets.{name}.env"),
-            hooks=parse_hooks(target_data.get("hooks"), f"format.targets.{name}.hooks"),
-        )
-        validate_format_backend(target)
-        targets[name] = target
-
-    return FormatConfig(default=default, targets=targets)
+    return _parse_named_workflow_config(
+        data,
+        section="format",
+        entries_key="targets",
+        registry=FORMAT_BACKENDS,
+        build_target=lambda name, target_data, backend, path: _parse_path_target(
+            FormatTargetConfig, name, target_data, backend, path
+        ),
+        build_config=lambda default, targets: FormatConfig(
+            default=default,
+            targets=targets,
+        ),
+    )
 
 
 def _parse_lint(data: dict[str, Any]) -> LintConfig:
@@ -320,42 +350,19 @@ def _parse_lint(data: dict[str, Any]) -> LintConfig:
         ConfigError: If the lint section is malformed.
     """
 
-    if not isinstance(data, dict):
-        raise ConfigError("`lint` must be a mapping")
-
-    reject_unknown_keys(data, "lint", {"default", "targets"})
-    targets_data = data.get("targets") or {}
-    if not isinstance(targets_data, dict):
-        raise ConfigError("`lint.targets` must be a mapping")
-
-    default = parse_workflow_selection(data.get("default"), "lint.default")
-    supported_backends = supported_lint_backends()
-    targets: dict[str, LintTargetConfig] = {}
-
-    for name, target_data in targets_data.items():
-        if not isinstance(target_data, dict):
-            raise ConfigError(f"`lint.targets.{name}` must be a mapping")
-
-        backend = optional_str(target_data, "backend", f"lint.targets.{name}.backend")
-        if backend is None:
-            continue
-        if backend not in supported_backends:
-            raise ConfigError(
-                unsupported_backend_message("lint", backend, supported_backends)
-            )
-
-        target = LintTargetConfig(
-            name=name,
-            backend=backend,
-            paths=string_list(target_data.get("paths"), f"lint.targets.{name}.paths"),
-            args=string_list(target_data.get("args"), f"lint.targets.{name}.args"),
-            env=string_mapping(target_data.get("env"), f"lint.targets.{name}.env"),
-            hooks=parse_hooks(target_data.get("hooks"), f"lint.targets.{name}.hooks"),
-        )
-        validate_lint_backend(target)
-        targets[name] = target
-
-    return LintConfig(default=default, targets=targets)
+    return _parse_named_workflow_config(
+        data,
+        section="lint",
+        entries_key="targets",
+        registry=LINT_BACKENDS,
+        build_target=lambda name, target_data, backend, path: _parse_path_target(
+            LintTargetConfig, name, target_data, backend, path
+        ),
+        build_config=lambda default, targets: LintConfig(
+            default=default,
+            targets=targets,
+        ),
+    )
 
 
 def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
@@ -379,7 +386,7 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
     if not isinstance(targets_data, dict):
         raise ConfigError("`deploy.targets` must be a mapping")
 
-    supported_backends = supported_deploy_backends()
+    supported_backends = registered_backends(DEPLOY_BACKENDS)
     targets: dict[str, DeployTargetConfig] = {}
     for name, target_data in targets_data.items():
         if not isinstance(target_data, dict):
@@ -409,7 +416,9 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
             env=string_mapping(target_data.get("env"), f"deploy.targets.{name}.env"),
             hooks=parse_hooks(target_data.get("hooks"), f"deploy.targets.{name}.hooks"),
         )
-        validate_deploy_backend(target)
+        require_backend_contract("deploy", target.backend, DEPLOY_BACKENDS).validate(
+            target
+        )
         targets[name] = target
 
     return targets
@@ -447,7 +456,7 @@ def _build_backends_for_entry(name: str) -> set[str]:
     """
 
     if name == CPP_WORKFLOW_KIND:
-        return {"cmake"}
+        return {BUILD_CMAKE}
     if name == PYTHON_WORKFLOW_KIND:
-        return {"python-build"}
+        return {BUILD_PYTHON}
     raise ConfigError(f"`build.{name}` is not a supported build entry")

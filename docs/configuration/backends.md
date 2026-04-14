@@ -114,6 +114,16 @@ paths. Its fields mean:
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
 
+### `pylint`
+
+`lint.targets.<name>.backend: pylint` runs `pylint` on the configured paths.
+Its fields mean:
+
+- `paths`: paths passed to `pylint`; this is required
+- `args`: extra flags appended before the paths
+- `env`: environment variables added to the lint command
+- `hooks`: pre/post commands run around the linter
+
 ### `clang-tidy`
 
 `lint.targets.<name>.backend: clang-tidy` runs `clang-tidy` on the configured

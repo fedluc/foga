@@ -1,15 +1,20 @@
 # Configuration Overview
 
-`foga` expects a root-level YAML mapping. The main top-level sections are:
+`foga` expects a root-level YAML mapping with these top-level sections.
 
-- `project`: required project metadata
-- `build`: optional build workflows
-- `test`: optional test workflows
-- `format`: optional format workflows
-- `lint`: optional lint workflows
-- `deploy`: optional deployment workflows
-- `clean`: optional cleanup targets
-- `profiles`: optional named overrides applied on top of the base config
+Required sections:
+
+- `project`: project metadata
+
+Optional sections:
+
+- `build`: build workflows
+- `test`: test workflows
+- `format`: format workflows
+- `lint`: lint workflows
+- `deploy`: deployment workflows
+- `clean`: cleanup targets
+- `profiles`: named overrides applied on top of the base config
 
 ## Example shape
 
@@ -113,7 +118,7 @@ you want `foga format` to run anything.
 ### `lint`
 
 `lint.targets` is a mapping keyed by target name. Each target chooses a backend
-such as `ruff-check` or `clang-tidy`.
+such as `ruff-check`, `pylint`, or `clang-tidy`.
 
 `lint.default` may be `cpp`, `python`, or `all`.
 

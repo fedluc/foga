@@ -51,6 +51,9 @@ foga lint --dry-run
 foga deploy --target pypi --dry-run
 ```
 
+Python lint targets can use `ruff-check` or `pylint`, and C++ lint targets can
+use `clang-tidy`.
+
 ## Documentation
 
 - Docs site: <https://fedluc.github.io/foga/>

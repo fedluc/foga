@@ -8,7 +8,13 @@ from ..config.models import DeployTargetConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
 from .common import split_hooks
-from .contracts import BackendContract, DeployRequest, WorkflowPlan
+from .contracts import (
+    BackendContract,
+    DeployRequest,
+    WorkflowPlan,
+    require_backend_contract,
+)
+from .kinds import DEPLOY_TWINE
 
 
 def plan_deploy(project_root: Path, targets: list[DeployTargetConfig]) -> WorkflowPlan:
@@ -25,37 +31,10 @@ def plan_deploy(project_root: Path, targets: list[DeployTargetConfig]) -> Workfl
     specs: list[CommandSpec] = []
     request = DeployRequest(project_root=project_root)
     for target in targets:
-        contract = _deploy_contract(target.backend)
+        contract = require_backend_contract("deploy", target.backend, DEPLOY_BACKENDS)
         contract.validate(target)
         specs.extend(contract.plan(target, request))
     return WorkflowPlan(specs=specs)
-
-
-def supported_deploy_backends() -> set[str]:
-    """Return the registered deploy backend names."""
-
-    return set(DEPLOY_BACKENDS)
-
-
-def validate_deploy_backend(config: DeployTargetConfig) -> None:
-    """Validate a configured deploy backend through the registry contract."""
-
-    _deploy_contract(config.backend).validate(config)
-
-
-def _deploy_contract(
-    backend: str,
-) -> BackendContract[DeployTargetConfig, DeployRequest]:
-    """Resolve a registered deploy backend contract."""
-
-    try:
-        return DEPLOY_BACKENDS[backend]
-    except KeyError as exc:
-        supported = ", ".join(sorted(DEPLOY_BACKENDS))
-        raise ConfigError(
-            f"Unsupported deploy backend: {backend}",
-            hint=f"Choose one of the supported deploy backends: {supported}.",
-        ) from exc
 
 
 def _twine_plan(
@@ -127,8 +106,8 @@ def _validate_twine(config: DeployTargetConfig) -> None:
 
 
 DEPLOY_BACKENDS: dict[str, BackendContract[DeployTargetConfig, DeployRequest]] = {
-    "twine": BackendContract(
-        name="twine",
+    DEPLOY_TWINE: BackendContract(
+        name=DEPLOY_TWINE,
         validate=_validate_twine,
         plan=_twine_plan,
     )

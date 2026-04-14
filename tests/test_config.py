@@ -604,7 +604,7 @@ lint:
         ConfigError,
         match=(
             "Unsupported lint backend: unknown. Supported backends: clang-tidy, "
-            "ruff-check"
+            "pylint, ruff-check"
         ),
     ):
         load_config(config_path)
@@ -682,6 +682,9 @@ lint:
     python-style:
       backend: ruff-check
       paths: ["src", "tests"]
+    python-static:
+      backend: pylint
+      paths: ["src"]
     cpp-style:
       backend: clang-tidy
       paths: ["src/demo.cpp"]
@@ -692,6 +695,7 @@ lint:
 
     assert config.formatters.default == "python"
     assert config.linters.default == "cpp"
+    assert config.linters.targets["python-static"].backend == "pylint"
 
 
 def test_load_config_validates_format_and_lint_paths(tmp_path: Path) -> None:

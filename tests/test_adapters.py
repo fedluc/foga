@@ -223,6 +223,11 @@ def test_plan_lint_builds_registered_linter_commands(tmp_path: Path) -> None:
             paths=["src", "tests"],
         ),
         LintTargetConfig(
+            name="python-static",
+            backend="pylint",
+            paths=["src"],
+        ),
+        LintTargetConfig(
             name="cpp-style",
             backend="clang-tidy",
             paths=["src/demo.cpp"],
@@ -234,6 +239,7 @@ def test_plan_lint_builds_registered_linter_commands(tmp_path: Path) -> None:
 
     assert [spec.command for spec in plan.specs] == [
         ["ruff", "check", "src", "tests"],
+        ["pylint", "src"],
         ["clang-tidy", "-p", "build", "src/demo.cpp"],
     ]
 

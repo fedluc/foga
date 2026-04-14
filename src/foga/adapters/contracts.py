@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Generic, TypeVar
+from typing import Callable, Generic, Mapping, TypeVar
 
+from ..errors import ConfigError
 from ..executor import CommandSpec
 
 ConfigT = TypeVar("ConfigT")
@@ -70,3 +71,28 @@ class BackendContract(Generic[ConfigT, ContextT]):
     name: str
     validate: Callable[[ConfigT], None]
     plan: Callable[[ConfigT, ContextT], list[CommandSpec]]
+
+
+def registered_backends(
+    registry: Mapping[str, BackendContract[ConfigT, ContextT]],
+) -> set[str]:
+    """Return the backend identifiers registered in a contract mapping."""
+
+    return set(registry)
+
+
+def require_backend_contract(
+    workflow: str,
+    backend: str,
+    registry: Mapping[str, BackendContract[ConfigT, ContextT]],
+) -> BackendContract[ConfigT, ContextT]:
+    """Resolve a backend contract or raise a stable unsupported-backend error."""
+
+    try:
+        return registry[backend]
+    except KeyError as exc:
+        supported = ", ".join(sorted(registry))
+        raise ConfigError(
+            f"Unsupported {workflow} backend: {backend}",
+            hint=f"Choose one of the supported {workflow} backends: {supported}.",
+        ) from exc

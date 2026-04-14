@@ -82,6 +82,10 @@ lint:
       paths:
         - src
         - tests
+    python-static:
+      backend: pylint
+      paths:
+        - src
     cpp-style:
       backend: clang-tidy
       args:

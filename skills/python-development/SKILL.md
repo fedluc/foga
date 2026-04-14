@@ -24,6 +24,8 @@ Use this skill to keep Python changes small, typed, testable, and easy to verify
 - Prefer `pathlib.Path`, `dataclass`, and straightforward collections over stringly-typed or deeply nested state.
 - Raise precise exceptions with actionable messages.
 - Keep functions focused. Split only when it improves readability or testability.
+- Avoid thin wrapper helpers that only forward to another function or registry lookup.
+- When multiple workflow sections share the same shape, prefer one shared parser or selection helper over copy-pasted loops.
 - Avoid premature frameworks, dependency injection layers, or generic utility modules unless the codebase already uses them.
 - Prefer `__future__.annotations` in Python modules when surrounding files use it.
 - Keep comments sparse. Add them only when behavior is non-obvious.
@@ -76,5 +78,6 @@ Use judgment:
 
 ## Work Log
 
+- 2026-04-14: Recorded the repository preference to remove thin wrapper helpers and to factor repeated workflow parsing and selection code into shared utilities when the structures genuinely match.
 - 2026-04-11: In `/workspaces/devkit`, added module, class, and function docstrings across the Python package and tests to improve API readability without changing behavior.
 - 2026-04-11: Recorded the repository preference for Google-style Python docstrings so future docstring updates stay consistent.

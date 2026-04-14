@@ -5,21 +5,35 @@ from __future__ import annotations
 from ..config.constants import CPP_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND
 from ..errors import ConfigError
 
+BUILD_CMAKE = "cmake"
+BUILD_PYTHON = "python-build"
+TEST_PYTEST = "pytest"
+TEST_TOX = "tox"
+TEST_CTEST = "ctest"
+FORMAT_BLACK = "black"
+FORMAT_RUFF = "ruff-format"
+FORMAT_CLANG = "clang-format"
+LINT_RUFF = "ruff-check"
+LINT_PYLINT = "pylint"
+LINT_CLANG = "clang-tidy"
+DEPLOY_TWINE = "twine"
+
 TEST_BACKEND_KINDS: dict[str, str] = {
-    "pytest": PYTHON_WORKFLOW_KIND,
-    "tox": PYTHON_WORKFLOW_KIND,
-    "ctest": CPP_WORKFLOW_KIND,
+    TEST_PYTEST: PYTHON_WORKFLOW_KIND,
+    TEST_TOX: PYTHON_WORKFLOW_KIND,
+    TEST_CTEST: CPP_WORKFLOW_KIND,
 }
 
 FORMAT_BACKEND_KINDS: dict[str, str] = {
-    "black": PYTHON_WORKFLOW_KIND,
-    "ruff-format": PYTHON_WORKFLOW_KIND,
-    "clang-format": CPP_WORKFLOW_KIND,
+    FORMAT_BLACK: PYTHON_WORKFLOW_KIND,
+    FORMAT_RUFF: PYTHON_WORKFLOW_KIND,
+    FORMAT_CLANG: CPP_WORKFLOW_KIND,
 }
 
 LINT_BACKEND_KINDS: dict[str, str] = {
-    "ruff-check": PYTHON_WORKFLOW_KIND,
-    "clang-tidy": CPP_WORKFLOW_KIND,
+    LINT_RUFF: PYTHON_WORKFLOW_KIND,
+    LINT_PYLINT: PYTHON_WORKFLOW_KIND,
+    LINT_CLANG: CPP_WORKFLOW_KIND,
 }
 
 
