@@ -11,6 +11,17 @@ TEST_BACKEND_KINDS: dict[str, str] = {
     "ctest": CPP_WORKFLOW_KIND,
 }
 
+FORMAT_BACKEND_KINDS: dict[str, str] = {
+    "black": PYTHON_WORKFLOW_KIND,
+    "ruff-format": PYTHON_WORKFLOW_KIND,
+    "clang-format": CPP_WORKFLOW_KIND,
+}
+
+LINT_BACKEND_KINDS: dict[str, str] = {
+    "ruff-check": PYTHON_WORKFLOW_KIND,
+    "clang-tidy": CPP_WORKFLOW_KIND,
+}
+
 
 def test_backend_kind(backend: str) -> str:
     """Return the logical kind associated with a test backend.
@@ -32,4 +43,30 @@ def test_backend_kind(backend: str) -> str:
         raise ConfigError(
             f"Unsupported test backend: {backend}",
             hint=f"Choose one of the supported test backends: {supported}.",
+        ) from exc
+
+
+def format_backend_kind(backend: str) -> str:
+    """Return the logical kind associated with a format backend."""
+
+    try:
+        return FORMAT_BACKEND_KINDS[backend]
+    except KeyError as exc:
+        supported = ", ".join(sorted(FORMAT_BACKEND_KINDS))
+        raise ConfigError(
+            f"Unsupported format backend: {backend}",
+            hint=f"Choose one of the supported format backends: {supported}.",
+        ) from exc
+
+
+def lint_backend_kind(backend: str) -> str:
+    """Return the logical kind associated with a lint backend."""
+
+    try:
+        return LINT_BACKEND_KINDS[backend]
+    except KeyError as exc:
+        supported = ", ".join(sorted(LINT_BACKEND_KINDS))
+        raise ConfigError(
+            f"Unsupported lint backend: {backend}",
+            hint=f"Choose one of the supported lint backends: {supported}.",
         ) from exc

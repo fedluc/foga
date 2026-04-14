@@ -5,6 +5,8 @@
 - `project`: required project metadata
 - `build`: optional build workflows
 - `test`: optional test workflows
+- `format`: optional format workflows
+- `lint`: optional lint workflows
 - `deploy`: optional deployment workflows
 - `clean`: optional cleanup targets
 - `profiles`: optional named overrides applied on top of the base config
@@ -30,6 +32,18 @@ test:
     unit:
       backend: pytest
       path: tests
+
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+
+lint:
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
 
 deploy:
   targets:
@@ -85,6 +99,26 @@ want `foga test` to run anything.
 the `twine` backend to upload matched artifacts.
 
 `deploy` is optional. Configure it only if you want `foga deploy`.
+
+### `format`
+
+`format.targets` is a mapping keyed by target name. Each target chooses a
+backend such as `ruff-format`, `black`, or `clang-format`.
+
+`format.default` may be `cpp`, `python`, or `all`.
+
+`format` is optional, but `format.targets` is the important nested section when
+you want `foga format` to run anything.
+
+### `lint`
+
+`lint.targets` is a mapping keyed by target name. Each target chooses a backend
+such as `ruff-check` or `clang-tidy`.
+
+`lint.default` may be `cpp`, `python`, or `all`.
+
+`lint` is optional, but `lint.targets` is the important nested section when you
+want `foga lint` to run anything.
 
 ### `clean`
 

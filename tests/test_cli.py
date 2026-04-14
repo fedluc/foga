@@ -28,6 +28,16 @@ deploy:
     pypi:
       backend: twine
       artifacts: ["dist/*"]
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+lint:
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
 clean:
   paths: ["dist"]
 """,
@@ -78,6 +88,8 @@ def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
     assert "project `demo` is ready to use" in captured.out
     assert "Build workflows" in captured.out
     assert "Test runners" in captured.out
+    assert "Format targets" in captured.out
+    assert "Lint targets" in captured.out
     assert "Deploy targets" in captured.out
     assert "Clean paths" in captured.out
 
@@ -383,6 +395,44 @@ def test_test_dry_run_routes_planned_specs_to_executor(
     monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
     exit_code = cli.main(["--config", str(config), "test", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured == {"count": 1, "dry_run": True}
+
+
+def test_format_dry_run_routes_planned_specs_to_executor(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The format command routes the workflow plan to the executor."""
+    config = write_config(tmp_path)
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["count"] = len(specs)
+        captured["dry_run"] = dry_run
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "format", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured == {"count": 1, "dry_run": True}
+
+
+def test_lint_dry_run_routes_planned_specs_to_executor(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The lint command routes the workflow plan to the executor."""
+    config = write_config(tmp_path)
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["count"] = len(specs)
+        captured["dry_run"] = dry_run
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "lint", "--dry-run"])
 
     assert exit_code == 0
     assert captured == {"count": 1, "dry_run": True}
@@ -717,6 +767,86 @@ test:
     assert captured["descriptions"] == ["tox runner `integration`"]
 
 
+def test_format_selection_and_target_filter_apply_together(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Format filtering applies target selection after kind selection."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+    black-style:
+      backend: black
+      paths: ["src"]
+    cpp-style:
+      backend: clang-format
+      paths: ["src/demo.cpp"]
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["descriptions"] = [spec.description for spec in specs]
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "format",
+            "python",
+            "--target",
+            "black-style",
+            "--dry-run",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["descriptions"] == ["black formatter `black-style`"]
+
+
+def test_lint_uses_default_selection_when_cli_selection_is_omitted(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Lint defaults apply when the CLI does not specify a selection."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+lint:
+  default: cpp
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
+    cpp-style:
+      backend: clang-tidy
+      paths: ["src/demo.cpp"]
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["descriptions"] = [spec.description for spec in specs]
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(["--config", str(config), "lint", "--dry-run"])
+
+    assert exit_code == 0
+    assert captured["descriptions"] == ["clang-tidy target `cpp-style`"]
+
+
 def test_validate_accepts_example_style_profile_overrides_without_backend(
     tmp_path: Path, capsys
 ) -> None:
@@ -816,6 +946,58 @@ test:
     assert "No cpp test workflows configured" in captured.err
 
 
+def test_format_uses_default_selection_error_when_default_kind_is_missing(
+    tmp_path: Path, capsys
+) -> None:
+    """Format reports the default kind when it points to no configured workflow."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+format:
+  default: cpp
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "format", "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "No cpp format workflows configured" in captured.err
+
+
+def test_lint_uses_default_selection_error_when_default_kind_is_missing(
+    tmp_path: Path, capsys
+) -> None:
+    """Lint reports the default kind when it points to no configured workflow."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+lint:
+  default: cpp
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "lint", "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "No cpp lint workflows configured" in captured.err
+
+
 def test_help_text_describes_common_profile_target_runner_and_dry_run_options() -> None:
     """Help text explains the common workflow-oriented CLI options."""
     runner = CliRunner()
@@ -823,11 +1005,15 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
     root_result = runner.invoke(cli.app, ["--help"])
     build_result = runner.invoke(cli.app, ["build", "--help"])
     test_result = runner.invoke(cli.app, ["test", "--help"])
+    format_result = runner.invoke(cli.app, ["format", "--help"])
+    lint_result = runner.invoke(cli.app, ["lint", "--help"])
     deploy_result = runner.invoke(cli.app, ["deploy", "--help"])
 
     assert root_result.exit_code == 0
     assert build_result.exit_code == 0
     assert test_result.exit_code == 0
+    assert format_result.exit_code == 0
+    assert lint_result.exit_code == 0
     assert deploy_result.exit_code == 0
 
     assert "Apply a named configuration profile" in build_result.stdout
@@ -835,10 +1021,14 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
     assert "them." in build_result.stdout
     assert "Run only the named test runner." in test_result.stdout
     assert "multiple runners." in test_result.stdout
+    assert "Run only the named format target." in format_result.stdout
+    assert "Run only the named lint target." in lint_result.stdout
     assert "Run only the named deploy target." in deploy_result.stdout
     assert "multiple targets." in deploy_result.stdout
     assert "Path to the foga YAML configuration file to load." in root_result.stdout
     assert "[cpp|python|all]" in build_result.stdout
+    assert "[cpp|python|all]" in format_result.stdout
+    assert "[cpp|python|all]" in lint_result.stdout
     assert (
         "[cpp|python|all]"
         in runner.invoke(cli.app, ["inspect", "build", "--help"]).stdout

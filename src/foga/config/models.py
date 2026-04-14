@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..adapters.kinds import test_backend_kind
+from ..adapters.kinds import format_backend_kind, lint_backend_kind, test_backend_kind
 from .constants import (
     ALL_WORKFLOW_SELECTION,
     CPP_WORKFLOW_KIND,
@@ -249,6 +249,130 @@ class TestRunnerConfig:
 
 
 @dataclass(frozen=True)
+class FormatTargetConfig:
+    """Configuration for an individual format target.
+
+    Attributes:
+        name: Target name from the configuration file.
+        backend: Format backend identifier.
+        paths: Paths passed to the formatter command.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around formatter steps.
+    """
+
+    name: str
+    backend: str
+    paths: list[str] = field(default_factory=list)
+    args: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
+    hooks: HookConfig = field(default_factory=HookConfig)
+
+
+@dataclass(frozen=True)
+class FormatConfig:
+    """Aggregate format configuration for configured format workflows.
+
+    Attributes:
+        default: Default format kind selection used when the CLI does not
+            request an explicit format mode.
+        targets: Parsed format targets keyed by target name.
+    """
+
+    default: str | None = None
+    targets: dict[str, FormatTargetConfig] = field(default_factory=dict)
+
+    def available_kinds(self) -> list[str]:
+        """Return the configured format kinds in stable execution order."""
+
+        return _ordered_unique(
+            format_backend_kind(target.backend) for target in self.targets.values()
+        )
+
+    def selected_kinds(self, selection: str | None = None) -> list[str]:
+        """Resolve the active format kinds for an invocation."""
+
+        selected = selection or self.default or ALL_WORKFLOW_SELECTION
+        if selected == ALL_WORKFLOW_SELECTION:
+            return self.available_kinds()
+        return [selected]
+
+    def select_targets(
+        self, selection: str | None = None
+    ) -> dict[str, FormatTargetConfig]:
+        """Return format targets matching the active selection."""
+
+        active_kinds = set(self.selected_kinds(selection))
+        return {
+            name: target
+            for name, target in self.targets.items()
+            if format_backend_kind(target.backend) in active_kinds
+        }
+
+
+@dataclass(frozen=True)
+class LintTargetConfig:
+    """Configuration for an individual lint target.
+
+    Attributes:
+        name: Target name from the configuration file.
+        backend: Lint backend identifier.
+        paths: Paths passed to the linter command.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around lint steps.
+    """
+
+    name: str
+    backend: str
+    paths: list[str] = field(default_factory=list)
+    args: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
+    hooks: HookConfig = field(default_factory=HookConfig)
+
+
+@dataclass(frozen=True)
+class LintConfig:
+    """Aggregate lint configuration for configured lint workflows.
+
+    Attributes:
+        default: Default lint kind selection used when the CLI does not
+            request an explicit lint mode.
+        targets: Parsed lint targets keyed by target name.
+    """
+
+    default: str | None = None
+    targets: dict[str, LintTargetConfig] = field(default_factory=dict)
+
+    def available_kinds(self) -> list[str]:
+        """Return the configured lint kinds in stable execution order."""
+
+        return _ordered_unique(
+            lint_backend_kind(target.backend) for target in self.targets.values()
+        )
+
+    def selected_kinds(self, selection: str | None = None) -> list[str]:
+        """Resolve the active lint kinds for an invocation."""
+
+        selected = selection or self.default or ALL_WORKFLOW_SELECTION
+        if selected == ALL_WORKFLOW_SELECTION:
+            return self.available_kinds()
+        return [selected]
+
+    def select_targets(
+        self, selection: str | None = None
+    ) -> dict[str, LintTargetConfig]:
+        """Return lint targets matching the active selection."""
+
+        active_kinds = set(self.selected_kinds(selection))
+        return {
+            name: target
+            for name, target in self.targets.items()
+            if lint_backend_kind(target.backend) in active_kinds
+        }
+
+
+@dataclass(frozen=True)
 class DeployTargetConfig:
     """Configuration for an individual deploy target.
 
@@ -304,6 +428,8 @@ class FogaConfig:
         project: Parsed project metadata.
         build: Parsed build configuration.
         tests: Parsed test runner configuration and defaults.
+        formatters: Parsed format target configuration and defaults.
+        linters: Parsed lint target configuration and defaults.
         deploy: Parsed deploy configuration keyed by target name.
         clean: Parsed clean configuration.
         raw: Raw merged configuration mapping after profile application.
@@ -313,6 +439,8 @@ class FogaConfig:
     project: ProjectConfig
     build: BuildConfig
     tests: TestConfig
+    formatters: FormatConfig
+    linters: LintConfig
     deploy: dict[str, DeployTargetConfig]
     clean: CleanConfig
     raw: dict[str, Any] = field(repr=False)

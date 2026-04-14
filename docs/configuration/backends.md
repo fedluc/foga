@@ -70,6 +70,60 @@ fields mean:
 - `env`: environment variables added to generated commands
 - `hooks`: pre/post commands run around the C++ test workflow
 
+## Format backends
+
+### `black`
+
+`format.targets.<name>.backend: black` runs `black` on the configured paths.
+Its fields mean:
+
+- `paths`: paths passed to `black`; this is required
+- `args`: extra flags appended before the paths
+- `env`: environment variables added to the formatter command
+- `hooks`: pre/post commands run around the formatter
+
+### `ruff-format`
+
+`format.targets.<name>.backend: ruff-format` runs `ruff format` on the
+configured paths. Its fields mean:
+
+- `paths`: paths passed to `ruff format`; this is required
+- `args`: extra flags appended before the paths
+- `env`: environment variables added to the formatter command
+- `hooks`: pre/post commands run around the formatter
+
+### `clang-format`
+
+`format.targets.<name>.backend: clang-format` runs `clang-format -i` on the
+configured paths. Its fields mean:
+
+- `paths`: paths passed to `clang-format`; this is required
+- `args`: extra flags appended after `-i` and before the paths
+- `env`: environment variables added to the formatter command
+- `hooks`: pre/post commands run around the formatter
+
+## Lint backends
+
+### `ruff-check`
+
+`lint.targets.<name>.backend: ruff-check` runs `ruff check` on the configured
+paths. Its fields mean:
+
+- `paths`: paths passed to `ruff check`; this is required
+- `args`: extra flags appended before the paths
+- `env`: environment variables added to the lint command
+- `hooks`: pre/post commands run around the linter
+
+### `clang-tidy`
+
+`lint.targets.<name>.backend: clang-tidy` runs `clang-tidy` on the configured
+paths. Its fields mean:
+
+- `paths`: paths passed to `clang-tidy`; this is required
+- `args`: extra flags appended before the paths
+- `env`: environment variables added to the lint command
+- `hooks`: pre/post commands run around the linter
+
 ## Deploy backends
 
 ### `twine`

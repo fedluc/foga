@@ -7,6 +7,8 @@ from typing import Any
 
 from ..adapters.build import validate_build_backend
 from ..adapters.deploy import supported_deploy_backends, validate_deploy_backend
+from ..adapters.formatting import supported_format_backends, validate_format_backend
+from ..adapters.linting import supported_lint_backends, validate_lint_backend
 from ..adapters.testing import supported_test_backends, validate_test_backend
 from ..errors import ConfigError
 from .constants import CPP_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND, WORKFLOW_KINDS
@@ -16,6 +18,10 @@ from .models import (
     CppBuildConfig,
     DeployTargetConfig,
     FogaConfig,
+    FormatConfig,
+    FormatTargetConfig,
+    LintConfig,
+    LintTargetConfig,
     ProjectConfig,
     PythonBuildConfig,
     TestConfig,
@@ -53,6 +59,8 @@ def _parse_config(data: dict[str, Any], project_root: Path) -> FogaConfig:
 
     build = _parse_build(data.get("build") or {})
     tests = _parse_tests(data.get("test") or {})
+    formatters = _parse_format(data.get("format") or {})
+    linters = _parse_lint(data.get("lint") or {})
     deploy = _parse_deploy(data.get("deploy") or {})
     clean = _parse_clean(data.get("clean") or {})
 
@@ -61,6 +69,8 @@ def _parse_config(data: dict[str, Any], project_root: Path) -> FogaConfig:
         project=ProjectConfig(name=str(project["name"])),
         build=build,
         tests=tests,
+        formatters=formatters,
+        linters=linters,
         deploy=deploy,
         clean=clean,
         raw=data,
@@ -244,6 +254,88 @@ def _parse_tests(data: dict[str, Any]) -> TestConfig:
         runners[name] = runner
 
     return TestConfig(default=default, runners=runners)
+
+
+def _parse_format(data: dict[str, Any]) -> FormatConfig:
+    """Parse format target configuration."""
+
+    if not isinstance(data, dict):
+        raise ConfigError("`format` must be a mapping")
+
+    reject_unknown_keys(data, "format", {"default", "targets"})
+    targets_data = data.get("targets") or {}
+    if not isinstance(targets_data, dict):
+        raise ConfigError("`format.targets` must be a mapping")
+
+    default = parse_workflow_selection(data.get("default"), "format.default")
+    supported_backends = supported_format_backends()
+    targets: dict[str, FormatTargetConfig] = {}
+
+    for name, target_data in targets_data.items():
+        if not isinstance(target_data, dict):
+            raise ConfigError(f"`format.targets.{name}` must be a mapping")
+
+        backend = optional_str(target_data, "backend", f"format.targets.{name}.backend")
+        if backend is None:
+            continue
+        if backend not in supported_backends:
+            raise ConfigError(
+                unsupported_backend_message("format", backend, supported_backends)
+            )
+
+        target = FormatTargetConfig(
+            name=name,
+            backend=backend,
+            paths=string_list(target_data.get("paths"), f"format.targets.{name}.paths"),
+            args=string_list(target_data.get("args"), f"format.targets.{name}.args"),
+            env=string_mapping(target_data.get("env"), f"format.targets.{name}.env"),
+            hooks=parse_hooks(target_data.get("hooks"), f"format.targets.{name}.hooks"),
+        )
+        validate_format_backend(target)
+        targets[name] = target
+
+    return FormatConfig(default=default, targets=targets)
+
+
+def _parse_lint(data: dict[str, Any]) -> LintConfig:
+    """Parse lint target configuration."""
+
+    if not isinstance(data, dict):
+        raise ConfigError("`lint` must be a mapping")
+
+    reject_unknown_keys(data, "lint", {"default", "targets"})
+    targets_data = data.get("targets") or {}
+    if not isinstance(targets_data, dict):
+        raise ConfigError("`lint.targets` must be a mapping")
+
+    default = parse_workflow_selection(data.get("default"), "lint.default")
+    supported_backends = supported_lint_backends()
+    targets: dict[str, LintTargetConfig] = {}
+
+    for name, target_data in targets_data.items():
+        if not isinstance(target_data, dict):
+            raise ConfigError(f"`lint.targets.{name}` must be a mapping")
+
+        backend = optional_str(target_data, "backend", f"lint.targets.{name}.backend")
+        if backend is None:
+            continue
+        if backend not in supported_backends:
+            raise ConfigError(
+                unsupported_backend_message("lint", backend, supported_backends)
+            )
+
+        target = LintTargetConfig(
+            name=name,
+            backend=backend,
+            paths=string_list(target_data.get("paths"), f"lint.targets.{name}.paths"),
+            args=string_list(target_data.get("args"), f"lint.targets.{name}.args"),
+            env=string_mapping(target_data.get("env"), f"lint.targets.{name}.env"),
+            hooks=parse_hooks(target_data.get("hooks"), f"lint.targets.{name}.hooks"),
+        )
+        validate_lint_backend(target)
+        targets[name] = target
+
+    return LintConfig(default=default, targets=targets)
 
 
 def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:

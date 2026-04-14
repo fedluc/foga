@@ -36,6 +36,17 @@ class DeployRequest:
 
 
 @dataclass(frozen=True)
+class ToolRequest:
+    """Options used when planning format or lint commands.
+
+    Attributes:
+        project_root: Project root used as the default working directory.
+    """
+
+    project_root: Path
+
+
+@dataclass(frozen=True)
 class WorkflowPlan:
     """Prepared command specs for a CLI workflow.
 
