@@ -257,7 +257,17 @@ def _parse_tests(data: dict[str, Any]) -> TestConfig:
 
 
 def _parse_format(data: dict[str, Any]) -> FormatConfig:
-    """Parse format target configuration."""
+    """Parse format target configuration.
+
+    Args:
+        data: Raw ``format`` section mapping.
+
+    Returns:
+        Parsed format configuration.
+
+    Raises:
+        ConfigError: If the format section is malformed.
+    """
 
     if not isinstance(data, dict):
         raise ConfigError("`format` must be a mapping")
@@ -298,7 +308,17 @@ def _parse_format(data: dict[str, Any]) -> FormatConfig:
 
 
 def _parse_lint(data: dict[str, Any]) -> LintConfig:
-    """Parse lint target configuration."""
+    """Parse lint target configuration.
+
+    Args:
+        data: Raw ``lint`` section mapping.
+
+    Returns:
+        Parsed lint configuration.
+
+    Raises:
+        ConfigError: If the lint section is malformed.
+    """
 
     if not isinstance(data, dict):
         raise ConfigError("`lint` must be a mapping")

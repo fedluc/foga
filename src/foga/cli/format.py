@@ -28,7 +28,13 @@ from .common import (
 
 @dataclass(slots=True)
 class FormatArgs:
-    """Parsed arguments for the format command."""
+    """Parsed arguments for the format command.
+
+    Attributes:
+        selection: Optional format kind selected from the CLI.
+        targets: Optional format target names selected from the CLI.
+        dry_run: Whether to print commands without executing them.
+    """
 
     selection: str | None
     targets: list[str] | None
@@ -70,7 +76,18 @@ def format_command(
         ),
     ] = False,
 ) -> int:
-    """Run configured format workflows."""
+    """Run configured format workflows.
+
+    Args:
+        ctx: Typer context carrying the resolved config path.
+        profile: Optional profile name applied before command planning.
+        selection: Optional format kind selector.
+        targets: Optional target names to run.
+        dry_run: Whether to print commands without executing them.
+
+    Returns:
+        Process exit code for the format command.
+    """
 
     config = load_config(config_path_from_context(ctx), profile)
     executor = CommandExecutor(config.project_root)
@@ -83,7 +100,19 @@ def format_command(
 
 
 def run_format(config: FogaConfig, executor: CommandExecutor, args: FormatArgs) -> int:
-    """Execute configured format workflows."""
+    """Execute configured format workflows.
+
+    Args:
+        config: Loaded project configuration.
+        executor: Command executor used to run or print command specs.
+        args: Parsed CLI arguments for ``foga format``.
+
+    Returns:
+        Process exit code for the format command.
+
+    Raises:
+        ConfigError: If no format workflows match the requested selection.
+    """
 
     resolved_selection = args.selection or config.formatters.default
     selected_by_kind = config.formatters.select_targets(args.selection)

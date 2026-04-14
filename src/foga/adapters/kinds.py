@@ -47,7 +47,17 @@ def test_backend_kind(backend: str) -> str:
 
 
 def format_backend_kind(backend: str) -> str:
-    """Return the logical kind associated with a format backend."""
+    """Return the logical kind associated with a format backend.
+
+    Args:
+        backend: Registered format backend identifier.
+
+    Returns:
+        Logical format kind used for CLI selection.
+
+    Raises:
+        ConfigError: If the backend name is not registered.
+    """
 
     try:
         return FORMAT_BACKEND_KINDS[backend]
@@ -60,7 +70,17 @@ def format_backend_kind(backend: str) -> str:
 
 
 def lint_backend_kind(backend: str) -> str:
-    """Return the logical kind associated with a lint backend."""
+    """Return the logical kind associated with a lint backend.
+
+    Args:
+        backend: Registered lint backend identifier.
+
+    Returns:
+        Logical lint kind used for CLI selection.
+
+    Raises:
+        ConfigError: If the backend name is not registered.
+    """
 
     try:
         return LINT_BACKEND_KINDS[backend]

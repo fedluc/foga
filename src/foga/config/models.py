@@ -283,14 +283,25 @@ class FormatConfig:
     targets: dict[str, FormatTargetConfig] = field(default_factory=dict)
 
     def available_kinds(self) -> list[str]:
-        """Return the configured format kinds in stable execution order."""
+        """Return the configured format kinds in stable execution order.
+
+        Returns:
+            Ordered format kinds derived from configured target backends.
+        """
 
         return _ordered_unique(
             format_backend_kind(target.backend) for target in self.targets.values()
         )
 
     def selected_kinds(self, selection: str | None = None) -> list[str]:
-        """Resolve the active format kinds for an invocation."""
+        """Resolve the active format kinds for an invocation.
+
+        Args:
+            selection: Optional explicit format kind selection.
+
+        Returns:
+            Active format kinds for the current invocation.
+        """
 
         selected = selection or self.default or ALL_WORKFLOW_SELECTION
         if selected == ALL_WORKFLOW_SELECTION:
@@ -300,7 +311,14 @@ class FormatConfig:
     def select_targets(
         self, selection: str | None = None
     ) -> dict[str, FormatTargetConfig]:
-        """Return format targets matching the active selection."""
+        """Return format targets matching the active selection.
+
+        Args:
+            selection: Optional explicit format kind selection.
+
+        Returns:
+            Format targets matching the active format kind set.
+        """
 
         active_kinds = set(self.selected_kinds(selection))
         return {
@@ -345,14 +363,25 @@ class LintConfig:
     targets: dict[str, LintTargetConfig] = field(default_factory=dict)
 
     def available_kinds(self) -> list[str]:
-        """Return the configured lint kinds in stable execution order."""
+        """Return the configured lint kinds in stable execution order.
+
+        Returns:
+            Ordered lint kinds derived from configured target backends.
+        """
 
         return _ordered_unique(
             lint_backend_kind(target.backend) for target in self.targets.values()
         )
 
     def selected_kinds(self, selection: str | None = None) -> list[str]:
-        """Resolve the active lint kinds for an invocation."""
+        """Resolve the active lint kinds for an invocation.
+
+        Args:
+            selection: Optional explicit lint kind selection.
+
+        Returns:
+            Active lint kinds for the current invocation.
+        """
 
         selected = selection or self.default or ALL_WORKFLOW_SELECTION
         if selected == ALL_WORKFLOW_SELECTION:
@@ -362,7 +391,14 @@ class LintConfig:
     def select_targets(
         self, selection: str | None = None
     ) -> dict[str, LintTargetConfig]:
-        """Return lint targets matching the active selection."""
+        """Return lint targets matching the active selection.
+
+        Args:
+            selection: Optional explicit lint kind selection.
+
+        Returns:
+            Lint targets matching the active lint kind set.
+        """
 
         active_kinds = set(self.selected_kinds(selection))
         return {

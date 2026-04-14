@@ -28,7 +28,13 @@ from .common import (
 
 @dataclass(slots=True)
 class LintArgs:
-    """Parsed arguments for the lint command."""
+    """Parsed arguments for the lint command.
+
+    Attributes:
+        selection: Optional lint kind selected from the CLI.
+        targets: Optional lint target names selected from the CLI.
+        dry_run: Whether to print commands without executing them.
+    """
 
     selection: str | None
     targets: list[str] | None
@@ -70,7 +76,18 @@ def lint_command(
         ),
     ] = False,
 ) -> int:
-    """Run configured lint workflows."""
+    """Run configured lint workflows.
+
+    Args:
+        ctx: Typer context carrying the resolved config path.
+        profile: Optional profile name applied before command planning.
+        selection: Optional lint kind selector.
+        targets: Optional target names to run.
+        dry_run: Whether to print commands without executing them.
+
+    Returns:
+        Process exit code for the lint command.
+    """
 
     config = load_config(config_path_from_context(ctx), profile)
     executor = CommandExecutor(config.project_root)
@@ -83,7 +100,19 @@ def lint_command(
 
 
 def run_lint(config: FogaConfig, executor: CommandExecutor, args: LintArgs) -> int:
-    """Execute configured lint workflows."""
+    """Execute configured lint workflows.
+
+    Args:
+        config: Loaded project configuration.
+        executor: Command executor used to run or print command specs.
+        args: Parsed CLI arguments for ``foga lint``.
+
+    Returns:
+        Process exit code for the lint command.
+
+    Raises:
+        ConfigError: If no lint workflows match the requested selection.
+    """
 
     resolved_selection = args.selection or config.linters.default
     selected_by_kind = config.linters.select_targets(args.selection)

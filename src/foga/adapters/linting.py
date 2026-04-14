@@ -10,7 +10,15 @@ from .contracts import BackendContract, ToolRequest, WorkflowPlan
 
 
 def plan_lint(project_root, targets: list[LintTargetConfig]) -> WorkflowPlan:
-    """Build a workflow plan for configured lint targets."""
+    """Build a workflow plan for configured lint targets.
+
+    Args:
+        project_root: Project root used as the command working directory.
+        targets: Parsed lint targets selected for execution.
+
+    Returns:
+        Planned command specs for all selected lint targets.
+    """
 
     specs: list[CommandSpec] = []
     request = ToolRequest(project_root=project_root)
@@ -22,13 +30,21 @@ def plan_lint(project_root, targets: list[LintTargetConfig]) -> WorkflowPlan:
 
 
 def supported_lint_backends() -> set[str]:
-    """Return the registered lint backend names."""
+    """Return the registered lint backend names.
+
+    Returns:
+        Set of supported lint backend identifiers.
+    """
 
     return set(LINT_BACKENDS)
 
 
 def validate_lint_backend(config: LintTargetConfig) -> None:
-    """Validate a configured lint backend through the registry contract."""
+    """Validate a configured lint backend through the registry contract.
+
+    Args:
+        config: Parsed lint target configuration.
+    """
 
     _lint_contract(config.backend).validate(config)
 
@@ -36,7 +52,17 @@ def validate_lint_backend(config: LintTargetConfig) -> None:
 def _lint_contract(
     backend: str,
 ) -> BackendContract[LintTargetConfig, ToolRequest]:
-    """Resolve a registered lint backend contract."""
+    """Resolve a registered lint backend contract.
+
+    Args:
+        backend: Requested lint backend identifier.
+
+    Returns:
+        Backend contract for the requested linter.
+
+    Raises:
+        ConfigError: If the backend name is not registered.
+    """
 
     try:
         return LINT_BACKENDS[backend]
@@ -51,7 +77,15 @@ def _lint_contract(
 def _ruff_check_plan(
     config: LintTargetConfig, request: ToolRequest
 ) -> list[CommandSpec]:
-    """Build the ruff check command for a lint target."""
+    """Build the ``ruff check`` command for a lint target.
+
+    Args:
+        config: Parsed lint target configuration.
+        request: Shared tool execution request context.
+
+    Returns:
+        Command specs for the configured ``ruff-check`` target.
+    """
 
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     specs = pre_hooks + [
@@ -69,7 +103,15 @@ def _ruff_check_plan(
 def _clang_tidy_plan(
     config: LintTargetConfig, request: ToolRequest
 ) -> list[CommandSpec]:
-    """Build the clang-tidy command for a lint target."""
+    """Build the ``clang-tidy`` command for a lint target.
+
+    Args:
+        config: Parsed lint target configuration.
+        request: Shared tool execution request context.
+
+    Returns:
+        Command specs for the configured ``clang-tidy`` target.
+    """
 
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     specs = pre_hooks + [
@@ -85,20 +127,35 @@ def _clang_tidy_plan(
 
 
 def _validate_paths(config: LintTargetConfig) -> None:
-    """Validate path-based linter configuration."""
+    """Validate path-based linter configuration.
+
+    Args:
+        config: Parsed lint target configuration.
+
+    Raises:
+        ConfigError: If no paths are configured.
+    """
 
     if not config.paths:
         raise ConfigError(f"`lint.targets.{config.name}.paths` must not be empty")
 
 
 def _validate_ruff_check(config: LintTargetConfig) -> None:
-    """Validate ruff-check target configuration."""
+    """Validate ``ruff-check`` target configuration.
+
+    Args:
+        config: Parsed lint target configuration.
+    """
 
     _validate_paths(config)
 
 
 def _validate_clang_tidy(config: LintTargetConfig) -> None:
-    """Validate clang-tidy target configuration."""
+    """Validate ``clang-tidy`` target configuration.
+
+    Args:
+        config: Parsed lint target configuration.
+    """
 
     _validate_paths(config)
 

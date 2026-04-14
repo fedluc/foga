@@ -17,7 +17,18 @@ from .common import config_path_from_context
 
 @dataclass(frozen=True)
 class ValidationSummary:
-    """User-facing validation summary details."""
+    """User-facing validation summary details.
+
+    Attributes:
+        project_name: Configured project name.
+        active_profile: Active profile name, if one was resolved.
+        build_workflows: Configured build workflow names or kinds.
+        test_runners: Configured test runner names.
+        format_targets: Configured format target names.
+        lint_targets: Configured lint target names.
+        deploy_targets: Configured deploy target names.
+        clean_paths: Configured cleanup paths.
+    """
 
     project_name: str
     active_profile: str | None
@@ -39,7 +50,15 @@ def validate_command(
         ),
     ] = None,
 ) -> int:
-    """Validate the configuration file."""
+    """Validate the configuration file.
+
+    Args:
+        ctx: Typer context carrying the resolved config path.
+        profile: Optional profile name applied during validation.
+
+    Returns:
+        Process exit code for the validation command.
+    """
     return run_validate(config_path_from_context(ctx), profile)
 
 
