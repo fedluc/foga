@@ -18,7 +18,7 @@ Use `foga build` to run configured build workflows:
 ```bash
 foga build --dry-run                                # Preview all configured build workflows
 foga build python --dry-run                         # Preview only the Python package build
-foga build native --target native_tests --dry-run   # Preview one native target explicitly
+foga build cpp --target cpp_tests --dry-run         # Preview one C++ target explicitly
 foga build all --profile mpi --dry-run              # Preview builds with the mpi profile applied
 ```
 
@@ -29,7 +29,7 @@ Use `foga test` to run one or more configured test runners:
 ```bash
 foga test --dry-run                            # Preview all configured test workflows
 foga test python --runner unit --dry-run       # Preview only the Python runner named "unit"
-foga test native --dry-run                     # Preview only native test workflows
+foga test cpp --dry-run                        # Preview only C++ test workflows
 foga test --profile mpi --dry-run              # Preview test commands with the mpi profile
 ```
 
@@ -57,10 +57,10 @@ commands:
 ```bash
 foga inspect                                     # Print the full resolved config
 foga inspect --profile mpi                       # Inspect after applying mpi
-foga inspect build native --target native_tests  # Inspect native build selection
+foga inspect build cpp --target cpp_tests        # Inspect C++ build selection
 foga inspect test python --runner unit           # Inspect the selected test runner
 foga inspect deploy --target pypi                # Inspect one deploy target
-foga inspect --full build native                 # Show the full document for build
+foga inspect --full build cpp                    # Show the full document for build
 ```
 
 Top-level `foga inspect` prints the full resolved config. Command-specific

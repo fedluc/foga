@@ -4,7 +4,7 @@
 
 ### `cmake`
 
-`build.native.backend: cmake` generates a configure step and one or more
+`build.cpp.backend: cmake` generates a configure step and one or more
 `cmake --build` steps. Its fields mean:
 
 - `source_dir`: source tree passed to `cmake -S`
@@ -12,10 +12,10 @@
 - `generator`: optional generator name such as `Ninja`
 - `configure_args`: extra flags appended to the configure step
 - `build_args`: extra flags appended to the build step
-- `targets`: default native targets to build when the CLI does not override
+- `targets`: default C++ targets to build when the CLI does not override
   them
 - `env`: environment variables added to the generated commands
-- `hooks`: pre/post commands run around the native workflow
+- `hooks`: pre/post commands run around the C++ workflow
 
 ### `python-build`
 
@@ -56,7 +56,7 @@ This backend runs `tox -e <env>`. Its fields mean:
 
 ### `ctest`
 
-This backend can configure and build native tests before running `ctest`. Its
+This backend can configure and build C++ tests before running `ctest`. Its
 fields mean:
 
 - `build_dir`: build tree used by `ctest --test-dir`; this is required
@@ -64,11 +64,11 @@ fields mean:
   configure step before testing
 - `generator`: optional generator name for the configure step
 - `configure_args`: extra flags appended to the configure step
-- `build_args`: extra flags appended to the native build step
+- `build_args`: extra flags appended to the C++ build step
 - `target`: optional build target compiled before tests run
 - `args`: extra flags appended to the final `ctest` command
 - `env`: environment variables added to generated commands
-- `hooks`: pre/post commands run around the native test workflow
+- `hooks`: pre/post commands run around the C++ test workflow
 
 ## Deploy backends
 

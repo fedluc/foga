@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from ..config.constants import NATIVE_WORKFLOW_KIND
-from ..config.models import BuildConfig, NativeBuildConfig, PythonBuildConfig
+from ..config.constants import CPP_WORKFLOW_KIND
+from ..config.models import BuildConfig, CppBuildConfig, PythonBuildConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
 from .common import split_hooks
 from .contracts import BackendContract, BuildRequest, WorkflowPlan
 
-BuildBackendConfig = NativeBuildConfig | PythonBuildConfig
+BuildBackendConfig = CppBuildConfig | PythonBuildConfig
 PYTHON_BUILD_COMMAND = ["python3", "-m", "build"]
 
 
@@ -23,7 +23,7 @@ def plan_build(
     Args:
         config: Parsed build configuration for the current project.
         selection: Optional explicit build kind requested by the CLI.
-        targets: Optional explicit native build targets that override the
+        targets: Optional explicit C++ build targets that override the
             configured defaults.
 
     Returns:
@@ -89,17 +89,17 @@ def validate_build_backend(config: BuildBackendConfig) -> None:
     _build_contract(config.backend).validate(config)
 
 
-def _cmake_plan(config: NativeBuildConfig, request: BuildRequest) -> list[CommandSpec]:
-    """Build CMake configure and build commands for a native workflow.
+def _cmake_plan(config: CppBuildConfig, request: BuildRequest) -> list[CommandSpec]:
+    """Build CMake configure and build commands for a C++ workflow.
 
     Args:
-        config: Parsed native build configuration.
+        config: Parsed C++ build configuration.
         request: Build planning options.
 
     Returns:
         Command specs for the configure step and one or more build steps.
     """
-    pre_hooks, post_hooks = split_hooks(config.hooks, NATIVE_WORKFLOW_KIND)
+    pre_hooks, post_hooks = split_hooks(config.hooks, CPP_WORKFLOW_KIND)
     command = [
         "cmake",
         "-S",
@@ -168,18 +168,18 @@ def _python_build_plan(
     return specs
 
 
-def _validate_native_build(config: BuildBackendConfig) -> None:
-    """Validate the native build contract input.
+def _validate_cpp_build(config: BuildBackendConfig) -> None:
+    """Validate the C++ build contract input.
 
     Args:
         config: Parsed build backend configuration.
 
     Raises:
-        ConfigError: If the config is not a native build configuration.
+        ConfigError: If the config is not a C++ build configuration.
     """
 
-    if not isinstance(config, NativeBuildConfig):
-        raise ConfigError("The `cmake` backend requires a native build configuration")
+    if not isinstance(config, CppBuildConfig):
+        raise ConfigError("The `cmake` backend requires a C++ build configuration")
 
 
 def _validate_python_build(config: BuildBackendConfig) -> None:
@@ -201,7 +201,7 @@ def _validate_python_build(config: BuildBackendConfig) -> None:
 BUILD_BACKENDS: dict[str, BackendContract[BuildBackendConfig, BuildRequest]] = {
     "cmake": BackendContract(
         name="cmake",
-        validate=_validate_native_build,
+        validate=_validate_cpp_build,
         plan=_cmake_plan,
     ),
     "python-build": BackendContract(

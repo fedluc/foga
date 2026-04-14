@@ -3,14 +3,14 @@
 </p>
 
 `foga` is a Python package and CLI for developers maintaining Python packages
-with native C or C++ bindings. It replaces ad-hoc repository scripts with a
+with C or C++ bindings. It replaces ad-hoc repository scripts with a
 single YAML configuration file that drives build, test, deploy, inspect, and
 cleanup workflows.
 
 ## What foga does
 
-- build Python packages and native artifacts from one config file
-- run Python and native test workflows through one CLI
+- build Python packages and C++ artifacts from one config file
+- run Python and C++ test workflows through one CLI
 - switch environment-specific settings with named profiles
 - inspect the resolved config before running anything
 - keep escape hatches explicit through structured hooks

@@ -10,7 +10,7 @@ import typer
 from ..adapters.testing import plan_tests
 from ..config.constants import (
     ALL_WORKFLOW_SELECTION,
-    NATIVE_WORKFLOW_KIND,
+    CPP_WORKFLOW_KIND,
     PYTHON_WORKFLOW_KIND,
 )
 from ..config.loading import load_config
@@ -49,7 +49,7 @@ def test_command(
         typer.Argument(
             help=(
                 "Run only the selected test kind: "
-                f"{NATIVE_WORKFLOW_KIND}, {PYTHON_WORKFLOW_KIND}, "
+                f"{CPP_WORKFLOW_KIND}, {PYTHON_WORKFLOW_KIND}, "
                 f"or {ALL_WORKFLOW_SELECTION}."
             ),
             metavar=WORKFLOW_SELECTION_METAVAR,

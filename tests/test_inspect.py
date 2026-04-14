@@ -14,8 +14,8 @@ def test_emit_document_colorizes_tty_output(monkeypatch, capsys) -> None:
         {
             "summary": {
                 "command": "build",
-                "selection": "native",
-                "targets": ["native_tests"],
+                "selection": "cpp",
+                "targets": ["cpp_tests"],
             }
         }
     )
@@ -23,7 +23,7 @@ def test_emit_document_colorizes_tty_output(monkeypatch, capsys) -> None:
     captured = capsys.readouterr()
     assert "\033[" in captured.out
     assert "summary" in captured.out
-    assert "native_tests" in captured.out
+    assert "cpp_tests" in captured.out
 
 
 def test_emit_document_keeps_plain_yaml_for_non_tty(monkeypatch, capsys) -> None:
@@ -34,11 +34,11 @@ def test_emit_document_keeps_plain_yaml_for_non_tty(monkeypatch, capsys) -> None
         {
             "summary": {
                 "command": "build",
-                "selection": "native",
+                "selection": "cpp",
             }
         }
     )
 
     captured = capsys.readouterr()
     assert "\033[" not in captured.out
-    assert captured.out == ("summary:\n  command: build\n  selection: native\n")
+    assert captured.out == ("summary:\n  command: build\n  selection: cpp\n")

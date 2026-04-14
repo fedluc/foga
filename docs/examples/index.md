@@ -5,8 +5,8 @@ projects.
 
 ## Available examples
 
-- [qupled](qupled.md): native CMake build, Python packaging, pytest suites,
-  a `ctest` native test runner, and MPI-related profiles
+- [qupled](qupled.md): C++ CMake build, Python packaging, pytest suites,
+  a `ctest` C++ test runner, and MPI-related profiles
 - [pybind11](pybind11.md): pinned containerized example that provisions an
   upstream repository in Docker and runs `foga` against it
 

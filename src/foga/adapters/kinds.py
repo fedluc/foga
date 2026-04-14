@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from ..config.constants import NATIVE_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND
+from ..config.constants import CPP_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND
 from ..errors import ConfigError
 
 TEST_BACKEND_KINDS: dict[str, str] = {
     "pytest": PYTHON_WORKFLOW_KIND,
     "tox": PYTHON_WORKFLOW_KIND,
-    "ctest": NATIVE_WORKFLOW_KIND,
+    "ctest": CPP_WORKFLOW_KIND,
 }
 
 

@@ -3,10 +3,10 @@ project:
 
 build:
   default: all
-  native:
+  cpp:
     backend: cmake
-    source_dir: src/qupled/native/src
-    build_dir: dist-native
+    source_dir: src/qupled/cpp/src
+    build_dir: dist-cpp
     configure_args:
       - -DBUILD_NATIVE_TESTS=OFF
       - -DUSE_MPI=OFF
@@ -25,10 +25,10 @@ test:
       marker: unit
       args:
         - -v
-    native-bindings:
+    cpp-bindings:
       backend: pytest
       path: tests
-      marker: native
+      marker: cpp
       args:
         - -v
     integration:
@@ -50,21 +50,21 @@ test:
               "-c",
               "from pathlib import Path; src = Path('examples/docs'); dst = Path('docs'); [(dst / path.name).unlink() for path in src.glob('*.py') if (dst / path.name).exists()]",
             ]
-    native-cpp:
+    cpp-tests:
       backend: ctest
-      source_dir: src/qupled/native/src
-      build_dir: dist-native-tests
+      source_dir: src/qupled/cpp/src
+      build_dir: dist-cpp-tests
       configure_args:
         - -DBUILD_NATIVE_TESTS=ON
         - -DUSE_MPI=OFF
-      target: native_tests
+      target: cpp_tests
       args:
         - -V
 
 profiles:
   mpi:
     build:
-      native:
+      cpp:
         configure_args:
           - -DBUILD_NATIVE_TESTS=OFF
           - -DUSE_MPI=ON
@@ -74,13 +74,13 @@ profiles:
           BUILD_NATIVE_TESTS: "OFF"
     test:
       runners:
-        native-cpp:
+        cpp-tests:
           configure_args:
             - -DBUILD_NATIVE_TESTS=ON
             - -DUSE_MPI=ON
   macos-homebrew:
     build:
-      native:
+      cpp:
         env:
           OpenMP_ROOT: /opt/homebrew/opt/libomp
       python:
@@ -88,7 +88,7 @@ profiles:
           OpenMP_ROOT: /opt/homebrew/opt/libomp
     test:
       runners:
-        native-cpp:
+        cpp-tests:
           env:
             OpenMP_ROOT: /opt/homebrew/opt/libomp
 
@@ -101,5 +101,5 @@ deploy:
 
 clean:
   paths:
-    - dist-native
-    - dist-native-tests
+    - dist-cpp
+    - dist-cpp-tests

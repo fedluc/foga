@@ -9,9 +9,9 @@ from foga.adapters.deploy import plan_deploy
 from foga.adapters.testing import plan_tests
 from foga.config.models import (
     BuildConfig,
+    CppBuildConfig,
     DeployTargetConfig,
     HookConfig,
-    NativeBuildConfig,
     PythonBuildConfig,
     TestRunnerConfig,
 )
@@ -19,16 +19,16 @@ from foga.errors import ConfigError
 
 
 def test_plan_build_generates_cmake_and_python_commands() -> None:
-    """Build planning includes native and Python commands in order."""
+    """Build planning includes cpp and Python commands in order."""
     config = BuildConfig(
-        native=NativeBuildConfig(
+        cpp=CppBuildConfig(
             backend="cmake",
-            source_dir="src/native",
-            build_dir="build/native",
+            source_dir="src/cpp",
+            build_dir="build/cpp",
             generator="Ninja",
             configure_args=["-DUSE_MPI=OFF"],
             build_args=["--verbose"],
-            targets=["native_tests"],
+            targets=["cpp_tests"],
             env={"CC": "clang"},
             hooks=HookConfig(pre=[["echo", "prep"]]),
         ),
@@ -44,9 +44,9 @@ def test_plan_build_generates_cmake_and_python_commands() -> None:
     assert specs[1].command == [
         "cmake",
         "-S",
-        "src/native",
+        "src/cpp",
         "-B",
-        "build/native",
+        "build/cpp",
         "-G",
         "Ninja",
         "-DUSE_MPI=OFF",
@@ -54,11 +54,11 @@ def test_plan_build_generates_cmake_and_python_commands() -> None:
     assert specs[2].command == [
         "cmake",
         "--build",
-        "build/native",
+        "build/cpp",
         "--parallel",
         "--verbose",
         "--target",
-        "native_tests",
+        "cpp_tests",
     ]
     assert specs[3].command == ["python3", "-m", "build", "--wheel"]
 
@@ -66,10 +66,10 @@ def test_plan_build_generates_cmake_and_python_commands() -> None:
 def test_plan_build_returns_registered_backend_specs_in_order() -> None:
     """Build planning uses the registered backend contracts in config order."""
     config = BuildConfig(
-        native=NativeBuildConfig(
+        cpp=CppBuildConfig(
             backend="cmake",
-            source_dir="src/native",
-            build_dir="build/native",
+            source_dir="src/cpp",
+            build_dir="build/cpp",
         ),
         python=PythonBuildConfig(
             backend="python-build",
@@ -77,11 +77,11 @@ def test_plan_build_returns_registered_backend_specs_in_order() -> None:
         ),
     )
 
-    plan = plan_build(config, targets=["native_tests"])
+    plan = plan_build(config, targets=["cpp_tests"])
 
     assert [spec.description for spec in plan.specs] == [
         "cmake configure",
-        "cmake build target `native_tests`",
+        "cmake build target `cpp_tests`",
         "python package build",
     ]
 
@@ -90,10 +90,10 @@ def test_plan_build_can_select_only_python_backends() -> None:
     """Build planning can narrow execution to Python workflows."""
     config = BuildConfig(
         entries={
-            "native": NativeBuildConfig(
+            "cpp": CppBuildConfig(
                 backend="cmake",
-                source_dir="src/native",
-                build_dir="build/native",
+                source_dir="src/cpp",
+                build_dir="build/cpp",
             ),
             "wheel": PythonBuildConfig(
                 backend="python-build",
@@ -110,11 +110,11 @@ def test_plan_build_can_select_only_python_backends() -> None:
 def test_plan_tests_ctest_runner_can_prepare_target_before_running() -> None:
     """ctest runners can configure and build before executing tests."""
     runner = TestRunnerConfig(
-        name="native",
+        name="cpp",
         backend="ctest",
-        source_dir="src/native",
-        build_dir="build/native-tests",
-        target="native_tests",
+        source_dir="src/cpp",
+        build_dir="build/cpp-tests",
+        target="cpp_tests",
         configure_args=["-DBUILD_NATIVE_TESTS=ON"],
     )
 
@@ -123,23 +123,23 @@ def test_plan_tests_ctest_runner_can_prepare_target_before_running() -> None:
     assert specs[0].command == [
         "cmake",
         "-S",
-        "src/native",
+        "src/cpp",
         "-B",
-        "build/native-tests",
+        "build/cpp-tests",
         "-DBUILD_NATIVE_TESTS=ON",
     ]
     assert specs[1].command == [
         "cmake",
         "--build",
-        "build/native-tests",
+        "build/cpp-tests",
         "--parallel",
         "--target",
-        "native_tests",
+        "cpp_tests",
     ]
     assert specs[2].command == [
         "ctest",
         "--test-dir",
-        "build/native-tests",
+        "build/cpp-tests",
         "--output-on-failure",
     ]
 

@@ -13,7 +13,7 @@ import yaml
 
 from ..config.constants import (
     ALL_WORKFLOW_SELECTION,
-    NATIVE_WORKFLOW_KIND,
+    CPP_WORKFLOW_KIND,
     PYTHON_WORKFLOW_KIND,
 )
 from ..config.loading import load_config
@@ -93,7 +93,7 @@ def inspect_build_command(
         list[str] | None,
         typer.Option(
             "--target",
-            help="Show native build target overrides in the resolved config.",
+            help="Show cpp build target overrides in the resolved config.",
         ),
     ] = None,
 ) -> int:
@@ -257,9 +257,7 @@ def _validate_build_target_override(config: FogaConfig, args: InspectArgs) -> No
         and args.targets
         and config.build.selected_kinds(args.selection) == [PYTHON_WORKFLOW_KIND]
     ):
-        raise ConfigError(
-            "`inspect build --target` can only be used with native builds"
-        )
+        raise ConfigError("`inspect build --target` can only be used with cpp builds")
 
 
 def _build_context(config: FogaConfig, args: InspectArgs) -> dict[str, object]:
@@ -300,7 +298,7 @@ def _build_build_context(config: FogaConfig, args: InspectArgs) -> dict[str, obj
     effective_targets = {
         name: list(args.targets) if args.targets else config.build.entries[name].targets
         for name in selected_entries
-        if build_kind(config.build.entries[name]) == NATIVE_WORKFLOW_KIND
+        if build_kind(config.build.entries[name]) == CPP_WORKFLOW_KIND
     }
     summary: dict[str, object] = {
         "command": "build",
@@ -370,7 +368,7 @@ def _should_include_build_entries(
 def _summarize_targets(
     effective_targets: dict[str, list[str]],
 ) -> list[str] | dict[str, list[str]]:
-    """Collapse target output when only one native build entry is active.
+    """Collapse target output when only one C++ build entry is active.
 
     Args:
         effective_targets: Effective targets keyed by build entry name.
@@ -404,7 +402,7 @@ def _build_resolved_config(config: FogaConfig, args: InspectArgs) -> dict[str, o
     active_kinds = set(config.build.selected_kinds(args.selection))
     for name, build_config in config.build.entries.items():
         if (
-            build_kind(build_config) != NATIVE_WORKFLOW_KIND
+            build_kind(build_config) != CPP_WORKFLOW_KIND
             or build_kind(build_config) not in active_kinds
         ):
             continue

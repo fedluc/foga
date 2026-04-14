@@ -3,7 +3,7 @@ project:
 
 build:
   default: all
-  native:
+  cpp:
     backend: cmake
     source_dir: .
     build_dir: build-foga
@@ -46,7 +46,7 @@ clean:
 profiles:
   release:
     build:
-      native:
+      cpp:
         build_dir: build-foga-release
         configure_args:
           - -DCMAKE_BUILD_TYPE=Release
@@ -58,7 +58,7 @@ profiles:
 
   relwithdebinfo:
     build:
-      native:
+      cpp:
         build_dir: build-foga-relwithdebinfo
         configure_args:
           - -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -70,7 +70,7 @@ profiles:
 
   venv:
     build:
-      native:
+      cpp:
         build_dir: build-foga-venv
         configure_args:
           - -DCMAKE_BUILD_TYPE=Debug
@@ -83,7 +83,7 @@ profiles:
 
   tidy:
     build:
-      native:
+      cpp:
         build_dir: build-foga-tidy
         build_args:
           - "1"
@@ -100,7 +100,7 @@ profiles:
 
   tidy-relaxed:
     build:
-      native:
+      cpp:
         build_dir: build-foga-tidy-relaxed
         build_args:
           - "1"
@@ -117,7 +117,7 @@ profiles:
 
   tidy-cpptest:
     build:
-      native:
+      cpp:
         build_dir: build-foga-tidy-cpptest
         build_args:
           - "1"
@@ -135,25 +135,25 @@ profiles:
 
   cpptest:
     build:
-      native:
+      cpp:
         targets:
           - cpptest
 
   pytest-target:
     build:
-      native:
+      cpp:
         targets:
           - pytest
 
   cmake-build-tests:
     build:
-      native:
+      cpp:
         targets:
           - test_cmake_build
 
   focused-callbacks-pickling:
     build:
-      native:
+      cpp:
         build_dir: build-foga-focused
         configure_args:
           - -DCMAKE_BUILD_TYPE=Debug

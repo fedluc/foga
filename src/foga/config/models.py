@@ -9,7 +9,7 @@ from typing import Any
 from ..adapters.kinds import test_backend_kind
 from .constants import (
     ALL_WORKFLOW_SELECTION,
-    NATIVE_WORKFLOW_KIND,
+    CPP_WORKFLOW_KIND,
     PYTHON_WORKFLOW_KIND,
 )
 
@@ -28,19 +28,19 @@ class HookConfig:
 
 
 @dataclass(frozen=True)
-class NativeBuildConfig:
-    """Configuration for a native CMake build workflow.
+class CppBuildConfig:
+    """Configuration for a C++ CMake build workflow.
 
     Attributes:
-        backend: Native build backend identifier.
+        backend: C++ build backend identifier.
         source_dir: Source directory passed to CMake.
         build_dir: Build directory passed to CMake.
         generator: Optional generator name for CMake.
         configure_args: Extra arguments passed to ``cmake -S``.
         build_args: Extra arguments passed to ``cmake --build``.
-        targets: Default native targets to build when none are requested.
+        targets: Default C++ targets to build when none are requested.
         env: Environment variables applied to generated commands.
-        hooks: Commands executed around native build steps.
+        hooks: Commands executed around C++ build steps.
     """
 
     backend: str
@@ -80,20 +80,18 @@ class BuildConfig:
             request an explicit build mode.
         entries: Build workflow configuration keyed by section name under
             ``build``.
-        native: Optional native build configuration.
+        cpp: Optional C++ build configuration.
         python: Optional Python build configuration.
     """
 
     default: str | None = None
-    entries: dict[str, NativeBuildConfig | PythonBuildConfig] = field(
-        default_factory=dict
-    )
-    native: NativeBuildConfig | None = None
+    entries: dict[str, CppBuildConfig | PythonBuildConfig] = field(default_factory=dict)
+    cpp: CppBuildConfig | None = None
     python: PythonBuildConfig | None = None
 
     def configured_backends(
         self, selection: str | None = None
-    ) -> list[NativeBuildConfig | PythonBuildConfig]:
+    ) -> list[CppBuildConfig | PythonBuildConfig]:
         """Return configured build backends in execution order.
 
         Args:
@@ -112,9 +110,9 @@ class BuildConfig:
                 if build_kind(config) in active_kinds
             ]
 
-        backends: list[NativeBuildConfig | PythonBuildConfig] = []
-        if self.native is not None and NATIVE_WORKFLOW_KIND in active_kinds:
-            backends.append(self.native)
+        backends: list[CppBuildConfig | PythonBuildConfig] = []
+        if self.cpp is not None and CPP_WORKFLOW_KIND in active_kinds:
+            backends.append(self.cpp)
         if self.python is not None and PYTHON_WORKFLOW_KIND in active_kinds:
             backends.append(self.python)
         return backends
@@ -132,8 +130,8 @@ class BuildConfig:
             )
 
         kinds: list[str] = []
-        if self.native is not None:
-            kinds.append(NATIVE_WORKFLOW_KIND)
+        if self.cpp is not None:
+            kinds.append(CPP_WORKFLOW_KIND)
         if self.python is not None:
             kinds.append(PYTHON_WORKFLOW_KIND)
         return kinds
@@ -320,7 +318,7 @@ class FogaConfig:
     raw: dict[str, Any] = field(repr=False)
 
 
-def build_kind(config: NativeBuildConfig | PythonBuildConfig) -> str:
+def build_kind(config: CppBuildConfig | PythonBuildConfig) -> str:
     """Return the logical kind for a parsed build backend config.
 
     Args:
@@ -330,8 +328,8 @@ def build_kind(config: NativeBuildConfig | PythonBuildConfig) -> str:
         Logical build kind associated with the backend config.
     """
 
-    if isinstance(config, NativeBuildConfig):
-        return NATIVE_WORKFLOW_KIND
+    if isinstance(config, CppBuildConfig):
+        return CPP_WORKFLOW_KIND
     return PYTHON_WORKFLOW_KIND
 
 

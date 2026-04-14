@@ -13,7 +13,7 @@ Suggested migration path:
    and cleanup.
 2. Map each stable workflow to a built-in backend first:
    `python -m build` becomes `python-build`, `pytest` becomes `pytest`,
-   `tox -e <env>` becomes `tox`, and `cmake` or `ctest` become native
+   `tox -e <env>` becomes `tox`, and `cmake` or `ctest` become C++
    backends.
 3. Keep repo-specific scripts only for logic that is genuinely project-specific.
 4. Wrap small prep or cleanup steps with hooks instead of copying full shell
@@ -53,7 +53,7 @@ When opened in a compatible environment, it installs:
 
 - Python 3.11
 - `foga` in editable mode with the `dev` extra, including `ruff`
-- common native-tooling dependencies used by package workflows:
+- common C++ tooling dependencies used by package workflows:
   `build-essential`, `clang`, `cmake`, `ninja-build`, `pkg-config`, and `gdb`
 - GitHub CLI (`gh`) for authenticated GitHub API and repository operations
 - Codex via `npm`

@@ -17,7 +17,7 @@ class BuildRequest:
     """Options used when planning build backend commands.
 
     Attributes:
-        targets: Optional explicit native build targets requested by the CLI.
+        targets: Optional explicit C++ build targets requested by the CLI.
             When unset, the backend should use its configured default targets.
     """
 

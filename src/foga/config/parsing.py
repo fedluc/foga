@@ -9,13 +9,13 @@ from ..adapters.build import validate_build_backend
 from ..adapters.deploy import supported_deploy_backends, validate_deploy_backend
 from ..adapters.testing import supported_test_backends, validate_test_backend
 from ..errors import ConfigError
-from .constants import NATIVE_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND, WORKFLOW_KINDS
+from .constants import CPP_WORKFLOW_KIND, PYTHON_WORKFLOW_KIND, WORKFLOW_KINDS
 from .models import (
     BuildConfig,
     CleanConfig,
+    CppBuildConfig,
     DeployTargetConfig,
     FogaConfig,
-    NativeBuildConfig,
     ProjectConfig,
     PythonBuildConfig,
     TestConfig,
@@ -83,8 +83,8 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
     if not isinstance(data, dict):
         raise ConfigError("`build` must be a mapping")
 
-    entries: dict[str, NativeBuildConfig | PythonBuildConfig] = {}
-    native = None
+    entries: dict[str, CppBuildConfig | PythonBuildConfig] = {}
+    cpp_build = None
     python_build = None
     default = parse_workflow_selection(data.get("default"), "build.default")
 
@@ -95,7 +95,7 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
             raise ConfigError(
                 f"`build.{name}` is not a supported build entry",
                 hint=(
-                    "Use `build.native` and/or `build.python` for "
+                    "Use `build.cpp` and/or `build.python` for "
                     "configured build workflows."
                 ),
             )
@@ -115,19 +115,19 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
         config = _parse_build_backend(name, build_data, backend)
         validate_build_backend(config)
         entries[name] = config
-        if name == NATIVE_WORKFLOW_KIND and isinstance(config, NativeBuildConfig):
-            native = config
+        if name == CPP_WORKFLOW_KIND and isinstance(config, CppBuildConfig):
+            cpp_build = config
         if name == PYTHON_WORKFLOW_KIND and isinstance(config, PythonBuildConfig):
             python_build = config
 
     return BuildConfig(
-        default=default, entries=entries, native=native, python=python_build
+        default=default, entries=entries, cpp=cpp_build, python=python_build
     )
 
 
 def _parse_build_backend(
     name: str, data: dict[str, Any], backend: str
-) -> NativeBuildConfig | PythonBuildConfig:
+) -> CppBuildConfig | PythonBuildConfig:
     """Parse a configured build backend by backend type.
 
     Args:
@@ -136,7 +136,7 @@ def _parse_build_backend(
         backend: Validated backend identifier.
 
     Returns:
-        Parsed native or Python build config.
+        Parsed C++ or Python build config.
 
     Raises:
         ConfigError: If the backend-specific configuration is invalid.
@@ -144,7 +144,7 @@ def _parse_build_backend(
 
     path = f"build.{name}"
     if backend == "cmake":
-        return NativeBuildConfig(
+        return CppBuildConfig(
             backend=backend,
             source_dir=required_str(data, "source_dir", f"{path}.source_dir"),
             build_dir=required_str(data, "build_dir", f"{path}.build_dir"),
@@ -334,7 +334,7 @@ def _build_backends_for_entry(name: str) -> set[str]:
         ConfigError: If the build entry name is unsupported.
     """
 
-    if name == NATIVE_WORKFLOW_KIND:
+    if name == CPP_WORKFLOW_KIND:
         return {"cmake"}
     if name == PYTHON_WORKFLOW_KIND:
         return {"python-build"}

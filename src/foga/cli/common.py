@@ -8,7 +8,7 @@ import typer
 
 from ..config.constants import (
     ALL_WORKFLOW_SELECTION,
-    NATIVE_WORKFLOW_KIND,
+    CPP_WORKFLOW_KIND,
     PYTHON_WORKFLOW_KIND,
 )
 from ..errors import ConfigError
@@ -17,13 +17,13 @@ from ..errors import ConfigError
 class WorkflowSelection(str, Enum):
     """Supported workflow selection values exposed by the CLI."""
 
-    NATIVE = NATIVE_WORKFLOW_KIND
+    CPP = CPP_WORKFLOW_KIND
     PYTHON = PYTHON_WORKFLOW_KIND
     ALL = ALL_WORKFLOW_SELECTION
 
 
 WORKFLOW_SELECTION_METAVAR = (
-    f"{NATIVE_WORKFLOW_KIND}|{PYTHON_WORKFLOW_KIND}|{ALL_WORKFLOW_SELECTION}"
+    f"{CPP_WORKFLOW_KIND}|{PYTHON_WORKFLOW_KIND}|{ALL_WORKFLOW_SELECTION}"
 )
 
 

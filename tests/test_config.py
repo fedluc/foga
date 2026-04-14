@@ -25,7 +25,7 @@ project:
 profiles:
   default:
     build:
-      native:
+      cpp:
         configure_args: ["-DUSE_MPI=ON"]
 test:
   runners:
@@ -33,7 +33,7 @@ test:
       backend: pytest
       path: tests
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -42,8 +42,8 @@ build:
 
     config = load_config(config_path)
 
-    assert config.build.native is not None
-    assert config.build.native.configure_args == ["-DUSE_MPI=ON"]
+    assert config.build.cpp is not None
+    assert config.build.cpp.configure_args == ["-DUSE_MPI=ON"]
 
 
 def test_load_config_validates_runner_fields(tmp_path: Path) -> None:
@@ -65,7 +65,7 @@ test:
 
 
 def test_load_config_rejects_unknown_build_entry_names(tmp_path: Path) -> None:
-    """Build config only accepts the native and python workflow entry names."""
+    """Build config only accepts the cpp and python workflow entry names."""
     config_path = write_config(
         tmp_path,
         """
@@ -292,19 +292,19 @@ project:
   name: demo
 build:
   default: python
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
   python:
     backend: python-build
 test:
-  default: native
+  default: cpp
   runners:
     unit:
       backend: pytest
       path: tests
-    native-cpp:
+    cpp-tests:
       backend: ctest
       build_dir: build/tests
 """,
@@ -313,7 +313,7 @@ test:
     config = load_config(config_path)
 
     assert config.build.default == "python"
-    assert config.tests.default == "native"
+    assert config.tests.default == "cpp"
 
 
 def test_load_config_allows_build_default_for_missing_kind(tmp_path: Path) -> None:
@@ -325,7 +325,7 @@ project:
   name: demo
 build:
   default: python
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -379,14 +379,14 @@ project:
   name: demo
 build:
   default: all
-  native:
+  cpp:
     env:
       OpenMP_ROOT: /opt/homebrew/opt/libomp
   python:
     backend: python-build
 test:
   runners:
-    native-cpp:
+    cpp-tests:
       env:
         OpenMP_ROOT: /opt/homebrew/opt/libomp
     unit:
@@ -409,7 +409,7 @@ def test_load_config_rejects_build_section_backend_mismatch(tmp_path: Path) -> N
 project:
   name: demo
 build:
-  native:
+  cpp:
     backend: python-build
 """,
     )
@@ -443,14 +443,14 @@ deploy:
 def test_load_config_lists_supported_build_backends_for_unknown_backend(
     tmp_path: Path,
 ) -> None:
-    """Unknown native build backends only list native-compatible backends."""
+    """Unknown cpp build backends only list cpp-compatible backends."""
     config_path = write_config(
         tmp_path,
         """
 project:
   name: demo
 build:
-  native:
+  cpp:
     backend: unknown
 """,
     )
@@ -548,9 +548,9 @@ project:
 profiles:
   default:
     build:
-      native: broken
+      cpp: broken
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -559,7 +559,7 @@ build:
 
     with pytest.raises(
         ConfigError,
-        match="`profiles.default.build.native` must remain a mapping",
+        match="`profiles.default.build.cpp` must remain a mapping",
     ):
         load_config(config_path)
 
@@ -574,10 +574,10 @@ project:
 profiles:
   default:
     build:
-      native:
+      cpp:
         backend: python-build
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -586,6 +586,6 @@ build:
 
     with pytest.raises(
         ConfigError,
-        match="`profiles.default.build.native.backend` cannot change backend",
+        match="`profiles.default.build.cpp.backend` cannot change backend",
     ):
         load_config(config_path)

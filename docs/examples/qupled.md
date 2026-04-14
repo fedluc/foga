@@ -2,10 +2,10 @@
 
 This example shows a mixed Python/C++ project with:
 
-- a standalone native CMake build
+- a standalone C++ CMake build
 - a separate Python package build
 - multiple pytest runners split by marker
-- a `ctest` runner for native C++ tests
+- a `ctest` runner for C++ tests
 - profile overrides for MPI and macOS Homebrew OpenMP paths
 
 Files:
@@ -14,4 +14,4 @@ Files:
 - [`examples/qupled/README.md`](https://github.com/fedluc/foga/blob/main/examples/qupled/README.md)
 
 Use this example when you want to see a config that combines Python workflows,
-native workflows, hooks for test fixture staging, and real profile overrides.
+C++ workflows, hooks for test fixture staging, and real profile overrides.

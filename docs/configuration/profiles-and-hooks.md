@@ -11,9 +11,9 @@ Example:
 profiles:
   mpi:
     build:
-      native:
+      cpp:
         configure_args:
-          - -DBUILD_NATIVE_TESTS=OFF
+          - -DBUILD_CPP_TESTS=OFF
           - -DUSE_MPI=ON
       python:
         env:

@@ -123,7 +123,7 @@ def test_validate_reports_precise_string_type_errors(tmp_path: Path, capsys) -> 
 project:
   name: demo
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: 42
@@ -135,7 +135,7 @@ build:
 
     captured = capsys.readouterr()
     assert exit_code == 1
-    assert "`build.native.build_dir` must be a string" in captured.err
+    assert "`build.cpp.build_dir` must be a string" in captured.err
 
 
 def test_inspect_outputs_resolved_config(tmp_path: Path, capsys) -> None:
@@ -164,10 +164,10 @@ project:
 profiles:
   mpi:
     build:
-      native:
+      cpp:
         targets: ["profile-target"]
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -191,7 +191,7 @@ test:
             "--profile",
             "mpi",
             "build",
-            "native",
+            "cpp",
             "--target",
             "cli-target",
         ]
@@ -203,12 +203,12 @@ test:
     assert document["active_profile"] == "mpi"
     assert document["summary"] == {
         "command": "build",
-        "selection": "native",
+        "selection": "cpp",
         "targets": ["cli-target"],
     }
     assert document["effective_config"] == {
         "build": {
-            "native": {
+            "cpp": {
                 "backend": "cmake",
                 "source_dir": "cpp",
                 "build_dir": "build",
@@ -228,11 +228,11 @@ project:
 profiles:
   mpi:
     build:
-      native:
+      cpp:
         targets: ["profile-target"]
 build:
   default: all
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -255,7 +255,7 @@ test:
             "mpi",
             "build",
             "--full",
-            "native",
+            "cpp",
             "--target",
             "cli-target",
         ]
@@ -266,10 +266,10 @@ test:
     assert exit_code == 0
     assert document["context"] == {
         "command": "build",
-        "selection": "native",
+        "selection": "cpp",
         "targets": ["cli-target"],
     }
-    assert document["resolved_config"]["build"]["native"]["targets"] == ["cli-target"]
+    assert document["resolved_config"]["build"]["cpp"]["targets"] == ["cli-target"]
 
 
 def test_inspect_reports_selected_test_runners(tmp_path: Path, capsys) -> None:
@@ -290,7 +290,7 @@ test:
     integration:
       backend: tox
       tox_env: py311
-    native-cpp:
+    cpp-tests:
       backend: ctest
       build_dir: build/tests
 """,
@@ -349,9 +349,7 @@ def test_inspect_build_rejects_target_override_for_python_selection(
 
     captured = capsys.readouterr()
     assert exit_code == 1
-    assert (
-        "`inspect build --target` can only be used with native builds" in captured.err
-    )
+    assert "`inspect build --target` can only be used with cpp builds" in captured.err
 
 
 def test_build_dry_run_routes_to_executor(tmp_path: Path, monkeypatch) -> None:
@@ -402,10 +400,10 @@ project:
 profiles:
   mpi:
     build:
-      native:
+      cpp:
         targets: ["profile-target"]
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -452,7 +450,7 @@ def test_build_selection_runs_only_selected_workflow_kind(
 project:
   name: demo
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -490,7 +488,7 @@ project:
   name: demo
 build:
   default: python
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -534,7 +532,7 @@ test:
     unit:
       backend: pytest
       path: tests
-    native-cpp:
+    cpp-tests:
       backend: ctest
       build_dir: build/tests
 """,
@@ -547,10 +545,10 @@ test:
 
     monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
 
-    exit_code = cli.main(["--config", str(config), "test", "native", "--dry-run"])
+    exit_code = cli.main(["--config", str(config), "test", "cpp", "--dry-run"])
 
     assert exit_code == 0
-    assert captured["descriptions"] == ["ctest runner `native-cpp`"]
+    assert captured["descriptions"] == ["ctest runner `cpp-tests`"]
 
 
 def test_build_all_selection_runs_all_configured_workflows(
@@ -563,7 +561,7 @@ def test_build_all_selection_runs_all_configured_workflows(
 project:
   name: demo
 build:
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -612,7 +610,7 @@ test:
     unit:
       backend: pytest
       path: tests
-    native-cpp:
+    cpp-tests:
       backend: ctest
       build_dir: build/tests
 """,
@@ -634,7 +632,7 @@ test:
 def test_test_all_selection_runs_all_configured_runner_kinds(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """The explicit all test selection includes python and native runners."""
+    """The explicit all test selection includes python and cpp runners."""
     config = tmp_path / "foga.yml"
     config.write_text(
         """
@@ -648,7 +646,7 @@ test:
     unit:
       backend: pytest
       path: tests
-    native-cpp:
+    cpp-tests:
       backend: ctest
       build_dir: build/tests
 """,
@@ -666,7 +664,7 @@ test:
     assert exit_code == 0
     assert captured["descriptions"] == [
         "pytest runner `unit`",
-        "ctest runner `native-cpp`",
+        "ctest runner `cpp-tests`",
     ]
 
 
@@ -690,7 +688,7 @@ test:
     integration:
       backend: tox
       tox_env: py311
-    native-cpp:
+    cpp-tests:
       backend: ctest
       build_dir: build/tests
 """,
@@ -731,12 +729,12 @@ project:
 profiles:
   default:
     build:
-      native:
+      cpp:
         env:
           OpenMP_ROOT: /opt/homebrew/opt/libomp
     test:
       runners:
-        native-cpp:
+        cpp-tests:
           env:
             OpenMP_ROOT: /opt/homebrew/opt/libomp
 build:
@@ -770,7 +768,7 @@ def test_build_uses_default_selection_error_when_default_kind_is_missing(
 project:
   name: demo
 build:
-  default: native
+  default: cpp
   python:
     backend: python-build
 test:
@@ -786,7 +784,7 @@ test:
 
     captured = capsys.readouterr()
     assert exit_code == 1
-    assert "No native build workflows configured" in captured.err
+    assert "No cpp build workflows configured" in captured.err
 
 
 def test_test_uses_default_selection_error_when_default_kind_is_missing(
@@ -802,7 +800,7 @@ build:
   python:
     backend: python-build
 test:
-  default: native
+  default: cpp
   runners:
     unit:
       backend: pytest
@@ -815,7 +813,7 @@ test:
 
     captured = capsys.readouterr()
     assert exit_code == 1
-    assert "No native test workflows configured" in captured.err
+    assert "No cpp test workflows configured" in captured.err
 
 
 def test_help_text_describes_common_profile_target_runner_and_dry_run_options() -> None:
@@ -840,8 +838,8 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
     assert "Run only the named deploy target." in deploy_result.stdout
     assert "multiple targets." in deploy_result.stdout
     assert "Path to the foga YAML configuration file to load." in root_result.stdout
-    assert "[native|python|all]" in build_result.stdout
+    assert "[cpp|python|all]" in build_result.stdout
     assert (
-        "[native|python|all]"
+        "[cpp|python|all]"
         in runner.invoke(cli.app, ["inspect", "build", "--help"]).stdout
     )

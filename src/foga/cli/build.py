@@ -10,7 +10,7 @@ import typer
 from ..adapters.build import plan_build
 from ..config.constants import (
     ALL_WORKFLOW_SELECTION,
-    NATIVE_WORKFLOW_KIND,
+    CPP_WORKFLOW_KIND,
     PYTHON_WORKFLOW_KIND,
 )
 from ..config.loading import load_config
@@ -48,7 +48,7 @@ def build_command(
         typer.Argument(
             help=(
                 "Run only the selected build kind: "
-                f"{NATIVE_WORKFLOW_KIND}, {PYTHON_WORKFLOW_KIND}, "
+                f"{CPP_WORKFLOW_KIND}, {PYTHON_WORKFLOW_KIND}, "
                 f"or {ALL_WORKFLOW_SELECTION}."
             ),
             metavar=WORKFLOW_SELECTION_METAVAR,
@@ -59,8 +59,7 @@ def build_command(
         typer.Option(
             "--target",
             help=(
-                "Build only the named native target. Repeat to include "
-                "multiple targets."
+                "Build only the named cpp target. Repeat to include multiple targets."
             ),
         ),
     ] = None,
@@ -90,7 +89,7 @@ def run_build(config: FogaConfig, executor: CommandExecutor, args: BuildArgs) ->
     if args.targets and config.build.selected_kinds(args.selection) == [
         PYTHON_WORKFLOW_KIND
     ]:
-        raise ConfigError("`build --target` can only be used with native builds")
+        raise ConfigError("`build --target` can only be used with cpp builds")
 
     plan = plan_build(config.build, selection=args.selection, targets=args.targets)
     if not plan.specs:

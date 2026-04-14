@@ -99,7 +99,7 @@ def _tox_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
 
 
 def _ctest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
-    """Build the optional CMake and ctest commands for a native test runner.
+    """Build the optional CMake and ctest commands for a C++ test runner.
 
     Args:
         config: Parsed ctest runner configuration.

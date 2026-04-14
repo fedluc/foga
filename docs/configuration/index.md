@@ -17,7 +17,7 @@ project:
 
 build:
   default: all
-  native:
+  cpp:
     backend: cmake
     source_dir: cpp
     build_dir: build
@@ -58,10 +58,10 @@ output.
 
 `build` defines up to two workflow kinds:
 
-- `build.native` for native build tooling
+- `build.cpp` for C++ build tooling
 - `build.python` for Python package builds
 
-`build.default` may be `native`, `python`, or `all`.
+`build.default` may be `cpp`, `python`, or `all`.
 
 When `build.default` is omitted, `foga build` runs all configured build kinds
 for backward compatibility.
@@ -74,7 +74,7 @@ least one build workflow is configured.
 `test.runners` is a mapping keyed by runner name. Each runner chooses a backend
 such as `pytest`, `tox`, or `ctest`.
 
-`test.default` may be `native`, `python`, or `all`.
+`test.default` may be `cpp`, `python`, or `all`.
 
 `test` is optional, but `test.runners` is the important nested section when you
 want `foga test` to run anything.

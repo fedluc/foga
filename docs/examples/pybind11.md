@@ -22,13 +22,13 @@ Typical usage:
 ```bash
 examples/pybind11/run-foga
 examples/pybind11/run-foga foga inspect --profile tidy-relaxed build
-examples/pybind11/run-foga foga build --profile release native
+examples/pybind11/run-foga foga build --profile release cpp
 ```
 
 The default command is a narrower build:
 
 ```bash
-foga build --profile cpptest native
+foga build --profile cpptest cpp
 ```
 
 Use this example when you want a self-contained demonstration of `foga` on a
