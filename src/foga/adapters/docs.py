@@ -12,7 +12,15 @@ from .contracts import BackendContract, DocsRequest, WorkflowPlan
 
 
 def plan_docs(project_root: Path, targets: list[DocsTargetConfig]) -> WorkflowPlan:
-    """Build a workflow plan for configured docs targets."""
+    """Build a workflow plan for configured docs targets.
+
+    Args:
+        project_root: Project root used as the default working directory.
+        targets: Docs targets selected for the current invocation.
+
+    Returns:
+        Prepared command specs for each selected docs target.
+    """
 
     specs: list[CommandSpec] = []
     request = DocsRequest(project_root=project_root)
@@ -24,19 +32,37 @@ def plan_docs(project_root: Path, targets: list[DocsTargetConfig]) -> WorkflowPl
 
 
 def supported_docs_backends() -> set[str]:
-    """Return the registered docs backend names."""
+    """Return the registered docs backend names.
+
+    Returns:
+        Set of registered docs backend names.
+    """
 
     return set(DOCS_BACKENDS)
 
 
 def validate_docs_backend(config: DocsTargetConfig) -> None:
-    """Validate a configured docs backend through the registry contract."""
+    """Validate a configured docs backend through the registry contract.
+
+    Args:
+        config: Parsed docs target configuration.
+    """
 
     _docs_contract(config.backend).validate(config)
 
 
 def _docs_contract(backend: str) -> BackendContract[DocsTargetConfig, DocsRequest]:
-    """Resolve a registered docs backend contract."""
+    """Resolve a registered docs backend contract.
+
+    Args:
+        backend: Configured docs backend name.
+
+    Returns:
+        Registered backend contract for the requested backend.
+
+    Raises:
+        ConfigError: If the backend name is not registered.
+    """
 
     try:
         return DOCS_BACKENDS[backend]
@@ -49,7 +75,15 @@ def _docs_contract(backend: str) -> BackendContract[DocsTargetConfig, DocsReques
 
 
 def _sphinx_plan(config: DocsTargetConfig, request: DocsRequest) -> list[CommandSpec]:
-    """Build the sphinx-build command for a docs target."""
+    """Build the sphinx-build command for a docs target.
+
+    Args:
+        config: Parsed docs target configuration.
+        request: Docs planning options.
+
+    Returns:
+        Command specs for the configured Sphinx docs target.
+    """
 
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     command = [
@@ -73,7 +107,15 @@ def _sphinx_plan(config: DocsTargetConfig, request: DocsRequest) -> list[Command
 
 
 def _mkdocs_plan(config: DocsTargetConfig, request: DocsRequest) -> list[CommandSpec]:
-    """Build the mkdocs command for a docs target."""
+    """Build the mkdocs command for a docs target.
+
+    Args:
+        config: Parsed docs target configuration.
+        request: Docs planning options.
+
+    Returns:
+        Command specs for the configured MkDocs target.
+    """
 
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     command = ["mkdocs", "build"]
@@ -95,7 +137,15 @@ def _mkdocs_plan(config: DocsTargetConfig, request: DocsRequest) -> list[Command
 
 
 def _doxygen_plan(config: DocsTargetConfig, request: DocsRequest) -> list[CommandSpec]:
-    """Build the doxygen command for a docs target."""
+    """Build the doxygen command for a docs target.
+
+    Args:
+        config: Parsed docs target configuration.
+        request: Docs planning options.
+
+    Returns:
+        Command specs for the configured Doxygen target.
+    """
 
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     command = ["doxygen", config.config_file or ""]
@@ -113,7 +163,14 @@ def _doxygen_plan(config: DocsTargetConfig, request: DocsRequest) -> list[Comman
 
 
 def _validate_sphinx(config: DocsTargetConfig) -> None:
-    """Validate sphinx target configuration."""
+    """Validate sphinx target configuration.
+
+    Args:
+        config: Parsed docs target configuration.
+
+    Raises:
+        ConfigError: If required Sphinx fields are missing.
+    """
 
     if not config.source_dir:
         raise ConfigError(f"`docs.targets.{config.name}.source_dir` is required")
@@ -122,14 +179,28 @@ def _validate_sphinx(config: DocsTargetConfig) -> None:
 
 
 def _validate_mkdocs(config: DocsTargetConfig) -> None:
-    """Validate mkdocs target configuration."""
+    """Validate mkdocs target configuration.
+
+    Args:
+        config: Parsed docs target configuration.
+
+    Raises:
+        ConfigError: If the MkDocs config file is missing.
+    """
 
     if not config.config_file:
         raise ConfigError(f"`docs.targets.{config.name}.config_file` is required")
 
 
 def _validate_doxygen(config: DocsTargetConfig) -> None:
-    """Validate doxygen target configuration."""
+    """Validate doxygen target configuration.
+
+    Args:
+        config: Parsed docs target configuration.
+
+    Raises:
+        ConfigError: If the Doxygen config file is missing.
+    """
 
     if not config.config_file:
         raise ConfigError(f"`docs.targets.{config.name}.config_file` is required")

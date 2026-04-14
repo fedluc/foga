@@ -17,7 +17,12 @@ from .common import config_path_from_context, select_named_items
 
 @dataclass(slots=True)
 class DocsArgs:
-    """Parsed arguments for the docs command."""
+    """Parsed arguments for the docs command.
+
+    Attributes:
+        targets: Optional docs target names selected from the CLI.
+        dry_run: Whether to print commands without executing them.
+    """
 
     targets: list[str] | None
     dry_run: bool
@@ -47,7 +52,17 @@ def docs_command(
         ),
     ] = False,
 ) -> int:
-    """Run configured documentation workflows."""
+    """Run configured documentation workflows.
+
+    Args:
+        ctx: Typer context carrying the resolved config path.
+        profile: Optional profile name to apply before resolving commands.
+        targets: Optional docs target names to run.
+        dry_run: Whether to print commands without executing them.
+
+    Returns:
+        Process exit code for the invoked docs command.
+    """
 
     config = load_config(config_path_from_context(ctx), profile)
     executor = CommandExecutor(config.project_root)
@@ -56,7 +71,19 @@ def docs_command(
 
 
 def run_docs(config: FogaConfig, executor: CommandExecutor, args: DocsArgs) -> int:
-    """Execute configured documentation workflows."""
+    """Execute configured documentation workflows.
+
+    Args:
+        config: Loaded project configuration.
+        executor: Command executor used to run or print command specs.
+        args: Parsed docs command arguments.
+
+    Returns:
+        Process exit code for the docs command.
+
+    Raises:
+        ConfigError: If no docs workflows are configured.
+    """
 
     selected = select_named_items(config.docs.targets, args.targets, "docs target")
     plan = plan_docs(config.project_root, list(selected.values()))
