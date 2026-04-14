@@ -17,6 +17,7 @@ PROFILES_SECTION = "profiles"
 # Nested config keys
 RUNNERS_KEY = "runners"
 TARGETS_KEY = "targets"
+LAUNCHER_KEY = "launcher"
 
 # Workflow selections
 CPP_WORKFLOW_KIND = "cpp"

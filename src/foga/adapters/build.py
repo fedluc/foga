@@ -6,7 +6,7 @@ from ..config.constants import BUILD_SECTION, CPP_WORKFLOW_KIND
 from ..config.models import BuildConfig, CppBuildConfig, PythonBuildConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
-from .common import split_hooks
+from .common import prepend_launcher, split_hooks
 from .contracts import (
     BackendContract,
     BuildRequest,
@@ -74,7 +74,11 @@ def _cmake_plan(config: CppBuildConfig, request: BuildRequest) -> list[CommandSp
     command.extend(config.configure_args)
 
     specs = pre_hooks + [
-        CommandSpec(command=command, env=config.env, description="cmake configure")
+        CommandSpec(
+            command=prepend_launcher(command, config.launcher),
+            env=config.env,
+            description="cmake configure",
+        )
     ]
 
     active_targets = request.targets if request.targets else config.targets
@@ -89,7 +93,10 @@ def _cmake_plan(config: CppBuildConfig, request: BuildRequest) -> list[CommandSp
         for target in active_targets:
             specs.append(
                 CommandSpec(
-                    command=build_command + ["--target", target],
+                    command=prepend_launcher(
+                        build_command + ["--target", target],
+                        config.launcher,
+                    ),
                     env=config.env,
                     description=f"cmake build target `{target}`",
                 )
@@ -97,7 +104,9 @@ def _cmake_plan(config: CppBuildConfig, request: BuildRequest) -> list[CommandSp
     else:
         specs.append(
             CommandSpec(
-                command=build_command, env=config.env, description="cmake build"
+                command=prepend_launcher(build_command, config.launcher),
+                env=config.env,
+                description="cmake build",
             )
         )
     specs.extend(post_hooks)
@@ -121,7 +130,9 @@ def _python_build_plan(
     pre_hooks, post_hooks = split_hooks(config.hooks, "python build")
     specs = pre_hooks + [
         CommandSpec(
-            command=PYTHON_BUILD_COMMAND + config.args,
+            command=prepend_launcher(
+                PYTHON_BUILD_COMMAND + config.args, config.launcher
+            ),
             env=config.env,
             description="python package build",
         )

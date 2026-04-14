@@ -14,4 +14,5 @@ Files:
 - [`examples/qupled/README.md`](https://github.com/fedluc/foga/blob/main/examples/qupled/README.md)
 
 Use this example when you want to see a config that combines Python workflows,
-C++ workflows, hooks for test fixture staging, and real profile overrides.
+C++ workflows, hooks for test fixture staging, launcher overrides, and real
+profile overrides.

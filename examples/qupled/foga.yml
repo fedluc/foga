@@ -124,6 +124,36 @@ profiles:
         cpp-tests:
           env:
             OpenMP_ROOT: /opt/homebrew/opt/libomp
+  tool-launchers:
+    build:
+      python:
+        launcher:
+          - uv
+          - run
+    test:
+      runners:
+        unit:
+          launcher:
+            - uv
+            - run
+    format:
+      targets:
+        python-style:
+          launcher:
+            - uv
+            - run
+    lint:
+      targets:
+        python-style:
+          launcher:
+            - uv
+            - run
+    deploy:
+      targets:
+        pypi:
+          launcher:
+            - uv
+            - run
 
 deploy:
   targets:

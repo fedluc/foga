@@ -31,6 +31,7 @@ build:
     build_dir: build
   python:
     backend: python-build
+    launcher: ["uv", "run"]
 
 test:
   default: python
@@ -96,6 +97,9 @@ for backward compatibility.
 `build` itself is optional, but `foga build` only does useful work when at
 least one build workflow is configured.
 
+Backend-backed entries may also set `launcher` to prepend a command prefix such
+as `["uv", "run"]` or `["pipx", "run"]`.
+
 ### `test`
 
 `test.runners` is a mapping keyed by runner name. Each runner chooses a backend
@@ -106,6 +110,8 @@ such as `pytest`, `tox`, or `ctest`.
 `test` is optional, but `test.runners` is the important nested section when you
 want `foga test` to run anything.
 
+Each runner may also set `launcher` to prepend a command prefix.
+
 ### `docs`
 
 `docs.targets` is a mapping keyed by target name. Each target chooses a backend
@@ -113,6 +119,8 @@ such as `sphinx`, `mkdocs`, or `doxygen`.
 
 `docs` is optional, but `docs.targets` is the important nested section when you
 want `foga docs` to run anything.
+
+Each docs target may also set `launcher` to prepend a command prefix.
 
 ### `format`
 
@@ -124,6 +132,8 @@ backend such as `ruff-format`, `black`, or `clang-format`.
 `format` is optional, but `format.targets` is the important nested section when
 you want `foga format` to run anything.
 
+Each format target may also set `launcher` to prepend a command prefix.
+
 ### `lint`
 
 `lint.targets` is a mapping keyed by target name. Each target chooses a backend
@@ -134,12 +144,16 @@ such as `ruff-check`, `pylint`, or `clang-tidy`.
 `lint` is optional, but `lint.targets` is the important nested section when you
 want `foga lint` to run anything.
 
+Each lint target may also set `launcher` to prepend a command prefix.
+
 ### `deploy`
 
 `deploy.targets` is a mapping keyed by target name. Each target currently uses
 the `twine` backend to upload matched artifacts.
 
 `deploy` is optional. Configure it only if you want `foga deploy`.
+
+Each deploy target may also set `launcher` to prepend a command prefix.
 
 ### `clean`
 

@@ -73,6 +73,7 @@ class NamedBackendConfig:
     Attributes:
         name: Configured target or runner name.
         backend: Backend identifier selected for the entry.
+        launcher: Optional command prefix prepended before the backend command.
         args: Extra backend-specific command arguments.
         env: Environment variables applied to generated commands.
         hooks: Commands executed around workflow steps.
@@ -80,6 +81,7 @@ class NamedBackendConfig:
 
     name: str
     backend: str
+    launcher: list[str] = field(default_factory=list)
     args: list[str] = field(default_factory=list)
     env: dict[str, str] = field(default_factory=dict)
     hooks: HookConfig = field(default_factory=HookConfig)
@@ -105,6 +107,7 @@ class CppBuildConfig:
         source_dir: Source directory passed to CMake.
         build_dir: Build directory passed to CMake.
         generator: Optional generator name for CMake.
+        launcher: Optional command prefix prepended before CMake commands.
         configure_args: Extra arguments passed to ``cmake -S``.
         build_args: Extra arguments passed to ``cmake --build``.
         targets: Default C++ targets to build when none are requested.
@@ -116,6 +119,7 @@ class CppBuildConfig:
     source_dir: str
     build_dir: str
     generator: str | None = None
+    launcher: list[str] = field(default_factory=list)
     configure_args: list[str] = field(default_factory=list)
     build_args: list[str] = field(default_factory=list)
     targets: list[str] = field(default_factory=list)
@@ -129,12 +133,14 @@ class PythonBuildConfig:
 
     Attributes:
         backend: Python build backend identifier.
+        launcher: Optional command prefix prepended before the build command.
         args: Extra arguments passed to the build command.
         env: Environment variables applied to generated commands.
         hooks: Commands executed around Python build steps.
     """
 
     backend: str
+    launcher: list[str] = field(default_factory=list)
     args: list[str] = field(default_factory=list)
     env: dict[str, str] = field(default_factory=dict)
     hooks: HookConfig = field(default_factory=HookConfig)
@@ -254,6 +260,7 @@ class TestRunnerConfig(NamedBackendConfig):
     Attributes:
         name: Runner name from the configuration file.
         backend: Test backend identifier.
+        launcher: Optional command prefix prepended before test commands.
         args: Extra backend-specific command arguments.
         env: Environment variables applied to generated commands.
         hooks: Commands executed around test steps.
@@ -288,6 +295,7 @@ class FormatTargetConfig(PathTargetConfig):
     Attributes:
         name: Target name from the configuration file.
         backend: Format backend identifier.
+        launcher: Optional command prefix prepended before formatter commands.
         paths: Paths passed to the formatter command.
         args: Extra backend-specific command arguments.
         env: Environment variables applied to generated commands.
@@ -342,6 +350,7 @@ class LintTargetConfig(PathTargetConfig):
     Attributes:
         name: Target name from the configuration file.
         backend: Lint backend identifier.
+        launcher: Optional command prefix prepended before lint commands.
         paths: Paths passed to the linter command.
         args: Extra backend-specific command arguments.
         env: Environment variables applied to generated commands.
@@ -396,6 +405,7 @@ class DeployTargetConfig(NamedBackendConfig):
     Attributes:
         name: Deploy target name from the configuration file.
         backend: Deploy backend identifier.
+        launcher: Optional command prefix prepended before deploy commands.
         artifacts: Glob patterns used to resolve artifacts for upload.
         repository: Optional named repository understood by the backend.
         repository_url: Optional explicit repository URL.
@@ -416,6 +426,7 @@ class DocsTargetConfig(NamedBackendConfig):
     Attributes:
         name: Docs target name from the configuration file.
         backend: Docs backend identifier.
+        launcher: Optional command prefix prepended before docs commands.
         args: Extra backend-specific command arguments.
         env: Environment variables applied to generated commands.
         hooks: Commands executed around docs steps.

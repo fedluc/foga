@@ -113,6 +113,41 @@ def test_plan_build_can_select_only_python_backends() -> None:
     assert [spec.description for spec in plan.specs] == ["python package build"]
 
 
+def test_plan_build_prepends_launchers_to_generated_commands() -> None:
+    """Build planning prepends launchers to CMake and Python build commands."""
+    config = BuildConfig(
+        cpp=CppBuildConfig(
+            backend="cmake",
+            source_dir="src/cpp",
+            build_dir="build/cpp",
+            launcher=["uv", "run"],
+            targets=["cpp_tests"],
+        ),
+        python=PythonBuildConfig(
+            backend="python-build",
+            launcher=["uv", "run"],
+            args=["--wheel"],
+        ),
+    )
+
+    specs = plan_build(config).specs
+
+    assert [spec.command for spec in specs] == [
+        ["uv", "run", "cmake", "-S", "src/cpp", "-B", "build/cpp"],
+        [
+            "uv",
+            "run",
+            "cmake",
+            "--build",
+            "build/cpp",
+            "--parallel",
+            "--target",
+            "cpp_tests",
+        ],
+        ["uv", "run", "python3", "-m", "build", "--wheel"],
+    ]
+
+
 def test_plan_tests_ctest_runner_can_prepare_target_before_running() -> None:
     """ctest runners can configure and build before executing tests."""
     runner = TestRunnerConfig(
@@ -150,6 +185,51 @@ def test_plan_tests_ctest_runner_can_prepare_target_before_running() -> None:
     ]
 
 
+def test_plan_tests_prepends_launchers_to_runner_commands() -> None:
+    """Test planning prepends launchers to tox and ctest commands."""
+    runners = [
+        TestRunnerConfig(
+            name="unit",
+            backend="tox",
+            tox_env="py312",
+            launcher=["pipx", "run"],
+        ),
+        TestRunnerConfig(
+            name="cpp",
+            backend="ctest",
+            source_dir="src/cpp",
+            build_dir="build/cpp-tests",
+            target="cpp_tests",
+            launcher=["pipx", "run"],
+        ),
+    ]
+
+    plan = plan_tests(runners)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["pipx", "run", "tox", "-e", "py312"],
+        ["pipx", "run", "cmake", "-S", "src/cpp", "-B", "build/cpp-tests"],
+        [
+            "pipx",
+            "run",
+            "cmake",
+            "--build",
+            "build/cpp-tests",
+            "--parallel",
+            "--target",
+            "cpp_tests",
+        ],
+        [
+            "pipx",
+            "run",
+            "ctest",
+            "--test-dir",
+            "build/cpp-tests",
+            "--output-on-failure",
+        ],
+    ]
+
+
 def test_plan_deploy_resolves_matching_artifacts(tmp_path: Path) -> None:
     """Deploy planning includes matched artifact paths for uploads."""
     dist = tmp_path / "dist"
@@ -173,6 +253,25 @@ def test_plan_deploy_resolves_matching_artifacts(tmp_path: Path) -> None:
         "testpypi",
         str(wheel),
     ]
+
+
+def test_plan_deploy_prepends_launcher_to_upload_command(tmp_path: Path) -> None:
+    """Deploy planning prepends the launcher to upload commands."""
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    wheel = dist / "demo-0.1.0-py3-none-any.whl"
+    wheel.write_text("artifact", encoding="utf-8")
+
+    target = DeployTargetConfig(
+        name="pypi",
+        backend="twine",
+        launcher=["uv", "run"],
+        artifacts=["dist/*"],
+    )
+
+    specs = plan_deploy(tmp_path, [target]).specs
+
+    assert specs[0].command == ["uv", "run", "twine", "upload", str(wheel)]
 
 
 def test_plan_docs_builds_registered_backend_commands(tmp_path: Path) -> None:
@@ -217,6 +316,25 @@ def test_plan_docs_builds_registered_backend_commands(tmp_path: Path) -> None:
     ]
 
 
+def test_plan_docs_prepends_launcher_to_backend_commands(tmp_path: Path) -> None:
+    """Docs planning prepends the launcher to generated docs commands."""
+    targets = [
+        DocsTargetConfig(
+            name="python-api",
+            backend="sphinx",
+            source_dir="docs",
+            build_dir="docs/_build/html",
+            launcher=["uv", "run"],
+        )
+    ]
+
+    plan = plan_docs(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["uv", "run", "sphinx-build", "-b", "html", "docs", "docs/_build/html"]
+    ]
+
+
 def test_plan_tests_combines_selected_runner_contracts() -> None:
     """Test planning combines multiple registered runner backends."""
     runners = [
@@ -255,6 +373,24 @@ def test_plan_format_builds_registered_formatter_commands(tmp_path: Path) -> Non
         ["echo", "prep"],
         ["ruff", "format", "src", "tests"],
         ["clang-format", "-i", "--style=file", "src/demo.cpp"],
+    ]
+
+
+def test_plan_format_prepends_launcher_to_formatter_commands(tmp_path: Path) -> None:
+    """Format planning prepends the launcher to formatter commands."""
+    targets = [
+        FormatTargetConfig(
+            name="python-style",
+            backend="ruff-format",
+            launcher=["pipx", "run"],
+            paths=["src", "tests"],
+        )
+    ]
+
+    plan = plan_format(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["pipx", "run", "ruff", "format", "src", "tests"]
     ]
 
 
@@ -333,6 +469,24 @@ def test_plan_lint_builds_registered_linter_commands(tmp_path: Path) -> None:
         ["ruff", "check", "src", "tests"],
         ["pylint", "src"],
         ["clang-tidy", "-p", "build", "src/demo.cpp"],
+    ]
+
+
+def test_plan_lint_prepends_launcher_to_linter_commands(tmp_path: Path) -> None:
+    """Lint planning prepends the launcher to linter commands."""
+    targets = [
+        LintTargetConfig(
+            name="python-style",
+            backend="ruff-check",
+            launcher=["pipx", "run"],
+            paths=["src", "tests"],
+        )
+    ]
+
+    plan = plan_lint(tmp_path, targets)
+
+    assert [spec.command for spec in plan.specs] == [
+        ["pipx", "run", "ruff", "check", "src", "tests"]
     ]
 
 

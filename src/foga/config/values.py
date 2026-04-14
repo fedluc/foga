@@ -128,6 +128,40 @@ def parse_hooks(data: Any, path: str) -> HookConfig:
     )
 
 
+def command_array(value: Any, path: str, *, field_name: str) -> list[str]:
+    """Validate one non-empty command array.
+
+    Args:
+        value: Raw configuration value.
+        path: Full configuration path used in validation errors.
+        field_name: User-facing field name used in validation hints.
+
+    Returns:
+        Validated command array, or an empty list when ``value`` is ``None``.
+
+    Raises:
+        ConfigError: If the value is not a non-empty list of strings.
+    """
+
+    if value is None:
+        return []
+    if isinstance(value, str):
+        raise ConfigError(
+            f"`{path}` must be a non-empty list of strings",
+            hint=(
+                f"Shell command strings are not supported for {field_name}; "
+                'use a list such as `["uv", "run"]`.'
+            ),
+        )
+    if (
+        not isinstance(value, list)
+        or not value
+        or not all(isinstance(item, str) for item in value)
+    ):
+        raise ConfigError(f"`{path}` must be a non-empty list of strings")
+    return list(value)
+
+
 def string_list(value: Any, path: str) -> list[str]:
     """Validate a list of strings and return a shallow copy.
 

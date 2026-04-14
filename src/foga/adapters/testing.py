@@ -6,7 +6,7 @@ from ..config.constants import RUNNERS_KEY, TEST_SECTION
 from ..config.models import TestRunnerConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
-from .common import split_hooks
+from .common import prepend_launcher, split_hooks
 from .contracts import BackendContract, WorkflowPlan, require_backend_contract
 from .kinds import TEST_CTEST, TEST_PYTEST, TEST_TOX
 
@@ -45,7 +45,7 @@ def _pytest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     specs = pre_hooks + [
         CommandSpec(
-            command=command,
+            command=prepend_launcher(command, config.launcher),
             env=config.env,
             description=f"pytest runner `{config.name}`",
         )
@@ -68,7 +68,9 @@ def _tox_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     specs = pre_hooks + [
         CommandSpec(
-            command=command, env=config.env, description=f"tox runner `{config.name}`"
+            command=prepend_launcher(command, config.launcher),
+            env=config.env,
+            description=f"tox runner `{config.name}`",
         )
     ]
     specs.extend(post_hooks)
@@ -99,7 +101,7 @@ def _ctest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
         configure_command.extend(config.configure_args)
         specs.append(
             CommandSpec(
-                command=configure_command,
+                command=prepend_launcher(configure_command, config.launcher),
                 env=config.env,
                 description=f"ctest configure `{config.name}`",
             )
@@ -110,7 +112,7 @@ def _ctest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
             build_command.extend(["--target", config.target])
         specs.append(
             CommandSpec(
-                command=build_command,
+                command=prepend_launcher(build_command, config.launcher),
                 env=config.env,
                 description=f"ctest build `{config.name}`",
             )
@@ -120,7 +122,9 @@ def _ctest_plan(config: TestRunnerConfig, _: None) -> list[CommandSpec]:
     command.extend(config.args)
     specs.append(
         CommandSpec(
-            command=command, env=config.env, description=f"ctest runner `{config.name}`"
+            command=prepend_launcher(command, config.launcher),
+            env=config.env,
+            description=f"ctest runner `{config.name}`",
         )
     )
     specs.extend(post_hooks)

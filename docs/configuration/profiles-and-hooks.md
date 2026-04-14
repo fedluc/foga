@@ -26,6 +26,7 @@ Use profiles for:
 - MPI versus non-MPI builds
 - platform-specific environment variables
 - release-only deployment settings
+- tool wrappers such as `uv run` or `pipx run`
 
 Profile merge rules are intentionally conservative:
 
@@ -51,6 +52,18 @@ test:
           - ["python3", "tools/prepare_integration.py"]
         post:
           - ["python3", "tools/cleanup_integration.py"]
+```
+
+If you need to run a backend through a wrapper command, use `launcher`
+instead of a hook. For example:
+
+```yaml
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+      launcher: ["uv", "run"]
+      paths: ["src", "tests"]
 ```
 
 Supported behavior:

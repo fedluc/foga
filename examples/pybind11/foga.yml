@@ -80,6 +80,16 @@ profiles:
           - -DPYBIND11_FINDPYTHON=NEW
           - -DPYBIND11_WERROR=ON
           - -DPYBIND11_CREATE_WITH_UV=python3
+      python:
+        launcher:
+          - uv
+          - run
+    test:
+      runners:
+        packaging:
+          launcher:
+            - uv
+            - run
 
   tidy:
     build:

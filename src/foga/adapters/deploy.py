@@ -8,7 +8,7 @@ from ..config.constants import DEPLOY_SECTION, TARGETS_KEY
 from ..config.models import DeployTargetConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
-from .common import split_hooks
+from .common import prepend_launcher, split_hooks
 from .contracts import (
     BackendContract,
     DeployRequest,
@@ -63,7 +63,7 @@ def _twine_plan(
     command.extend(artifacts)
     specs = pre_hooks + [
         CommandSpec(
-            command=command,
+            command=prepend_launcher(command, config.launcher),
             env=config.env,
             description=f"deploy target `{config.name}`",
         )

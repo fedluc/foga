@@ -9,7 +9,7 @@ from ..config.constants import LINT_SECTION
 from ..config.models import LintTargetConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
-from .common import split_hooks
+from .common import prepend_launcher, split_hooks
 from .contracts import (
     BackendContract,
     ToolRequest,
@@ -61,7 +61,10 @@ def _plan_path_target(
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     specs = pre_hooks + [
         CommandSpec(
-            command=[*command_prefix, *config.args, *config.paths],
+            command=prepend_launcher(
+                [*command_prefix, *config.args, *config.paths],
+                config.launcher,
+            ),
             cwd=request.project_root,
             env=config.env,
             description=description_template.format(name=config.name),

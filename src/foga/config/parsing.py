@@ -21,6 +21,7 @@ from .constants import (
     DEPLOY_SECTION,
     DOCS_SECTION,
     FORMAT_SECTION,
+    LAUNCHER_KEY,
     LINT_SECTION,
     PROJECT_SECTION,
     PYTHON_WORKFLOW_KIND,
@@ -47,6 +48,7 @@ from .models import (
     TestRunnerConfig,
 )
 from .values import (
+    command_array,
     optional_str,
     parse_hooks,
     parse_workflow_selection,
@@ -185,6 +187,11 @@ def _parse_build_backend(
             source_dir=required_str(data, "source_dir", f"{path}.source_dir"),
             build_dir=required_str(data, "build_dir", f"{path}.build_dir"),
             generator=optional_str(data, "generator", f"{path}.generator"),
+            launcher=command_array(
+                data.get(LAUNCHER_KEY),
+                f"{path}.{LAUNCHER_KEY}",
+                field_name=LAUNCHER_KEY,
+            ),
             configure_args=string_list(
                 data.get("configure_args"), f"{path}.configure_args"
             ),
@@ -202,6 +209,11 @@ def _parse_build_backend(
             )
         return PythonBuildConfig(
             backend=backend,
+            launcher=command_array(
+                data.get(LAUNCHER_KEY),
+                f"{path}.{LAUNCHER_KEY}",
+                field_name=LAUNCHER_KEY,
+            ),
             args=string_list(data.get("args"), f"{path}.args"),
             env=string_mapping(data.get("env"), f"{path}.env"),
             hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
@@ -353,6 +365,11 @@ def _parse_path_target(
     return target_type(
         name=name,
         backend=backend,
+        launcher=command_array(
+            data.get(LAUNCHER_KEY),
+            f"{path}.{LAUNCHER_KEY}",
+            field_name=LAUNCHER_KEY,
+        ),
         paths=string_list(data.get("paths"), f"{path}.paths"),
         args=string_list(data.get("args"), f"{path}.args"),
         env=string_mapping(data.get("env"), f"{path}.env"),
@@ -381,6 +398,11 @@ def _parse_test_runner(
     return TestRunnerConfig(
         name=name,
         backend=backend,
+        launcher=command_array(
+            data.get(LAUNCHER_KEY),
+            f"{path}.{LAUNCHER_KEY}",
+            field_name=LAUNCHER_KEY,
+        ),
         args=string_list(data.get("args"), f"{path}.args"),
         env=string_mapping(data.get("env"), f"{path}.env"),
         hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
@@ -419,6 +441,11 @@ def _parse_docs_target(
     return DocsTargetConfig(
         name=name,
         backend=backend,
+        launcher=command_array(
+            data.get(LAUNCHER_KEY),
+            f"{path}.{LAUNCHER_KEY}",
+            field_name=LAUNCHER_KEY,
+        ),
         args=string_list(data.get("args"), f"{path}.args"),
         env=string_mapping(data.get("env"), f"{path}.env"),
         hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
@@ -450,6 +477,11 @@ def _parse_deploy_target(
     return DeployTargetConfig(
         name=name,
         backend=backend,
+        launcher=command_array(
+            data.get(LAUNCHER_KEY),
+            f"{path}.{LAUNCHER_KEY}",
+            field_name=LAUNCHER_KEY,
+        ),
         artifacts=string_list(data.get("artifacts"), f"{path}.artifacts"),
         repository=optional_str(data, "repository", f"{path}.repository"),
         repository_url=optional_str(

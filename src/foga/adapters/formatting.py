@@ -10,7 +10,7 @@ from ..config.constants import FORMAT_SECTION, TARGETS_KEY
 from ..config.models import FormatTargetConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
-from .common import split_hooks
+from .common import prepend_launcher, split_hooks
 from .contracts import (
     BackendContract,
     ToolRequest,
@@ -65,7 +65,10 @@ def _plan_path_target(
     resolved_paths = _resolve_format_paths(request.project_root, config)
     specs = pre_hooks + [
         CommandSpec(
-            command=[*command_prefix, *config.args, *resolved_paths],
+            command=prepend_launcher(
+                [*command_prefix, *config.args, *resolved_paths],
+                config.launcher,
+            ),
             cwd=request.project_root,
             env=config.env,
             description=description_template.format(name=config.name),

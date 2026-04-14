@@ -10,7 +10,7 @@ from ..config.constants import DOCS_SECTION, TARGETS_KEY
 from ..config.models import DocsTargetConfig
 from ..errors import ConfigError
 from ..executor import CommandSpec
-from .common import split_hooks
+from .common import prepend_launcher, split_hooks
 from .contracts import (
     BackendContract,
     ToolRequest,
@@ -60,7 +60,7 @@ def _plan_docs_target(
     pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
     specs = pre_hooks + [
         CommandSpec(
-            command=command_builder(config),
+            command=prepend_launcher(command_builder(config), config.launcher),
             cwd=request.project_root,
             env=config.env,
             description=f"docs target `{config.name}`",

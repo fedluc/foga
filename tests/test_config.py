@@ -263,6 +263,118 @@ test:
     assert config.build.python.hooks.post == [["python3", "tools/cleanup.py"]]
 
 
+def test_load_config_parses_launcher_command_arrays(tmp_path: Path) -> None:
+    """Launcher fields are loaded as direct command arrays."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  cpp:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+    launcher: ["uv", "run"]
+  python:
+    backend: python-build
+    launcher: ["uv", "run"]
+test:
+  runners:
+    unit:
+      backend: tox
+      tox_env: py312
+      launcher: ["pipx", "run"]
+docs:
+  targets:
+    api:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build/html
+      launcher: ["uv", "run"]
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src"]
+      launcher: ["pipx", "run"]
+lint:
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src"]
+      launcher: ["pipx", "run"]
+deploy:
+  targets:
+    pypi:
+      backend: twine
+      artifacts: ["dist/*"]
+      launcher: ["uv", "run"]
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.build.cpp is not None
+    assert config.build.python is not None
+    assert config.build.cpp.launcher == ["uv", "run"]
+    assert config.build.python.launcher == ["uv", "run"]
+    assert config.tests.runners["unit"].launcher == ["pipx", "run"]
+    assert config.docs.targets["api"].launcher == ["uv", "run"]
+    assert config.formatters.targets["python-style"].launcher == ["pipx", "run"]
+    assert config.linters.targets["python-style"].launcher == ["pipx", "run"]
+    assert config.deploy["pypi"].launcher == ["uv", "run"]
+
+
+def test_load_config_rejects_shell_string_launchers(tmp_path: Path) -> None:
+    """Launcher fields must use command arrays instead of shell strings."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  python:
+    backend: python-build
+    launcher: uv run
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`build.python.launcher` must be a non-empty list of strings",
+    ):
+        load_config(config_path)
+
+
+def test_load_config_rejects_empty_launcher_arrays(tmp_path: Path) -> None:
+    """Launcher fields reject empty command arrays."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+      launcher: []
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`test.runners.unit.launcher` must be a non-empty list of strings",
+    ):
+        load_config(config_path)
+
+
 def test_load_config_rejects_shell_string_hook_commands(tmp_path: Path) -> None:
     """Hook commands must use command arrays instead of shell strings."""
     config_path = write_config(
