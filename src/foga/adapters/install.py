@@ -18,6 +18,7 @@ from .contracts import (
 )
 from .kinds import (
     INSTALL_APT_GET,
+    INSTALL_BREW,
     INSTALL_NPM,
     INSTALL_PIP,
     INSTALL_POETRY,
@@ -299,6 +300,14 @@ INSTALL_BACKENDS: dict[str, BackendContract[InstallTargetConfig, ToolRequest]] =
         plan=partial(
             _plan_install_command,
             command_prefix=("npm", "install"),
+        ),
+    ),
+    INSTALL_BREW: BackendContract(
+        name=INSTALL_BREW,
+        validate=partial(_validate_system_packages, backend=INSTALL_BREW),
+        plan=partial(
+            _plan_install_command,
+            command_prefix=(INSTALL_BREW, "install"),
         ),
     ),
     INSTALL_APT_GET: BackendContract(

@@ -157,7 +157,7 @@ Each lint target may also set `launcher` to prepend a command prefix.
 ### `install`
 
 `install.targets` is a mapping keyed by target name. Each target chooses a
-backend such as `pip`, `uv`, `poetry`, `npm`, `apt-get`, or `yum`.
+backend such as `pip`, `uv`, `poetry`, `npm`, `apt-get`, `brew`, or `yum`.
 
 `install` is optional, but `install.targets` is the important nested section
 when you want `foga install` to run anything.

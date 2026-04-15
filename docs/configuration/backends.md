@@ -238,6 +238,16 @@ fields as `pip`.
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
 
+### `brew`
+
+`install.targets.<name>.backend: brew` runs `brew install`.
+
+- `packages`: package names passed to `brew install`; this is required
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended before packages
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
 ### `yum`
 
 `install.targets.<name>.backend: yum` runs `yum install`.

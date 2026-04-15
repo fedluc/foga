@@ -346,6 +346,21 @@ def test_plan_install_supports_poetry_and_uv_backends(tmp_path: Path) -> None:
     ]
 
 
+def test_plan_install_supports_brew_targets(tmp_path: Path) -> None:
+    """Install planning maps brew targets to the expected command."""
+    targets = [
+        InstallTargetConfig(
+            name="macos-deps",
+            backend="brew",
+            packages=["cmake", "llvm"],
+        )
+    ]
+
+    specs = plan_install(tmp_path, targets).specs
+
+    assert [spec.command for spec in specs] == [["brew", "install", "cmake", "llvm"]]
+
+
 def test_plan_install_validates_backend_specific_inputs(tmp_path: Path) -> None:
     """Install planning rejects missing or incompatible backend settings."""
     with pytest.raises(
@@ -373,6 +388,20 @@ def test_plan_install_validates_backend_specific_inputs(tmp_path: Path) -> None:
                     name="python-deps",
                     backend="poetry",
                     packages=["requests"],
+                )
+            ],
+        )
+
+    with pytest.raises(
+        ConfigError,
+        match="install.targets.macos-deps.packages.*must not be empty",
+    ):
+        plan_install(
+            tmp_path,
+            [
+                InstallTargetConfig(
+                    name="macos-deps",
+                    backend="brew",
                 )
             ],
         )

@@ -34,6 +34,7 @@ INSTALL_PIP = "pip"
 INSTALL_UV = "uv"
 INSTALL_POETRY = "poetry"
 INSTALL_NPM = "npm"
+INSTALL_BREW = "brew"
 INSTALL_APT_GET = "apt-get"
 INSTALL_YUM = "yum"
 

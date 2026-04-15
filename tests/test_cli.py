@@ -523,6 +523,29 @@ install:
     assert "sudo apt-get install -y cmake clang" in captured.out
 
 
+def test_install_command_dry_run_outputs_brew_commands(tmp_path: Path, capsys) -> None:
+    """Install dry-run prints the planned brew install command."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+install:
+  targets:
+    macos-deps:
+      backend: brew
+      packages: ["cmake", "llvm"]
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "install", "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "brew install cmake llvm" in captured.out
+
+
 def test_build_cli_target_overrides_profile_and_base_targets(
     tmp_path: Path, monkeypatch
 ) -> None:

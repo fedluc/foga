@@ -844,7 +844,7 @@ install:
         ConfigError,
         match=(
             "Unsupported install backend: unknown. Supported backends: apt-get, "
-            "npm, pip, poetry, uv, yum"
+            "brew, npm, pip, poetry, uv, yum"
         ),
     ):
         load_config(config_path)
@@ -952,6 +952,27 @@ install:
     assert list(config.install) == ["editable", "python-deps"]
     assert config.install["editable"].editable is True
     assert config.install["python-deps"].args == ["--sync"]
+
+
+def test_load_config_parses_brew_install_targets(tmp_path: Path) -> None:
+    """Brew install targets are loaded into the parsed config."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+install:
+  targets:
+    macos-deps:
+      backend: brew
+      packages: ["cmake", "llvm"]
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert list(config.install) == ["macos-deps"]
+    assert config.install["macos-deps"].packages == ["cmake", "llvm"]
 
 
 def test_load_config_rejects_profile_mapping_shape_changes(tmp_path: Path) -> None:
