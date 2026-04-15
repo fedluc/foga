@@ -399,6 +399,27 @@ class LintConfig(WorkflowSelectionConfig):
 
 
 @dataclass(frozen=True)
+class InstallTargetConfig(NamedBackendConfig):
+    """Configuration for an individual install target.
+
+    Attributes:
+        name: Install target name from the configuration file.
+        backend: Install backend identifier.
+        launcher: Optional command prefix prepended before install commands.
+        packages: Optional package names, specifiers, or package-manager targets.
+        path: Optional local path installed by backends that support it.
+        editable: Whether pip-style backends should install the path in editable mode.
+        args: Extra backend-specific command arguments.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around install steps.
+    """
+
+    packages: list[str] = field(default_factory=list)
+    path: str | None = None
+    editable: bool = False
+
+
+@dataclass(frozen=True)
 class DeployTargetConfig(NamedBackendConfig):
     """Configuration for an individual deploy target.
 
@@ -487,6 +508,7 @@ class FogaConfig:
         docs: Parsed documentation target configuration.
         formatters: Parsed format target configuration and defaults.
         linters: Parsed lint target configuration and defaults.
+        install: Parsed install configuration keyed by target name.
         deploy: Parsed deploy configuration keyed by target name.
         clean: Parsed clean configuration.
         raw: Raw merged configuration mapping after profile application.
@@ -499,6 +521,7 @@ class FogaConfig:
     docs: DocsConfig
     formatters: FormatConfig
     linters: LintConfig
+    install: dict[str, InstallTargetConfig]
     deploy: dict[str, DeployTargetConfig]
     clean: CleanConfig
     raw: dict[str, Any] = field(repr=False)

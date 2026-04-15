@@ -8,6 +8,7 @@ from foga.adapters.build import plan_build
 from foga.adapters.deploy import plan_deploy
 from foga.adapters.docs import plan_docs
 from foga.adapters.formatting import plan_format
+from foga.adapters.install import plan_install
 from foga.adapters.linting import plan_lint
 from foga.adapters.testing import plan_tests
 from foga.config.models import (
@@ -17,6 +18,7 @@ from foga.config.models import (
     DocsTargetConfig,
     FormatTargetConfig,
     HookConfig,
+    InstallTargetConfig,
     LintTargetConfig,
     PythonBuildConfig,
     TestRunnerConfig,
@@ -272,6 +274,108 @@ def test_plan_deploy_prepends_launcher_to_upload_command(tmp_path: Path) -> None
     specs = plan_deploy(tmp_path, [target]).specs
 
     assert specs[0].command == ["uv", "run", "twine", "upload", str(wheel)]
+
+
+def test_plan_install_builds_local_and_system_install_commands(
+    tmp_path: Path,
+) -> None:
+    """Install planning supports editable package and system package targets."""
+    targets = [
+        InstallTargetConfig(
+            name="editable",
+            backend="pip",
+            path=".",
+            editable=True,
+            args=["--no-deps"],
+            hooks=HookConfig(pre=[["echo", "prepare"]]),
+        ),
+        InstallTargetConfig(
+            name="system",
+            backend="apt-get",
+            launcher=["sudo"],
+            packages=["cmake", "clang"],
+            args=["-y"],
+        ),
+    ]
+
+    specs = plan_install(tmp_path, targets).specs
+
+    assert specs[0].command == ["echo", "prepare"]
+    assert specs[1].command == [
+        "python3",
+        "-m",
+        "pip",
+        "install",
+        "-e",
+        "--no-deps",
+        ".",
+    ]
+    assert specs[1].cwd == tmp_path
+    assert specs[2].command == [
+        "sudo",
+        "apt-get",
+        "install",
+        "-y",
+        "cmake",
+        "clang",
+    ]
+    assert specs[2].cwd == tmp_path
+
+
+def test_plan_install_supports_poetry_and_uv_backends(tmp_path: Path) -> None:
+    """Install planning maps each configured backend to its native command."""
+    targets = [
+        InstallTargetConfig(
+            name="python-deps",
+            backend="poetry",
+            args=["--sync"],
+        ),
+        InstallTargetConfig(
+            name="editable-uv",
+            backend="uv",
+            path=".",
+            editable=True,
+        ),
+    ]
+
+    specs = plan_install(tmp_path, targets).specs
+
+    assert [spec.command for spec in specs] == [
+        ["poetry", "install", "--sync"],
+        ["uv", "pip", "install", "-e", "."],
+    ]
+
+
+def test_plan_install_validates_backend_specific_inputs(tmp_path: Path) -> None:
+    """Install planning rejects missing or incompatible backend settings."""
+    with pytest.raises(
+        ConfigError, match="install.targets.editable.path.*editable.*true"
+    ):
+        plan_install(
+            tmp_path,
+            [
+                InstallTargetConfig(
+                    name="editable",
+                    backend="pip",
+                    editable=True,
+                )
+            ],
+        )
+
+    with pytest.raises(
+        ConfigError,
+        match="install.targets.python-deps.packages.*not supported.*poetry",
+    ):
+        plan_install(
+            tmp_path,
+            [
+                InstallTargetConfig(
+                    name="python-deps",
+                    backend="poetry",
+                    packages=["requests"],
+                )
+            ],
+        )
 
 
 def test_plan_docs_builds_registered_backend_commands(tmp_path: Path) -> None:

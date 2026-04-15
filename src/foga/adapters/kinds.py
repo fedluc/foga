@@ -29,6 +29,14 @@ LINT_RUFF = "ruff-check"
 LINT_PYLINT = "pylint"
 LINT_CLANG = "clang-tidy"
 
+# Install backend names
+INSTALL_PIP = "pip"
+INSTALL_UV = "uv"
+INSTALL_POETRY = "poetry"
+INSTALL_NPM = "npm"
+INSTALL_APT_GET = "apt-get"
+INSTALL_YUM = "yum"
+
 # Deploy backend names
 DEPLOY_TWINE = "twine"
 

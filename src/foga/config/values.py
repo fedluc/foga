@@ -81,6 +81,29 @@ def optional_str(data: dict[str, Any], key: str, path: str) -> str | None:
     return value
 
 
+def optional_bool(data: dict[str, Any], key: str, path: str) -> bool | None:
+    """Read an optional boolean field.
+
+    Args:
+        data: Source mapping.
+        key: Mapping key to read.
+        path: Full configuration path used in validation errors.
+
+    Returns:
+        Boolean value when present, otherwise ``None``.
+
+    Raises:
+        ConfigError: If the value is present but not a boolean.
+    """
+
+    value = data.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, bool):
+        raise ConfigError(f"`{path}` must be a boolean")
+    return value
+
+
 def parse_workflow_selection(value: Any, path: str) -> str | None:
     """Parse a workflow kind selector.
 

@@ -72,6 +72,16 @@ foga lint python --target python-style --dry-run  # Preview one Python linter ta
 foga lint cpp --dry-run                           # Preview only C++ lint targets
 ```
 
+## Install
+
+Use `foga install` to run installation targets:
+
+```bash
+foga install --dry-run                      # Preview all configured install targets
+foga install --target editable --dry-run    # Preview one install target explicitly
+foga install --profile release --dry-run    # Preview install commands with a profile
+```
+
 ## Deploy
 
 Use `foga deploy` to run deployment targets:
@@ -118,6 +128,7 @@ Available dry-run commands:
 - `foga deploy --dry-run`
 - `foga format --dry-run`
 - `foga lint --dry-run`
+- `foga install --dry-run`
 
 Dry-run output shows the planned commands without executing them. Use it to
 verify:

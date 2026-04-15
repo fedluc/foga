@@ -10,6 +10,7 @@ from ..adapters.contracts import registered_backends, require_backend_contract
 from ..adapters.deploy import DEPLOY_BACKENDS
 from ..adapters.docs import DOCS_BACKENDS
 from ..adapters.formatting import FORMAT_BACKENDS
+from ..adapters.install import INSTALL_BACKENDS
 from ..adapters.kinds import BUILD_CMAKE, BUILD_PYTHON
 from ..adapters.linting import LINT_BACKENDS
 from ..adapters.testing import TEST_BACKENDS
@@ -21,6 +22,7 @@ from .constants import (
     DEPLOY_SECTION,
     DOCS_SECTION,
     FORMAT_SECTION,
+    INSTALL_SECTION,
     LAUNCHER_KEY,
     LINT_SECTION,
     PROJECT_SECTION,
@@ -40,6 +42,7 @@ from .models import (
     FogaConfig,
     FormatConfig,
     FormatTargetConfig,
+    InstallTargetConfig,
     LintConfig,
     LintTargetConfig,
     ProjectConfig,
@@ -49,6 +52,7 @@ from .models import (
 )
 from .values import (
     command_array,
+    optional_bool,
     optional_str,
     parse_hooks,
     parse_workflow_selection,
@@ -86,6 +90,7 @@ def _parse_config(data: dict[str, Any], project_root: Path) -> FogaConfig:
     docs = _parse_docs(data.get(DOCS_SECTION) or {})
     formatters = _parse_format(data.get(FORMAT_SECTION) or {})
     linters = _parse_lint(data.get(LINT_SECTION) or {})
+    install = _parse_install(data.get(INSTALL_SECTION) or {})
     deploy = _parse_deploy(data.get(DEPLOY_SECTION) or {})
     clean = _parse_clean(data.get(CLEAN_SECTION) or {})
 
@@ -97,6 +102,7 @@ def _parse_config(data: dict[str, Any], project_root: Path) -> FogaConfig:
         docs=docs,
         formatters=formatters,
         linters=linters,
+        install=install,
         deploy=deploy,
         clean=clean,
         raw=data,
@@ -495,6 +501,42 @@ def _parse_deploy_target(
     )
 
 
+def _parse_install_target(
+    name: str,
+    data: dict[str, Any],
+    backend: str,
+    path: str,
+) -> InstallTargetConfig:
+    """Parse a named install target configuration.
+
+    Args:
+        name: Configured target name.
+        data: Raw target mapping.
+        backend: Validated backend identifier.
+        path: Dotted config path used in validation errors.
+
+    Returns:
+        Parsed install target configuration.
+    """
+
+    editable = optional_bool(data, "editable", f"{path}.editable")
+    return InstallTargetConfig(
+        name=name,
+        backend=backend,
+        launcher=command_array(
+            data.get(LAUNCHER_KEY),
+            f"{path}.{LAUNCHER_KEY}",
+            field_name=LAUNCHER_KEY,
+        ),
+        packages=string_list(data.get("packages"), f"{path}.packages"),
+        path=optional_str(data, "path", f"{path}.path"),
+        editable=editable if editable is not None else False,
+        args=string_list(data.get("args"), f"{path}.args"),
+        env=string_mapping(data.get("env"), f"{path}.env"),
+        hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
+    )
+
+
 def _parse_tests(data: dict[str, Any]) -> TestConfig:
     """Parse test runner configuration.
 
@@ -619,6 +661,24 @@ def _parse_deploy(data: dict[str, Any]) -> dict[str, DeployTargetConfig]:
         section=DEPLOY_SECTION,
         registry=DEPLOY_BACKENDS,
         build_target=_parse_deploy_target,
+    )
+
+
+def _parse_install(data: dict[str, Any]) -> dict[str, InstallTargetConfig]:
+    """Parse install target configuration.
+
+    Args:
+        data: Raw install configuration mapping.
+
+    Returns:
+        Parsed install targets keyed by configured name.
+    """
+
+    return _parse_named_targets(
+        data,
+        section=INSTALL_SECTION,
+        registry=INSTALL_BACKENDS,
+        build_target=_parse_install_target,
     )
 
 
