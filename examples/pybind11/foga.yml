@@ -31,6 +31,18 @@ test:
       args:
         - -v
 
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
+    python-deps:
+      backend: uv
+      packages:
+        - pytest
+        - build
+
 clean:
   paths:
     - build-foga

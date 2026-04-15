@@ -23,6 +23,12 @@ test:
     unit:
       backend: pytest
       path: tests
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
 deploy:
   targets:
     pypi:
@@ -97,6 +103,7 @@ def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
     assert "Docs targets" in captured.out
     assert "Format targets" in captured.out
     assert "Lint targets" in captured.out
+    assert "Install targets" in captured.out
     assert "Deploy targets" in captured.out
     assert "Clean paths" in captured.out
 
@@ -482,6 +489,38 @@ def test_lint_dry_run_routes_planned_specs_to_executor(
 
     assert exit_code == 0
     assert captured == {"count": 1, "dry_run": True}
+
+
+def test_install_command_dry_run_outputs_planned_commands(
+    tmp_path: Path, capsys
+) -> None:
+    """Install dry-run prints the planned commands for the selected targets."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
+    system:
+      backend: apt-get
+      launcher: ["sudo"]
+      packages: ["cmake", "clang"]
+      args: ["-y"]
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "install", "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "python3 -m pip install -e ." in captured.out
+    assert "sudo apt-get install -y cmake clang" in captured.out
 
 
 def test_build_cli_target_overrides_profile_and_base_targets(

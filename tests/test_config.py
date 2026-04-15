@@ -182,6 +182,31 @@ deploy:
         load_config(config_path)
 
 
+def test_load_config_rejects_unknown_install_keys(tmp_path: Path) -> None:
+    """Install config only accepts the targets key."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+install:
+  adas:
+    backend: pip
+    path: .
+  targets:
+    editable:
+      backend: pip
+      path: .
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`install.adas` is not a supported configuration key",
+    ):
+        load_config(config_path)
+
+
 def test_load_config_rejects_unknown_docs_keys(tmp_path: Path) -> None:
     """Docs config only accepts the targets key."""
     config_path = write_config(
@@ -304,6 +329,13 @@ lint:
       backend: ruff-check
       paths: ["src"]
       launcher: ["pipx", "run"]
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
+      launcher: ["uv", "run"]
 deploy:
   targets:
     pypi:
@@ -323,6 +355,7 @@ deploy:
     assert config.docs.targets["api"].launcher == ["uv", "run"]
     assert config.formatters.targets["python-style"].launcher == ["pipx", "run"]
     assert config.linters.targets["python-style"].launcher == ["pipx", "run"]
+    assert config.install["editable"].launcher == ["uv", "run"]
     assert config.deploy["pypi"].launcher == ["uv", "run"]
 
 
@@ -616,6 +649,28 @@ deploy:
         load_config(config_path)
 
 
+def test_load_config_validates_install_target_requirements(tmp_path: Path) -> None:
+    """Install target validation runs through the backend registry."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+install:
+  targets:
+    editable:
+      backend: pip
+      editable: true
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match="`install.targets.editable.path` is required when `editable` is true",
+    ):
+        load_config(config_path)
+
+
 def test_load_config_lists_supported_build_backends_for_unknown_backend(
     tmp_path: Path,
 ) -> None:
@@ -768,6 +823,33 @@ deploy:
         load_config(config_path)
 
 
+def test_load_config_lists_supported_install_backends_for_unknown_backend(
+    tmp_path: Path,
+) -> None:
+    """Unknown install backends list the registered install backends."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+install:
+  targets:
+    editable:
+      backend: unknown
+      path: .
+""",
+    )
+
+    with pytest.raises(
+        ConfigError,
+        match=(
+            "Unsupported install backend: unknown. Supported backends: apt-get, "
+            "npm, pip, poetry, uv, yum"
+        ),
+    ):
+        load_config(config_path)
+
+
 def test_load_config_lists_supported_docs_backends_for_unknown_backend(
     tmp_path: Path,
 ) -> None:
@@ -844,6 +926,32 @@ docs:
     assert list(config.docs.targets) == ["python-api", "site"]
     assert config.docs.targets["python-api"].builder == "dirhtml"
     assert config.docs.targets["site"].config_file == "mkdocs.yml"
+
+
+def test_load_config_parses_install_targets(tmp_path: Path) -> None:
+    """Install targets are loaded into the parsed config."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
+    python-deps:
+      backend: poetry
+      args: ["--sync"]
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert list(config.install) == ["editable", "python-deps"]
+    assert config.install["editable"].editable is True
+    assert config.install["python-deps"].args == ["--sync"]
 
 
 def test_load_config_rejects_profile_mapping_shape_changes(tmp_path: Path) -> None:

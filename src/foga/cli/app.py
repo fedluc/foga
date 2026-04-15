@@ -18,6 +18,7 @@ from .deploy import deploy_command
 from .docs import docs_command
 from .format import format_command
 from .inspect import build_inspect_app
+from .install import install_command
 from .lint import lint_command
 from .test import test_command
 from .validate import validate_command
@@ -33,6 +34,7 @@ app.command("build")(build_command)
 app.command("test")(test_command)
 app.command("docs")(docs_command)
 app.command("format")(format_command)
+app.command("install")(install_command)
 app.command("lint")(lint_command)
 app.command("deploy")(deploy_command)
 app.command("clean")(clean_command)

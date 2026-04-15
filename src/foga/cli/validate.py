@@ -27,6 +27,7 @@ class ValidationSummary:
         docs_targets: Configured docs target names.
         format_targets: Configured format target names.
         lint_targets: Configured lint target names.
+        install_targets: Configured install target names.
         deploy_targets: Configured deploy target names.
         clean_paths: Configured cleanup paths.
     """
@@ -38,6 +39,7 @@ class ValidationSummary:
     docs_targets: list[str]
     format_targets: list[str]
     lint_targets: list[str]
+    install_targets: list[str]
     deploy_targets: list[str]
     clean_paths: list[str]
 
@@ -101,6 +103,7 @@ def _build_validation_summary(
         docs_targets=list(config.docs.targets),
         format_targets=list(config.formatters.targets),
         lint_targets=list(config.linters.targets),
+        install_targets=list(config.install),
         deploy_targets=list(config.deploy),
         clean_paths=config.clean.paths,
     )
@@ -141,6 +144,10 @@ def _format_validation_summary(summary: ValidationSummary) -> str:
         format_detail(
             "Lint targets",
             ", ".join(summary.lint_targets) if summary.lint_targets else "none",
+        ),
+        format_detail(
+            "Install targets",
+            ", ".join(summary.install_targets) if summary.install_targets else "none",
         ),
         format_detail(
             "Deploy targets",

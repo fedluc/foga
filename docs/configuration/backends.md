@@ -186,6 +186,68 @@ paths. Its fields mean:
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
 
+## Install backends
+
+### `pip`
+
+`install.targets.<name>.backend: pip` runs `python3 -m pip install`. Its fields
+mean:
+
+- `path`: optional local path to install, commonly `.`
+- `packages`: optional package names or specifiers appended after the command
+- `editable`: optional boolean that adds `-e`; requires `path`
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended before packages or paths
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+### `uv`
+
+`install.targets.<name>.backend: uv` runs `uv pip install`. It accepts the same
+fields as `pip`.
+
+### `poetry`
+
+`install.targets.<name>.backend: poetry` runs `poetry install`.
+
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended after `poetry install`
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+`poetry` does not use `path`, `packages`, or `editable`.
+
+### `npm`
+
+`install.targets.<name>.backend: npm` runs `npm install`.
+
+- `packages`: optional package names appended after `npm install`
+- `path`: optional local package path appended after the command
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended before packages or paths
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+### `apt-get`
+
+`install.targets.<name>.backend: apt-get` runs `apt-get install`.
+
+- `packages`: package names passed to `apt-get install`; this is required
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended before packages, such as `-y`
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+### `yum`
+
+`install.targets.<name>.backend: yum` runs `yum install`.
+
+- `packages`: package names passed to `yum install`; this is required
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended before packages
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
 ## Deploy backends
 
 ### `twine`

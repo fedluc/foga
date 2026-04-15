@@ -13,6 +13,7 @@ Optional sections:
 - `docs`: docs workflows
 - `format`: format workflows
 - `lint`: lint workflows
+- `install`: installation workflows
 - `deploy`: deployment workflows
 - `clean`: cleanup targets
 - `profiles`: named overrides applied on top of the base config
@@ -58,6 +59,13 @@ lint:
     python-style:
       backend: ruff-check
       paths: ["src", "tests"]
+
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
 
 deploy:
   targets:
@@ -145,6 +153,18 @@ such as `ruff-check`, `pylint`, or `clang-tidy`.
 want `foga lint` to run anything.
 
 Each lint target may also set `launcher` to prepend a command prefix.
+
+### `install`
+
+`install.targets` is a mapping keyed by target name. Each target chooses a
+backend such as `pip`, `uv`, `poetry`, `npm`, `apt-get`, or `yum`.
+
+`install` is optional, but `install.targets` is the important nested section
+when you want `foga install` to run anything.
+
+Each install target may also set `launcher` to prepend a command prefix. This
+is the intended way to add `sudo` or a container runner for system package
+installers.
 
 ### `deploy`
 
