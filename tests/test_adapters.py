@@ -346,6 +346,42 @@ def test_plan_install_supports_poetry_and_uv_backends(tmp_path: Path) -> None:
     ]
 
 
+def test_plan_install_supports_uv_project_sync_targets(tmp_path: Path) -> None:
+    """Uv project sync targets map first-class fields to uv sync flags."""
+    targets = [
+        InstallTargetConfig(
+            name="dev-python",
+            backend="uv",
+            groups=["dev"],
+            extras=["test", "docs"],
+            install_project=False,
+        ),
+        InstallTargetConfig(
+            name="project-sync",
+            backend="uv",
+            install_project=True,
+            args=["--frozen"],
+        ),
+    ]
+
+    specs = plan_install(tmp_path, targets).specs
+
+    assert [spec.command for spec in specs] == [
+        [
+            "uv",
+            "sync",
+            "--group",
+            "dev",
+            "--extra",
+            "test",
+            "--extra",
+            "docs",
+            "--no-install-project",
+        ],
+        ["uv", "sync", "--frozen"],
+    ]
+
+
 def test_plan_install_supports_brew_targets(tmp_path: Path) -> None:
     """Install planning maps brew targets to the expected command."""
     targets = [
@@ -388,6 +424,38 @@ def test_plan_install_validates_backend_specific_inputs(tmp_path: Path) -> None:
                     name="python-deps",
                     backend="poetry",
                     packages=["requests"],
+                )
+            ],
+        )
+
+    with pytest.raises(
+        ConfigError,
+        match="install.targets.python-deps.groups.*not supported.*pip",
+    ):
+        plan_install(
+            tmp_path,
+            [
+                InstallTargetConfig(
+                    name="python-deps",
+                    backend="pip",
+                    groups=["dev"],
+                    path=".",
+                )
+            ],
+        )
+
+    with pytest.raises(
+        ConfigError,
+        match="install.targets.dev-python.packages.*not supported.*project sync",
+    ):
+        plan_install(
+            tmp_path,
+            [
+                InstallTargetConfig(
+                    name="dev-python",
+                    backend="uv",
+                    packages=["dev"],
+                    groups=["dev"],
                 )
             ],
         )

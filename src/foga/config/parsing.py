@@ -531,6 +531,11 @@ def _parse_install_target(
         packages=string_list(data.get("packages"), f"{path}.packages"),
         path=optional_str(data, "path", f"{path}.path"),
         editable=editable if editable is not None else False,
+        groups=string_list(data.get("groups"), f"{path}.groups"),
+        extras=string_list(data.get("extras"), f"{path}.extras"),
+        install_project=optional_bool(
+            data, "install_project", f"{path}.install_project"
+        ),
         args=string_list(data.get("args"), f"{path}.args"),
         env=string_mapping(data.get("env"), f"{path}.env"),
         hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),

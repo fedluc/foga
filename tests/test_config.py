@@ -954,6 +954,30 @@ install:
     assert config.install["python-deps"].args == ["--sync"]
 
 
+def test_load_config_parses_uv_project_install_fields(tmp_path: Path) -> None:
+    """Uv install targets load groups, extras, and install_project."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+install:
+  targets:
+    dev-python:
+      backend: uv
+      groups: ["dev"]
+      extras: ["test", "docs"]
+      install_project: false
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.install["dev-python"].groups == ["dev"]
+    assert config.install["dev-python"].extras == ["test", "docs"]
+    assert config.install["dev-python"].install_project is False
+
+
 def test_load_config_parses_brew_install_targets(tmp_path: Path) -> None:
     """Brew install targets are loaded into the parsed config."""
     config_path = write_config(
