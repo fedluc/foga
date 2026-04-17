@@ -39,7 +39,17 @@ from .common import (
 
 @dataclass(slots=True)
 class InspectArgs:
-    """Parsed arguments for the inspect command family."""
+    """Parsed arguments for the inspect command family.
+
+    Attributes:
+        profile: Configuration profile requested on the CLI.
+        full: Whether to render the full resolved configuration document.
+        inspect_command: Selected inspect subcommand, if any.
+        selection: Workflow selection override for build, test, format, or lint.
+        targets: Named target overrides for build, deploy, docs, format, install, or
+            lint inspection.
+        runner: Named test runner overrides for test inspection.
+    """
 
     profile: str | None = None
     full: bool = False
@@ -58,7 +68,11 @@ inspect_app = typer.Typer(
 
 
 def build_inspect_app() -> typer.Typer:
-    """Return the configured inspect sub-application."""
+    """Return the configured inspect sub-application.
+
+    Returns:
+        Typer application for the ``inspect`` command family.
+    """
     return inspect_app
 
 
@@ -74,7 +88,16 @@ def inspect_callback(
         typer.Option("--full", help="Show the full resolved configuration document."),
     ] = False,
 ) -> int | None:
-    """Render inspect output or seed shared inspect state for subcommands."""
+    """Render inspect output or seed shared inspect state for subcommands.
+
+    Args:
+        ctx: Current Typer context.
+        profile: Configuration profile to apply.
+        full: Whether to render the full resolved configuration document.
+
+    Returns:
+        Exit code when rendering the top-level inspect command, otherwise ``None``.
+    """
     args = InspectArgs(profile=profile, full=full)
     ctx.obj = args
     if ctx.invoked_subcommand is None:
@@ -104,7 +127,17 @@ def inspect_build_command(
         ),
     ] = None,
 ) -> int:
-    """Inspect resolved build configuration."""
+    """Inspect resolved build configuration.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        selection: Selected build workflow kind to inspect.
+        targets: Optional C++ build target overrides.
+
+    Returns:
+        Process exit code for the command.
+    """
     return _run_inspect_subcommand(
         ctx,
         full=full,
@@ -136,7 +169,17 @@ def inspect_test_command(
         ),
     ] = None,
 ) -> int:
-    """Inspect resolved test configuration."""
+    """Inspect resolved test configuration.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        selection: Selected test workflow kind to inspect.
+        runner: Optional test runner names to include in the summary.
+
+    Returns:
+        Process exit code for the command.
+    """
     return _run_inspect_subcommand(
         ctx,
         full=full,
@@ -161,7 +204,16 @@ def inspect_deploy_command(
         ),
     ] = None,
 ) -> int:
-    """Inspect resolved deploy configuration."""
+    """Inspect resolved deploy configuration.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        targets: Optional deploy target names to include in the summary.
+
+    Returns:
+        Process exit code for the command.
+    """
     return _run_inspect_subcommand(
         ctx,
         full=full,
@@ -185,7 +237,16 @@ def inspect_docs_command(
         ),
     ] = None,
 ) -> int:
-    """Inspect resolved docs configuration."""
+    """Inspect resolved docs configuration.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        targets: Optional docs target names to include in the summary.
+
+    Returns:
+        Process exit code for the command.
+    """
     return _run_inspect_subcommand(
         ctx,
         full=full,
@@ -216,7 +277,17 @@ def inspect_format_command(
         ),
     ] = None,
 ) -> int:
-    """Inspect resolved format configuration."""
+    """Inspect resolved format configuration.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        selection: Selected format workflow kind to inspect.
+        targets: Optional format target names to include in the summary.
+
+    Returns:
+        Process exit code for the command.
+    """
     return _run_inspect_subcommand(
         ctx,
         full=full,
@@ -241,7 +312,16 @@ def inspect_install_command(
         ),
     ] = None,
 ) -> int:
-    """Inspect resolved install configuration."""
+    """Inspect resolved install configuration.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        targets: Optional install target names to include in the summary.
+
+    Returns:
+        Process exit code for the command.
+    """
     return _run_inspect_subcommand(
         ctx,
         full=full,
@@ -272,7 +352,17 @@ def inspect_lint_command(
         ),
     ] = None,
 ) -> int:
-    """Inspect resolved lint configuration."""
+    """Inspect resolved lint configuration.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        selection: Selected lint workflow kind to inspect.
+        targets: Optional lint target names to include in the summary.
+
+    Returns:
+        Process exit code for the command.
+    """
     return _run_inspect_subcommand(
         ctx,
         full=full,
@@ -283,7 +373,17 @@ def inspect_lint_command(
 
 
 def _inspect_args_from_context(ctx: typer.Context) -> InspectArgs:
-    """Return the shared inspect arguments set by the inspect callback."""
+    """Return the shared inspect arguments set by the inspect callback.
+
+    Args:
+        ctx: Current Typer context.
+
+    Returns:
+        Shared inspect arguments seeded by the parent callback.
+
+    Raises:
+        RuntimeError: If the inspect callback did not initialize the context.
+    """
     inspect_args = ctx.parent.obj if ctx.parent is not None else None
     if not isinstance(inspect_args, InspectArgs):
         raise RuntimeError("Inspect context was not initialized")
@@ -299,7 +399,19 @@ def _run_inspect_subcommand(
     targets: list[str] | None = None,
     runner: list[str] | None = None,
 ) -> int:
-    """Run an inspect subcommand with the shared parent inspect options."""
+    """Run an inspect subcommand with the shared parent inspect options.
+
+    Args:
+        ctx: Current Typer context.
+        full: Whether to render the full resolved configuration document.
+        inspect_command: Inspect subcommand name being executed.
+        selection: Workflow selection override for the subcommand.
+        targets: Named target overrides for the subcommand.
+        runner: Named test runner overrides for the subcommand.
+
+    Returns:
+        Process exit code for the command.
+    """
     base_args = _inspect_args_from_context(ctx)
     return run_inspect(
         config_path_from_context(ctx),
@@ -499,7 +611,15 @@ def _build_deploy_context(config: FogaConfig, args: InspectArgs) -> dict[str, ob
 
 
 def _build_docs_context(config: FogaConfig, args: InspectArgs) -> dict[str, object]:
-    """Build inspect metadata for the docs subcommand."""
+    """Build inspect metadata for the docs subcommand.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+
+    Returns:
+        Docs inspection metadata.
+    """
     selected_targets = config.docs.selected_targets(args.targets)
     return {
         "command": "docs",
@@ -508,7 +628,15 @@ def _build_docs_context(config: FogaConfig, args: InspectArgs) -> dict[str, obje
 
 
 def _build_format_context(config: FogaConfig, args: InspectArgs) -> dict[str, object]:
-    """Build inspect metadata for the format subcommand."""
+    """Build inspect metadata for the format subcommand.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+
+    Returns:
+        Format inspection metadata.
+    """
     selected_targets = config.formatters.selected_targets(args.selection, args.targets)
     return {
         "command": "format",
@@ -520,7 +648,15 @@ def _build_format_context(config: FogaConfig, args: InspectArgs) -> dict[str, ob
 
 
 def _build_install_context(config: FogaConfig, args: InspectArgs) -> dict[str, object]:
-    """Build inspect metadata for the install subcommand."""
+    """Build inspect metadata for the install subcommand.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+
+    Returns:
+        Install inspection metadata.
+    """
     selected_targets = config.install.selected_targets(args.targets)
     return {
         "command": "install",
@@ -529,7 +665,15 @@ def _build_install_context(config: FogaConfig, args: InspectArgs) -> dict[str, o
 
 
 def _build_lint_context(config: FogaConfig, args: InspectArgs) -> dict[str, object]:
-    """Build inspect metadata for the lint subcommand."""
+    """Build inspect metadata for the lint subcommand.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+
+    Returns:
+        Lint inspection metadata.
+    """
     selected_targets = config.linters.selected_targets(args.selection, args.targets)
     return {
         "command": "lint",
@@ -709,7 +853,16 @@ def _build_effective_deploy_config(
 def _build_effective_docs_config(
     config: FogaConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
-    """Build the concise config fragment for docs inspection."""
+    """Build the concise config fragment for docs inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Docs-specific config fragment.
+    """
     selected_targets = config.docs.selected_targets(args.targets)
     return _build_effective_named_entries_config(
         resolved_config,
@@ -723,7 +876,16 @@ def _build_effective_docs_config(
 def _build_effective_format_config(
     config: FogaConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
-    """Build the concise config fragment for format inspection."""
+    """Build the concise config fragment for format inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Format-specific config fragment.
+    """
     selected_targets = config.formatters.selected_targets(args.selection, args.targets)
     return _build_effective_named_entries_config(
         resolved_config,
@@ -737,7 +899,16 @@ def _build_effective_format_config(
 def _build_effective_install_config(
     config: FogaConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
-    """Build the concise config fragment for install inspection."""
+    """Build the concise config fragment for install inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Install-specific config fragment.
+    """
     selected_targets = config.install.selected_targets(args.targets)
     return _build_effective_named_entries_config(
         resolved_config,
@@ -751,7 +922,16 @@ def _build_effective_install_config(
 def _build_effective_lint_config(
     config: FogaConfig, args: InspectArgs, resolved_config: dict[str, object]
 ) -> dict[str, object]:
-    """Build the concise config fragment for lint inspection."""
+    """Build the concise config fragment for lint inspection.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+        resolved_config: Full resolved configuration document.
+
+    Returns:
+        Lint-specific config fragment.
+    """
     selected_targets = config.linters.selected_targets(args.selection, args.targets)
     return _build_effective_named_entries_config(
         resolved_config,
@@ -770,7 +950,18 @@ def _build_effective_named_entries_config(
     selected_names: list[str],
     default_keys: tuple[str, ...],
 ) -> dict[str, object]:
-    """Return the filtered section for named-target and named-runner workflows."""
+    """Return the filtered section for named-target and named-runner workflows.
+
+    Args:
+        resolved_config: Full resolved configuration document.
+        section_name: Top-level section to filter.
+        entries_key: Nested mapping key that contains the named entries.
+        selected_names: Entry names to keep in the filtered output.
+        default_keys: Section keys to preserve alongside the filtered entries.
+
+    Returns:
+        Filtered configuration section for display.
+    """
     section = resolved_config.get(section_name)
     if not isinstance(section, dict):
         return {}
@@ -791,7 +982,15 @@ def _build_effective_named_entries_config(
 
 
 def _build_planned_commands(config: FogaConfig, args: InspectArgs) -> list[str]:
-    """Build shell-rendered command previews for the active inspect context."""
+    """Build shell-rendered command previews for the active inspect context.
+
+    Args:
+        config: Loaded project configuration.
+        args: Parsed inspect command arguments.
+
+    Returns:
+        Planned commands rendered as shell-safe strings.
+    """
     if args.inspect_command == "build":
         plan = plan_build(config.build, args.selection, args.targets)
     elif args.inspect_command == "test":
