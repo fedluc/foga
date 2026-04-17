@@ -1,8 +1,0 @@
-{
-  "source_dir": "/workspaces/foga/examples/tutorial/04-pybind11-profiles",
-  "build_dir": "/workspaces/foga/examples/tutorial/04-pybind11-profiles/build-wheel",
-  "cmake_path": "/usr/bin/cmake",
-  "skbuild_path": "/home/vscode/.cache/uv/builds-v0/.tmpIHsEyV/lib/python3.12/site-packages/scikit_build_core",
-  "skbuild_version": "0.12.2",
-  "python_executable": "/home/vscode/.cache/uv/builds-v0/.tmpIHsEyV/bin/python"
-}

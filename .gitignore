@@ -47,3 +47,6 @@ htmlcov/
 *.swp
 *.swo
 .DS_Store
+# Tutorial example output
+examples/tutorial/**/build-*/
+examples/tutorial/**/build-wheel/

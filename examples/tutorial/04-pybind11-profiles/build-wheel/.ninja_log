@@ -1,5 +1,0 @@
-# ninja log v5
-1	111	1776453265693431950	CMakeFiles/hello_core.dir/cpp/src/greeting.cpp.o	2ee8a5ec2da7ec56
-118	136	1776453265718585313	libhello_core.a	c6ff40a07b305db6
-2	1082	1776453266664286920	CMakeFiles/_core.dir/src/hello_bindings/bindings.cpp.o	19d6e6e68db32693
-1088	1897	1776453267480433013	_core.cpython-312-aarch64-linux-gnu.so	3411e13c10b76bfd
