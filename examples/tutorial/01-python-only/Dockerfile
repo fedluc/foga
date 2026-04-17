@@ -2,12 +2,12 @@ FROM python:3.12-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive UV_LINK_MODE=copy
 
-WORKDIR /workspace/foga
+WORKDIR /workspace/example
 
 RUN python -m pip install --no-cache-dir uv
 
-COPY . /workspace/foga
+COPY . /workspace/example
 
-RUN uv sync --frozen --extra dev
+RUN uv sync --extra dev
 
-ENTRYPOINT ["python", "run-example.py", "--mode", "host", "python-only"]
+ENTRYPOINT ["uv", "run", "foga", "--config", "foga.yml"]

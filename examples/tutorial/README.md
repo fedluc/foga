@@ -24,9 +24,11 @@ python run-example.py pybind11-tests
 python run-example.py pybind11-profiles
 ```
 
-Those commands build an example-specific Docker image and run the example in a
-container by default, so the host machine does not need the example toolchain.
-If you already have the dependencies and explicitly want a local run, use
+Those commands build an example-specific Docker image from the example
+directory and run it by default, so the host machine does not need the example
+toolchain. Each example `pyproject.toml` declares `foga` as a dependency, and
+the Dockerfile installs it through `uv sync` before running any commands. If
+you already have the dependencies and explicitly want a local run, use
 `python run-example.py --mode host <name>`.
 
 Once these examples feel familiar, move to the larger real-world references in

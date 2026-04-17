@@ -101,6 +101,12 @@ def resolve_example(name: str) -> ExampleSpec:
     raise KeyError(name)
 
 
+def example_root(spec: ExampleSpec) -> Path:
+    """Return the repository path for one example."""
+
+    return REPO_ROOT / spec.directory
+
+
 def format_examples() -> str:
     """Render the available example list for CLI help output."""
 
@@ -125,7 +131,7 @@ def build_foga_command(spec: ExampleSpec, args: Sequence[str]) -> list[str]:
     """Build the local foga invocation for one example command."""
 
     uv = require_tool("uv")
-    config = REPO_ROOT / spec.directory / "foga.yml"
+    config = example_root(spec) / "foga.yml"
     return [
         uv,
         "run",
@@ -155,7 +161,7 @@ def build_docker_build_command(spec: ExampleSpec) -> list[str]:
         str(REPO_ROOT / spec.dockerfile),
         "-t",
         docker_image_tag(spec),
-        str(REPO_ROOT),
+        str(example_root(spec)),
     ]
 
 
@@ -186,8 +192,12 @@ def run_host_example(spec: ExampleSpec, forwarded_args: Sequence[str]) -> None:
 def run_docker_example(spec: ExampleSpec, forwarded_args: Sequence[str]) -> None:
     """Build and run an example inside its dedicated Docker image."""
 
+    commands = (
+        [tuple(forwarded_args)] if forwarded_args else list(spec.default_commands)
+    )
     run_command(build_docker_build_command(spec), cwd=REPO_ROOT)
-    run_command(build_docker_run_command(spec, forwarded_args), cwd=REPO_ROOT)
+    for command in commands:
+        run_command(build_docker_run_command(spec, command), cwd=REPO_ROOT)
 
 
 def run_example(

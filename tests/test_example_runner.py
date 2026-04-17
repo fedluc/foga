@@ -25,6 +25,7 @@ def test_build_docker_commands_use_example_metadata(monkeypatch) -> None:
         "-f",
         str(example_runner.REPO_ROOT / spec.dockerfile),
     ]
+    assert build_command[-1] == str(example_runner.example_root(spec))
     assert run_command == [
         "/docker",
         "run",
@@ -32,6 +33,36 @@ def test_build_docker_commands_use_example_metadata(monkeypatch) -> None:
         example_runner.docker_image_tag(spec),
         "build",
         "cpp",
+    ]
+
+
+def test_run_docker_example_runs_default_commands(monkeypatch) -> None:
+    spec = example_runner.resolve_example("python-only")
+    calls: list[tuple[tuple[str, ...], Path]] = []
+
+    monkeypatch.setattr(
+        example_runner,
+        "build_docker_build_command",
+        lambda spec: ["docker", "build", spec.name],
+    )
+    monkeypatch.setattr(
+        example_runner,
+        "build_docker_run_command",
+        lambda spec, args: ["docker", "run", spec.name, *args],
+    )
+
+    def fake_run(command: list[str], *, cwd: Path) -> None:
+        calls.append((tuple(command), cwd))
+
+    monkeypatch.setattr(example_runner, "run_command", fake_run)
+
+    example_runner.run_docker_example(spec, ())
+
+    assert calls == [
+        (("docker", "build", "python-only"), example_runner.REPO_ROOT),
+        (("docker", "run", "python-only", "validate"), example_runner.REPO_ROOT),
+        (("docker", "run", "python-only", "install"), example_runner.REPO_ROOT),
+        (("docker", "run", "python-only", "build"), example_runner.REPO_ROOT),
     ]
 
 

@@ -8,7 +8,8 @@ It shows:
 - a default debug-oriented C++ build
 - a `release` profile with a separate build directory and `Release` flags
 - matching `ctest` runs for both build modes
-- a Dockerfile that installs native tooling through `foga install --target system`
+- a Dockerfile that installs `foga` through `uv sync` and native tooling through
+  `foga install --target system`
 
 Files:
 

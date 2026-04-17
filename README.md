@@ -44,8 +44,9 @@ test:
 For runnable examples that build up gradually, start with
 [`examples/tutorial/`](examples/tutorial/) or the
 [Examples guide](docs/examples/tutorials.md). From the repository root,
-`python run-example.py --list` shows the short example names and the launcher
-runs them in Docker by default.
+`python run-example.py --list` shows the short example names. Each tutorial
+Docker image installs `foga` from PyPI through the example's `pyproject.toml`,
+and the launcher runs those images by default.
 
 ## Quick start
 

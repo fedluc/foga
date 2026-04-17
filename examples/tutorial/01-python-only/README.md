@@ -8,6 +8,7 @@ It shows:
 - a `uv`-based development install
 - a `python-build` package build
 - a dedicated Docker environment so the example does not touch the host machine
+- a self-contained `uv` project that installs `foga` from PyPI
 
 Files:
 

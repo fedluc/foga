@@ -8,7 +8,8 @@ It shows:
 - Python tests for the `pybind11` module
 - C++ tests driven through `ctest`
 - Python `ruff format` and `ruff check` targets
-- a Dockerfile that installs the native build toolchain through `foga install`
+- a Dockerfile that installs `foga` through `uv sync` and the native build
+  toolchain through `foga install`
 
 Files:
 

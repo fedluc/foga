@@ -30,9 +30,11 @@ python run-example.py pybind11-tests
 python run-example.py pybind11-profiles
 ```
 
-Those commands build the example-specific Docker image and execute the example in
-a container by default. You can still forward an explicit `foga` command after
-the example name, for example:
+Those commands build the example-specific Docker image from the example
+directory and execute it in a container by default. Each example installs
+`foga` from PyPI through its own `pyproject.toml` and `uv sync`, so the image no
+longer depends on a copy of this repository. You can still forward an explicit
+`foga` command after the example name, for example:
 
 ```bash
 python run-example.py pybind11-profiles inspect --profile release build cpp

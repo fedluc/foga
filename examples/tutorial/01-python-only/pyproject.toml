@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Pure Python tutorial example for foga."
 requires-python = ">=3.10"
 dependencies = [
+    "foga>=0.1.0",
     "numpy>=2.0",
     "rich>=14.0",
 ]

@@ -8,7 +8,8 @@ It shows:
 - a small shared C++ greeting implementation
 - a standalone CMake executable built through `build.cpp`
 - a Python package built through `build.python`
-- a Dockerfile that installs native tooling through `foga install --target system`
+- a Dockerfile that installs `foga` through `uv sync` and native tooling through
+  `foga install --target system`
 
 Files:
 
