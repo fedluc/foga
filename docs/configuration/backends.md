@@ -216,9 +216,8 @@ Its fields mean:
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
 
-The `uv` backend is project-oriented. `path`, `packages`, and `editable` are
-not supported; use the `pip` backend for pip-style installs such as
-`requirements.txt`, local paths, or editable installs.
+The `uv` backend only supports project sync options. `path`, `packages`, and
+`editable` are not supported.
 
 Example:
 
