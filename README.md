@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/foga.svg" alt="foga" width="400">
+  <img src="https://raw.githubusercontent.com/fedluc/foga/main/assets/foga.svg" alt="foga" width="400">
 </p>
 
 `foga` is a Python package and CLI for developers maintaining Python packages

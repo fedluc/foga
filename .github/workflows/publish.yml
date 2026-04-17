@@ -23,17 +23,22 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install project and development dependencies
-        run: python -m pip install -e ".[dev]"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Sync project dependencies
+        run: uv sync --frozen --extra dev
 
       - name: Run lint checks
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Run test suite
-        run: pytest
+        run: uv run pytest
 
       - name: Build package
-        run: python -m build
+        run: uv run python -m build
 
       - name: Upload distribution artifacts
         uses: actions/upload-artifact@v4

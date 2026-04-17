@@ -30,30 +30,40 @@ Good candidates to keep outside `foga`:
 
 ## Working on this repository
 
-Install the project in editable mode with development dependencies:
+Install `uv` first if it is not already available in your shell, then sync the
+repository environment with the extras used in development and documentation:
 
 ```bash
-pip install -e .[dev,docs]
+uv sync --extra dev --extra docs
 ```
 
 Standard verification:
 
 ```bash
-ruff check .
-pytest
-python -m build
-sphinx-build -W --keep-going -b html docs docs/_build/html
+uv run ruff check .
+uv run pytest
+uv run python -m build
+uv run sphinx-build -W --keep-going -b html docs docs/_build/html
+```
+
+When dependency metadata changes, refresh the committed lockfile with:
+
+```bash
+uv lock
 ```
 
 ## Devcontainer
 
 The repository includes a devcontainer in
 [`/.devcontainer/devcontainer.json`](https://github.com/fedluc/foga/blob/main/.devcontainer/devcontainer.json).
-When opened in a compatible environment, it installs:
+When opened in a compatible environment, it installs the repository toolchain,
+GitHub CLI, and Codex:
 
 - Python 3.11
-- `foga` in editable mode with the `dev` extra, including `ruff`
+- `uv`
+- `foga` in editable mode with the `dev` and `docs` extras, including `ruff`
+  and Sphinx
 - common C++ tooling dependencies used by package workflows:
   `build-essential`, `clang`, `cmake`, `ninja-build`, `pkg-config`, and `gdb`
 - GitHub CLI (`gh`) for authenticated GitHub API and repository operations
-- Codex via `npm`
+- Codex (`@openai/codex`) via `npm`
