@@ -8,10 +8,11 @@ It shows:
 - Python tests for the `pybind11` module
 - C++ tests driven through `ctest`
 - Python `ruff format` and `ruff check` targets
-- one `run-foga` helper that exercises install, build, test, and lint
+- a Dockerfile that installs the native build toolchain through `foga install`
 
 Files:
 
+- [`Dockerfile`](Dockerfile)
 - [`foga.yml`](foga.yml)
 - [`pyproject.toml`](pyproject.toml)
 - [`cpp/`](cpp)
@@ -19,10 +20,10 @@ Files:
 - [`tests/`](tests)
 - [`run-foga`](run-foga)
 
-Typical usage:
+Typical usage from the repository root:
 
 ```bash
-./run-foga
-./run-foga test
-./run-foga lint
+python run-example.py pybind11-tests
+python run-example.py pybind11-tests test
+python run-example.py pybind11-tests lint
 ```

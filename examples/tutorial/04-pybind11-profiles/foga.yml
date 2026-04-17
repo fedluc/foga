@@ -20,6 +20,13 @@ install:
     dev:
       backend: uv
       extras: ["dev"]
+    system:
+      backend: apt-get
+      args: ["-y"]
+      packages: ["build-essential", "cmake", "ninja-build"]
+      hooks:
+        pre:
+          - ["apt-get", "update"]
 
 test:
   default: all

@@ -1,0 +1,11 @@
+.git
+.venv
+__pycache__
+**/__pycache__
+docs/_build
+examples/tutorial/**/.venv
+examples/tutorial/**/build-*
+examples/tutorial/**/build-wheel
+examples/tutorial/**/dist
+examples/tutorial/**/.pytest_cache
+examples/tutorial/**/.ruff_cache

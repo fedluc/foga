@@ -13,15 +13,7 @@ install:
       backend: uv
       extras: ["dev"]
 
-test:
-  runners:
-    unit:
-      backend: pytest
-      path: tests
-      launcher: ["uv", "run"]
-
 clean:
   paths:
     - dist
     - .venv
-    - .pytest_cache

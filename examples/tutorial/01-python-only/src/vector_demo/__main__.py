@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rich.console import Console
 
-from . import centered_norm
+from .math_ops import centered_norm
 
 
 def main() -> None:

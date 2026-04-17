@@ -8,20 +8,21 @@ It shows:
 - a small shared C++ greeting implementation
 - a standalone CMake executable built through `build.cpp`
 - a Python package built through `build.python`
-- a simple smoke test driven by the `run-foga` helper
+- a Dockerfile that installs native tooling through `foga install --target system`
 
 Files:
 
+- [`Dockerfile`](Dockerfile)
 - [`foga.yml`](foga.yml)
 - [`pyproject.toml`](pyproject.toml)
 - [`cpp/`](cpp)
 - [`src/hello_bindings`](src/hello_bindings)
 - [`run-foga`](run-foga)
 
-Typical usage:
+Typical usage from the repository root:
 
 ```bash
-./run-foga
-./run-foga build cpp
-./run-foga build python
+python run-example.py pybind11-hello
+python run-example.py pybind11-hello build cpp
+python run-example.py pybind11-hello build python
 ```

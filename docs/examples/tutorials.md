@@ -6,11 +6,11 @@ without forcing you to absorb a large real-world repository first.
 ## Progressive example ladder
 
 1. [`01-python-only`](https://github.com/fedluc/foga/blob/main/examples/tutorial/01-python-only/README.md)
-   shows a minimal Python package with custom dependencies, a package build, a
-   development install, and pytest-based tests.
+   shows a minimal Python package with custom dependencies, a package build, and
+   a development install in an isolated container workflow.
 2. [`02-pybind11-hello`](https://github.com/fedluc/foga/blob/main/examples/tutorial/02-pybind11-hello/README.md)
-   adds a tiny `pybind11` module and separates the standalone C++ build from the
-   Python package build.
+   adds a tiny `pybind11` module and shows how `foga install` can drive
+   `apt-get` installation of native build tooling during a Docker image build.
 3. [`03-pybind11-tests`](https://github.com/fedluc/foga/blob/main/examples/tutorial/03-pybind11-tests/README.md)
    extends the mixed project with Python tests, C++ tests, and Python linting
    and formatting targets.
@@ -20,19 +20,29 @@ without forcing you to absorb a large real-world repository first.
 
 ## How to run them
 
-Each tutorial directory includes a `run-foga` helper. From the repository root:
+Run the tutorial examples from the repository root with one cross-platform
+launcher:
 
 ```bash
-examples/tutorial/01-python-only/run-foga
-examples/tutorial/02-pybind11-hello/run-foga
-examples/tutorial/03-pybind11-tests/run-foga
-examples/tutorial/04-pybind11-profiles/run-foga
+python run-example.py python-only
+python run-example.py pybind11-hello
+python run-example.py pybind11-tests
+python run-example.py pybind11-profiles
 ```
 
-You can also pass an explicit `foga` command through the helper, for example:
+Those commands build the example-specific Docker image and execute the example in
+a container by default. You can still forward an explicit `foga` command after
+the example name, for example:
 
 ```bash
-examples/tutorial/04-pybind11-profiles/run-foga inspect --profile release build cpp
+python run-example.py pybind11-profiles inspect --profile release build cpp
+```
+
+If you intentionally want to run an example directly on the current machine, use
+`--mode host`:
+
+```bash
+python run-example.py --mode host pybind11-tests test
 ```
 
 ## After the tutorials

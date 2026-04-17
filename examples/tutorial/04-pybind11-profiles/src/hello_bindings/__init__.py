@@ -1,3 +1,1 @@
-from ._core import greet
-
-__all__ = ["greet"]
+"""Profiled pybind11 tutorial package."""

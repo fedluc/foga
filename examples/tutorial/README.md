@@ -5,25 +5,29 @@ reference project.
 
 Read them in order:
 
-1. [`01-python-only`](01-python-only/README.md): pure Python package with build,
-   install, and test workflows.
+1. [`01-python-only`](01-python-only/README.md): pure Python package with build
+   and install workflows in a containerized example environment.
 2. [`02-pybind11-hello`](02-pybind11-hello/README.md): adds a tiny `pybind11`
-   module and keeps the standalone C++ build separate from the Python package
-   build.
+   module and shows native dependency installation through `foga install` and
+   `apt-get` inside Docker.
 3. [`03-pybind11-tests`](03-pybind11-tests/README.md): extends the mixed project
    with Python tests, C++ tests, and Python lint and format targets.
 4. [`04-pybind11-profiles`](04-pybind11-profiles/README.md): adds profile-driven
    debug and release C++ build modes to the tested mixed project.
 
-Each directory includes a `run-foga` helper that uses the repository's local
-`foga` checkout:
+Run them from the repository root with the cross-platform launcher:
 
 ```bash
-examples/tutorial/01-python-only/run-foga
-examples/tutorial/02-pybind11-hello/run-foga
-examples/tutorial/03-pybind11-tests/run-foga
-examples/tutorial/04-pybind11-profiles/run-foga
+python run-example.py python-only
+python run-example.py pybind11-hello
+python run-example.py pybind11-tests
+python run-example.py pybind11-profiles
 ```
+
+Those commands build an example-specific Docker image and run the example in a
+container by default, so the host machine does not need the example toolchain.
+If you already have the dependencies and explicitly want a local run, use
+`python run-example.py --mode host <name>`.
 
 Once these examples feel familiar, move to the larger real-world references in
 [`examples/qupled`](../qupled/README.md) and
