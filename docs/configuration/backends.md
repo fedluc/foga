@@ -203,8 +203,33 @@ mean:
 
 ### `uv`
 
-`install.targets.<name>.backend: uv` runs `uv pip install`. It accepts the same
-fields as `pip`.
+`install.targets.<name>.backend: uv` runs `uv sync` for uv-managed projects.
+
+Its fields mean:
+
+- `groups`: optional dependency groups passed as repeated `--group` flags
+- `extras`: optional extras passed as repeated `--extra` flags
+- `install_project`: optional boolean that controls whether the local project is
+  installed; `false` adds `--no-install-project`
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended after `uv sync`
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+The `uv` backend only supports project sync options. `path`, `packages`, and
+`editable` are not supported.
+
+Example:
+
+```yaml
+install:
+  targets:
+    dev-python:
+      backend: uv
+      groups: ["dev"]
+      extras: ["test", "docs"]
+      install_project: false
+```
 
 ### `poetry`
 

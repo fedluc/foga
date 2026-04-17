@@ -546,6 +546,35 @@ install:
     assert "brew install cmake llvm" in captured.out
 
 
+def test_install_command_dry_run_outputs_uv_project_sync_commands(
+    tmp_path: Path, capsys
+) -> None:
+    """Install dry-run prints uv sync commands for uv project installs."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+install:
+  targets:
+    dev-python:
+      backend: uv
+      groups: ["dev"]
+      extras: ["test", "docs"]
+      install_project: false
+""",
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["--config", str(config), "install", "--dry-run"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "uv sync --group dev --extra test --extra docs --no-install-project" in (
+        captured.out
+    )
+
+
 def test_build_cli_target_overrides_profile_and_base_targets(
     tmp_path: Path, monkeypatch
 ) -> None:

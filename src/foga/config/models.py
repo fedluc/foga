@@ -409,6 +409,9 @@ class InstallTargetConfig(NamedBackendConfig):
         packages: Optional package names, specifiers, or package-manager targets.
         path: Optional local path installed by backends that support it.
         editable: Whether pip-style backends should install the path in editable mode.
+        groups: Optional uv dependency groups synced from ``pyproject.toml``.
+        extras: Optional uv extras synced from ``pyproject.toml``.
+        install_project: Whether uv project sync should install the local project.
         args: Extra backend-specific command arguments.
         env: Environment variables applied to generated commands.
         hooks: Commands executed around install steps.
@@ -417,6 +420,9 @@ class InstallTargetConfig(NamedBackendConfig):
     packages: list[str] = field(default_factory=list)
     path: str | None = None
     editable: bool = False
+    groups: list[str] = field(default_factory=list)
+    extras: list[str] = field(default_factory=list)
+    install_project: bool | None = None
 
 
 @dataclass(frozen=True)

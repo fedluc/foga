@@ -103,6 +103,47 @@ def _plan_install_command(
     return specs
 
 
+
+def _uv_sync_options(config: InstallTargetConfig) -> list[str]:
+    """Return uv sync flags derived from uv-specific install fields."""
+
+    options: list[str] = []
+    for group in config.groups:
+        options.extend(["--group", group])
+    for extra in config.extras:
+        options.extend(["--extra", extra])
+    if config.install_project is False:
+        options.append("--no-install-project")
+    return options
+
+
+def _plan_uv_install(
+    config: InstallTargetConfig, request: ToolRequest
+) -> list[CommandSpec]:
+    """Build command specs for uv install targets.
+
+    Args:
+        config: Parsed install target configuration.
+        request: Shared planning context with the project root.
+
+    Returns:
+        Planned command specs for the target, including hooks.
+    """
+
+    pre_hooks, post_hooks = split_hooks(config.hooks, config.name)
+    command = ["uv", "sync", *_uv_sync_options(config), *config.args]
+    specs = pre_hooks + [
+        CommandSpec(
+            command=prepend_launcher(command, config.launcher),
+            cwd=request.project_root,
+            env=config.env,
+            description=f"install target `{config.name}`",
+        )
+    ]
+    specs.extend(post_hooks)
+    return specs
+
+
 def _plan_poetry_install(
     config: InstallTargetConfig, request: ToolRequest
 ) -> list[CommandSpec]:
@@ -206,6 +247,22 @@ def _reject_editable(config: InstallTargetConfig, backend: str) -> None:
     )
 
 
+def _reject_uv_sync_fields(config: InstallTargetConfig, backend: str) -> None:
+    """Reject uv sync fields for backends that do not support them."""
+
+    for field_name in ("groups", "extras"):
+        if getattr(config, field_name):
+            raise ConfigError(
+                f"`{INSTALL_SECTION}.{TARGETS_KEY}.{config.name}.{field_name}` is not "
+                f"supported for the `{backend}` backend"
+            )
+    if config.install_project is not None:
+        raise ConfigError(
+            f"`{INSTALL_SECTION}.{TARGETS_KEY}.{config.name}.install_project` is not "
+            f"supported for the `{backend}` backend"
+        )
+
+
 def _validate_pip_like(config: InstallTargetConfig) -> None:
     """Validate pip-style install targets.
 
@@ -220,6 +277,25 @@ def _validate_pip_like(config: InstallTargetConfig) -> None:
     _require_subjects(config)
 
 
+def _validate_pip(config: InstallTargetConfig) -> None:
+    """Validate pip install targets."""
+
+    _reject_uv_sync_fields(config, INSTALL_PIP)
+    _validate_pip_like(config)
+
+
+def _validate_uv(config: InstallTargetConfig) -> None:
+    """Validate uv install targets that always use project sync semantics."""
+
+    _reject_path(config, INSTALL_UV)
+    _reject_editable(config, INSTALL_UV)
+    if config.packages:
+        raise ConfigError(
+            f"`{INSTALL_SECTION}.{TARGETS_KEY}.{config.name}.packages` is not "
+            f"supported for the `{INSTALL_UV}` backend"
+        )
+
+
 def _validate_poetry(config: InstallTargetConfig) -> None:
     """Validate poetry install targets.
 
@@ -232,6 +308,7 @@ def _validate_poetry(config: InstallTargetConfig) -> None:
 
     _reject_path(config, INSTALL_POETRY)
     _reject_editable(config, INSTALL_POETRY)
+    _reject_uv_sync_fields(config, INSTALL_POETRY)
     if config.packages:
         raise ConfigError(
             f"`{INSTALL_SECTION}.{TARGETS_KEY}.{config.name}.packages` is not "
@@ -250,6 +327,7 @@ def _validate_npm(config: InstallTargetConfig) -> None:
     """
 
     _reject_editable(config, INSTALL_NPM)
+    _reject_uv_sync_fields(config, INSTALL_NPM)
 
 
 def _validate_system_packages(config: InstallTargetConfig, *, backend: str) -> None:
@@ -265,6 +343,7 @@ def _validate_system_packages(config: InstallTargetConfig, *, backend: str) -> N
 
     _reject_path(config, backend)
     _reject_editable(config, backend)
+    _reject_uv_sync_fields(config, backend)
     if config.packages:
         return
     raise ConfigError(
@@ -275,7 +354,7 @@ def _validate_system_packages(config: InstallTargetConfig, *, backend: str) -> N
 INSTALL_BACKENDS: dict[str, BackendContract[InstallTargetConfig, ToolRequest]] = {
     INSTALL_PIP: BackendContract(
         name=INSTALL_PIP,
-        validate=_validate_pip_like,
+        validate=_validate_pip,
         plan=partial(
             _plan_install_command,
             command_prefix=("python3", "-m", "pip", "install"),
@@ -283,11 +362,8 @@ INSTALL_BACKENDS: dict[str, BackendContract[InstallTargetConfig, ToolRequest]] =
     ),
     INSTALL_UV: BackendContract(
         name=INSTALL_UV,
-        validate=_validate_pip_like,
-        plan=partial(
-            _plan_install_command,
-            command_prefix=("uv", "pip", "install"),
-        ),
+        validate=_validate_uv,
+        plan=_plan_uv_install,
     ),
     INSTALL_POETRY: BackendContract(
         name=INSTALL_POETRY,
