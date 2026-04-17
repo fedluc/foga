@@ -37,8 +37,11 @@ development
 
 ## Example projects
 
-The repository includes example configurations derived from real projects:
+The repository includes two kinds of examples:
 
+- [Tutorial examples](examples/tutorials.md): four staged examples that start
+  with a pure-Python package and build up to mixed C++/Python workflows with
+  tests, linting, and profiles
 - [`qupled`](examples/qupled.md): mixed Python/C++ project with C++ CMake
   builds, Python packaging, pytest suites, and profile overrides
 - [`pybind11`](examples/pybind11.md): pinned containerized example that runs

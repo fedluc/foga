@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vector-demo"
+version = "0.1.0"
+description = "Pure Python tutorial example for foga."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=2.0",
+    "rich>=14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.2",
+    "pytest>=8.0",
+]
+
+[project.scripts]
+vector-demo = "vector_demo.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vector_demo"]

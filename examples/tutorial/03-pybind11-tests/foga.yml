@@ -1,0 +1,64 @@
+project:
+  name: pybind11-tested-example
+
+build:
+  default: all
+  cpp:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build-cpp
+    generator: Ninja
+    targets: ["hello_cli"]
+  python:
+    backend: python-build
+    launcher: ["uv", "run"]
+
+install:
+  default_targets: ["dev"]
+  targets:
+    dev:
+      backend: uv
+      extras: ["dev"]
+
+test:
+  default: all
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+      launcher: ["uv", "run"]
+    cpp:
+      backend: ctest
+      source_dir: cpp
+      build_dir: build-cpp-tests
+      generator: Ninja
+      target: hello_cpp_tests
+      args: ["--output-on-failure"]
+
+format:
+  default: python
+  default_targets: ["python-style"]
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+      launcher: ["uv", "run"]
+
+lint:
+  default: python
+  default_targets: ["python-style"]
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
+      launcher: ["uv", "run"]
+
+clean:
+  paths:
+    - build-cpp
+    - build-cpp-tests
+    - build-wheel
+    - dist
+    - .venv
+    - .pytest_cache
+    - .ruff_cache

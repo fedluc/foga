@@ -1,0 +1,80 @@
+project:
+  name: pybind11-profiled-example
+
+build:
+  default: all
+  cpp:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build-cpp-debug
+    generator: Ninja
+    configure_args: ["-DCMAKE_BUILD_TYPE=Debug"]
+    targets: ["hello_cli"]
+  python:
+    backend: python-build
+    launcher: ["uv", "run"]
+
+install:
+  default_targets: ["dev"]
+  targets:
+    dev:
+      backend: uv
+      extras: ["dev"]
+
+test:
+  default: all
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+      launcher: ["uv", "run"]
+    cpp:
+      backend: ctest
+      source_dir: cpp
+      build_dir: build-cpp-tests-debug
+      generator: Ninja
+      configure_args: ["-DCMAKE_BUILD_TYPE=Debug"]
+      target: hello_cpp_tests
+      args: ["--output-on-failure"]
+
+format:
+  default: python
+  default_targets: ["python-style"]
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+      launcher: ["uv", "run"]
+
+lint:
+  default: python
+  default_targets: ["python-style"]
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
+      launcher: ["uv", "run"]
+
+profiles:
+  release:
+    build:
+      cpp:
+        build_dir: build-cpp-release
+        configure_args: ["-DCMAKE_BUILD_TYPE=Release"]
+    test:
+      runners:
+        cpp:
+          build_dir: build-cpp-tests-release
+          configure_args: ["-DCMAKE_BUILD_TYPE=Release"]
+
+clean:
+  paths:
+    - build-cpp-debug
+    - build-cpp-release
+    - build-cpp-tests-debug
+    - build-cpp-tests-release
+    - build-wheel
+    - dist
+    - .venv
+    - .pytest_cache
+    - .ruff_cache

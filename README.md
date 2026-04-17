@@ -41,6 +41,10 @@ test:
       path: tests
 ```
 
+For runnable examples that build up gradually, start with
+[`examples/tutorial/`](examples/tutorial/) or the
+[Examples guide](docs/examples/tutorials.md).
+
 ## Quick start
 
 ```bash

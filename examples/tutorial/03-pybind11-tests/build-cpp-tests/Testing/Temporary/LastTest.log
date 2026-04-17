@@ -1,0 +1,18 @@
+Start testing: Apr 17 19:14 UTC
+----------------------------------------------------------
+1/1 Testing: hello_cpp_tests
+1/1 Test: hello_cpp_tests
+Command: "/workspaces/foga/examples/tutorial/03-pybind11-tests/build-cpp-tests/hello_cpp_tests"
+Directory: /workspaces/foga/examples/tutorial/03-pybind11-tests/build-cpp-tests
+"hello_cpp_tests" start time: Apr 17 19:14 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hello_cpp_tests" end time: Apr 17 19:14 UTC
+"hello_cpp_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Apr 17 19:14 UTC

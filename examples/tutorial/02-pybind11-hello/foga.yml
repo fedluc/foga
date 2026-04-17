@@ -1,0 +1,28 @@
+project:
+  name: pybind11-hello-example
+
+build:
+  default: all
+  cpp:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build-cpp
+    generator: Ninja
+    targets: ["hello_cli"]
+  python:
+    backend: python-build
+    launcher: ["uv", "run"]
+
+install:
+  default_targets: ["dev"]
+  targets:
+    dev:
+      backend: uv
+      extras: ["dev"]
+
+clean:
+  paths:
+    - build-cpp
+    - build-wheel
+    - dist
+    - .venv

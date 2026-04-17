@@ -1,0 +1,5 @@
+# ninja log v5
+0	85	1776453273821291692	CMakeFiles/hello_core.dir/src/greeting.cpp.o	7a7bc8a1f7a6b8e9
+91	114	1776453273849068633	libhello_core.a	2c409551238274d9
+0	117	1776453273853227541	CMakeFiles/hello_cli.dir/app/main.cpp.o	ad1d3f5c594cdef5
+118	141	1776453273876764741	hello_cli	fc9da948ff9e6242

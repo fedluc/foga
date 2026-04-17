@@ -1,0 +1,1 @@
+/tmp/tmptsmqpwyo/wheel/platlib/hello_bindings/_core.cpython-312-aarch64-linux-gnu.so

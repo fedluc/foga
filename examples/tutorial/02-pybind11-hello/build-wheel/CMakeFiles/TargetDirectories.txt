@@ -1,0 +1,8 @@
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/hello_core.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/_core.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/edit_cache.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/rebuild_cache.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/list_install_components.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/install.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/install/local.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-wheel/CMakeFiles/install/strip.dir

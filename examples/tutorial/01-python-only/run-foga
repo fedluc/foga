@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+CONFIG="$SCRIPT_DIR/foga.yml"
+
+if [ "$#" -gt 0 ]; then
+  exec uv run --project "$REPO_ROOT" foga --config "$CONFIG" "$@"
+fi
+
+uv run --project "$REPO_ROOT" foga --config "$CONFIG" validate
+uv run --project "$REPO_ROOT" foga --config "$CONFIG" install
+uv run --project "$REPO_ROOT" foga --config "$CONFIG" build
+uv run --project "$REPO_ROOT" foga --config "$CONFIG" test

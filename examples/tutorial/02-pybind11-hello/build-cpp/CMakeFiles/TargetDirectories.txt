@@ -1,0 +1,4 @@
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-cpp/CMakeFiles/hello_core.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-cpp/CMakeFiles/hello_cli.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-cpp/CMakeFiles/edit_cache.dir
+/workspaces/foga/examples/tutorial/02-pybind11-hello/build-cpp/CMakeFiles/rebuild_cache.dir

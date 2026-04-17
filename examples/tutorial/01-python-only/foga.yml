@@ -1,0 +1,27 @@
+project:
+  name: python-only-example
+
+build:
+  python:
+    backend: python-build
+    launcher: ["uv", "run"]
+
+install:
+  default_targets: ["dev"]
+  targets:
+    dev:
+      backend: uv
+      extras: ["dev"]
+
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+      launcher: ["uv", "run"]
+
+clean:
+  paths:
+    - dist
+    - .venv
+    - .pytest_cache
