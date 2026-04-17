@@ -12,6 +12,7 @@ sudo apt-get install -y --no-install-recommends \
     bubblewrap \
     clang \
     cmake \
+    curl \
     gdb \
     git \
     gh \
@@ -20,13 +21,15 @@ sudo apt-get install -y --no-install-recommends \
 sudo apt-get clean
 sudo rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip first so editable installs and modern packaging tools behave
-# consistently inside the fresh container image.
-python3 -m pip install --upgrade pip
+# Install uv so the development container matches the repository workflow.
+curl -LsSf https://astral.sh/uv/install.sh | sh
+grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" || \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+export PATH="$HOME/.local/bin:$PATH"
 
-# Install this repository in editable mode together with the development
-# dependencies used to build, test, and publish `foga` itself.
-python3 -m pip install -e ".[dev]"
+# Sync this repository together with the development and docs extras used to
+# build, test, and document `foga` itself.
+uv sync --extra dev --extra docs
 
 # Install Codex in the container so the development environment matches the
 # local workflow expected for this repository.
