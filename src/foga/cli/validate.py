@@ -103,8 +103,8 @@ def _build_validation_summary(
         docs_targets=list(config.docs.targets),
         format_targets=list(config.formatters.targets),
         lint_targets=list(config.linters.targets),
-        install_targets=list(config.install),
-        deploy_targets=list(config.deploy),
+        install_targets=list(config.install.targets),
+        deploy_targets=list(config.deploy.targets),
         clean_paths=config.clean.paths,
     )
 

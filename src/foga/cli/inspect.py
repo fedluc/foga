@@ -25,7 +25,6 @@ from .common import (
     WORKFLOW_SELECTION_METAVAR,
     WorkflowSelection,
     config_path_from_context,
-    resolve_named_items,
     selection_value,
 )
 
@@ -321,12 +320,7 @@ def _build_test_context(config: FogaConfig, args: InspectArgs) -> dict[str, obje
     Returns:
         Test inspection metadata.
     """
-    selected_runners = resolve_named_items(
-        config.tests.select_runners(args.selection),
-        args.runner,
-        config.tests.default_runners,
-        "test runner",
-    )
+    selected_runners = config.tests.selected_runners(args.selection, args.runner)
     return {
         "command": "test",
         "selection": args.selection or config.tests.default or ALL_WORKFLOW_SELECTION,
@@ -344,12 +338,7 @@ def _build_deploy_context(config: FogaConfig, args: InspectArgs) -> dict[str, ob
     Returns:
         Deploy inspection metadata.
     """
-    selected_targets = resolve_named_items(
-        config.deploy.targets,
-        args.targets,
-        config.deploy.default_targets,
-        "deploy target",
-    )
+    selected_targets = config.deploy.selected_targets(args.targets)
     return {
         "command": "deploy",
         "targets": list(selected_targets),
@@ -487,12 +476,7 @@ def _build_effective_test_config(
     if not isinstance(test_section, dict):
         return {}
 
-    selected_runners = resolve_named_items(
-        config.tests.select_runners(args.selection),
-        args.runner,
-        config.tests.default_runners,
-        "test runner",
-    )
+    selected_runners = config.tests.selected_runners(args.selection, args.runner)
     runners_section = test_section.get("runners")
     if not isinstance(runners_section, dict):
         effective_test = {"runners": {}}
@@ -532,12 +516,7 @@ def _build_effective_deploy_config(
     if not isinstance(deploy_section, dict):
         return {}
 
-    selected_targets = resolve_named_items(
-        config.deploy.targets,
-        args.targets,
-        config.deploy.default_targets,
-        "deploy target",
-    )
+    selected_targets = config.deploy.selected_targets(args.targets)
     targets_section = deploy_section.get("targets")
     if not isinstance(targets_section, dict):
         effective_deploy = {"targets": {}}

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, TypeVar
 
 from ..adapters.kinds import format_backend_kind, lint_backend_kind, test_backend_kind
+from ..errors import ConfigError
 from .constants import (
     ALL_WORKFLOW_SELECTION,
     CPP_WORKFLOW_KIND,
@@ -255,6 +256,28 @@ class TestConfig(WorkflowSelectionConfig):
             kind_resolver=test_backend_kind,
         )
 
+    def selected_runners(
+        self,
+        selection: str | None = None,
+        runner_names: list[str] | None = None,
+    ) -> dict[str, TestRunnerConfig]:
+        """Resolve the effective test runners for one invocation.
+
+        Args:
+            selection: Optional explicit test kind selected by the CLI.
+            runner_names: Optional explicit runner names selected by the CLI.
+
+        Returns:
+            Runner mapping after kind selection and named default resolution.
+        """
+
+        return _select_named_entries(
+            self.select_runners(selection),
+            selected_names=runner_names,
+            default_names=self.default_runners,
+            label="test runner",
+        )
+
 
 @dataclass(frozen=True)
 class TestRunnerConfig(NamedBackendConfig):
@@ -348,6 +371,20 @@ class FormatConfig(WorkflowSelectionConfig):
             kind_resolver=format_backend_kind,
         )
 
+    def selected_targets(
+        self,
+        selection: str | None = None,
+        target_names: list[str] | None = None,
+    ) -> dict[str, FormatTargetConfig]:
+        """Resolve the effective format targets for one invocation."""
+
+        return _select_named_entries(
+            self.select_targets(selection),
+            selected_names=target_names,
+            default_names=self.default_targets,
+            label="format target",
+        )
+
 
 @dataclass(frozen=True)
 class LintTargetConfig(PathTargetConfig):
@@ -404,6 +441,20 @@ class LintConfig(WorkflowSelectionConfig):
             self.targets,
             active_kinds=set(self.selected_kinds(selection)),
             kind_resolver=lint_backend_kind,
+        )
+
+    def selected_targets(
+        self,
+        selection: str | None = None,
+        target_names: list[str] | None = None,
+    ) -> dict[str, LintTargetConfig]:
+        """Resolve the effective lint targets for one invocation."""
+
+        return _select_named_entries(
+            self.select_targets(selection),
+            selected_names=target_names,
+            default_names=self.default_targets,
+            label="lint target",
         )
 
 
@@ -491,6 +542,18 @@ class DocsConfig:
     default_targets: list[str] = field(default_factory=list)
     targets: dict[str, DocsTargetConfig] = field(default_factory=dict)
 
+    def selected_targets(
+        self, target_names: list[str] | None = None
+    ) -> dict[str, DocsTargetConfig]:
+        """Resolve the effective docs targets for one invocation."""
+
+        return _select_named_entries(
+            self.targets,
+            selected_names=target_names,
+            default_names=self.default_targets,
+            label="docs target",
+        )
+
 
 @dataclass(frozen=True)
 class InstallConfig:
@@ -505,15 +568,17 @@ class InstallConfig:
     default_targets: list[str] = field(default_factory=list)
     targets: dict[str, InstallTargetConfig] = field(default_factory=dict)
 
-    def __getitem__(self, name: str) -> InstallTargetConfig:
-        """Return one configured install target by name."""
+    def selected_targets(
+        self, target_names: list[str] | None = None
+    ) -> dict[str, InstallTargetConfig]:
+        """Resolve the effective install targets for one invocation."""
 
-        return self.targets[name]
-
-    def __iter__(self):
-        """Iterate install target names in configuration order."""
-
-        return iter(self.targets)
+        return _select_named_entries(
+            self.targets,
+            selected_names=target_names,
+            default_names=self.default_targets,
+            label="install target",
+        )
 
 
 @dataclass(frozen=True)
@@ -529,15 +594,17 @@ class DeployConfig:
     default_targets: list[str] = field(default_factory=list)
     targets: dict[str, DeployTargetConfig] = field(default_factory=dict)
 
-    def __getitem__(self, name: str) -> DeployTargetConfig:
-        """Return one configured deploy target by name."""
+    def selected_targets(
+        self, target_names: list[str] | None = None
+    ) -> dict[str, DeployTargetConfig]:
+        """Resolve the effective deploy targets for one invocation."""
 
-        return self.targets[name]
-
-    def __iter__(self):
-        """Iterate deploy target names in configuration order."""
-
-        return iter(self.targets)
+        return _select_named_entries(
+            self.targets,
+            selected_names=target_names,
+            default_names=self.default_targets,
+            label="deploy target",
+        )
 
 
 @dataclass(frozen=True)
@@ -664,3 +731,37 @@ def _select_entries_by_kind(
         for name, entry in entries.items()
         if kind_resolver(entry.backend) in active_kinds
     }
+
+
+def _select_named_entries(
+    entries: Mapping[str, WorkflowEntryT],
+    *,
+    selected_names: list[str] | None,
+    default_names: list[str] | None,
+    label: str,
+) -> dict[str, WorkflowEntryT]:
+    """Resolve named entries, applying configured defaults when needed.
+
+    Args:
+        entries: Candidate entries available for the current invocation.
+        selected_names: Optional explicit names selected by the CLI.
+        default_names: Optional config-level default names.
+        label: User-facing label used in validation errors.
+
+    Returns:
+        Selected entries in the requested order.
+
+    Raises:
+        ConfigError: If an explicit or default name does not exist.
+    """
+
+    effective_names = default_names if selected_names is None else selected_names
+    if not effective_names:
+        return dict(entries)
+
+    selected: dict[str, WorkflowEntryT] = {}
+    for name in effective_names:
+        if name not in entries:
+            raise ConfigError(f"Unknown {label}: {name}")
+        selected[name] = entries[name]
+    return selected

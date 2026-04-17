@@ -11,7 +11,6 @@ from ..config.constants import (
     CPP_WORKFLOW_KIND,
     PYTHON_WORKFLOW_KIND,
 )
-from ..errors import ConfigError
 
 
 class WorkflowSelection(str, Enum):
@@ -41,32 +40,3 @@ def config_path_from_context(ctx: typer.Context) -> str:
     if not isinstance(config_path, str):
         raise RuntimeError("CLI context was not initialized")
     return config_path
-
-
-def select_named_items(
-    items: dict[str, object], selected_names: list[str] | None, label: str
-) -> dict[str, object]:
-    """Filter named configuration items and validate explicit selections."""
-    if not selected_names:
-        return items
-
-    selected: dict[str, object] = {}
-    for name in selected_names:
-        if name not in items:
-            raise ConfigError(f"Unknown {label}: {name}")
-        selected[name] = items[name]
-    return selected
-
-
-def resolve_named_items(
-    items: dict[str, object],
-    selected_names: list[str] | None,
-    default_names: list[str],
-    label: str,
-) -> dict[str, object]:
-    """Apply config defaults when the CLI omits a named selection filter."""
-
-    effective_names = (
-        default_names if selected_names is None and default_names else selected_names
-    )
-    return select_named_items(items, effective_names, label)

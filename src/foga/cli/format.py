@@ -21,7 +21,6 @@ from .common import (
     WORKFLOW_SELECTION_METAVAR,
     WorkflowSelection,
     config_path_from_context,
-    resolve_named_items,
     selection_value,
 )
 
@@ -115,13 +114,7 @@ def run_format(config: FogaConfig, executor: CommandExecutor, args: FormatArgs) 
     """
 
     resolved_selection = args.selection or config.formatters.default
-    selected_by_kind = config.formatters.select_targets(args.selection)
-    selected = resolve_named_items(
-        selected_by_kind,
-        args.targets,
-        config.formatters.default_targets,
-        "format target",
-    )
+    selected = config.formatters.selected_targets(args.selection, args.targets)
     plan = plan_format(config.project_root, list(selected.values()))
     if not plan.specs:
         if resolved_selection and resolved_selection != ALL_WORKFLOW_SELECTION:

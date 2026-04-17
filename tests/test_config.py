@@ -355,8 +355,8 @@ deploy:
     assert config.docs.targets["api"].launcher == ["uv", "run"]
     assert config.formatters.targets["python-style"].launcher == ["pipx", "run"]
     assert config.linters.targets["python-style"].launcher == ["pipx", "run"]
-    assert config.install["editable"].launcher == ["uv", "run"]
-    assert config.deploy["pypi"].launcher == ["uv", "run"]
+    assert config.install.targets["editable"].launcher == ["uv", "run"]
+    assert config.deploy.targets["pypi"].launcher == ["uv", "run"]
 
 
 def test_load_config_rejects_shell_string_launchers(tmp_path: Path) -> None:
@@ -949,10 +949,10 @@ install:
 
     config = load_config(config_path)
 
-    assert list(config.install) == ["editable", "python-deps"]
+    assert list(config.install.targets) == ["editable", "python-deps"]
     assert config.install.default_targets == []
-    assert config.install["editable"].editable is True
-    assert config.install["python-deps"].args == ["--sync"]
+    assert config.install.targets["editable"].editable is True
+    assert config.install.targets["python-deps"].args == ["--sync"]
 
 
 def test_load_config_parses_uv_project_install_fields(tmp_path: Path) -> None:
@@ -974,9 +974,9 @@ install:
 
     config = load_config(config_path)
 
-    assert config.install["dev-python"].groups == ["dev"]
-    assert config.install["dev-python"].extras == ["test", "docs"]
-    assert config.install["dev-python"].install_project is False
+    assert config.install.targets["dev-python"].groups == ["dev"]
+    assert config.install.targets["dev-python"].extras == ["test", "docs"]
+    assert config.install.targets["dev-python"].install_project is False
 
 
 def test_load_config_parses_brew_install_targets(tmp_path: Path) -> None:
@@ -996,8 +996,8 @@ install:
 
     config = load_config(config_path)
 
-    assert list(config.install) == ["macos-deps"]
-    assert config.install["macos-deps"].packages == ["cmake", "llvm"]
+    assert list(config.install.targets) == ["macos-deps"]
+    assert config.install.targets["macos-deps"].packages == ["cmake", "llvm"]
 
 
 def test_load_config_parses_named_selection_defaults(tmp_path: Path) -> None:
