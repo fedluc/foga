@@ -19,12 +19,12 @@ Files:
 - [`cpp/`](cpp)
 - [`src/hello_bindings`](src/hello_bindings)
 - [`tests/`](tests)
-- [`run-foga`](run-foga)
+- [`run_example.py`](run_example.py)
 
 Typical usage from the repository root:
 
 ```bash
 python run-example.py pybind11-profiles
-python run-example.py pybind11-profiles inspect --profile release build cpp
-python run-example.py pybind11-profiles test --profile release cpp
+python run-example.py pybind11-profiles --list-steps
+python run-example.py pybind11-profiles build-release test-release
 ```

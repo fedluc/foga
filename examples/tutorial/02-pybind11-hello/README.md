@@ -18,12 +18,12 @@ Files:
 - [`pyproject.toml`](pyproject.toml)
 - [`cpp/`](cpp)
 - [`src/hello_bindings`](src/hello_bindings)
-- [`run-foga`](run-foga)
+- [`run_example.py`](run_example.py)
 
 Typical usage from the repository root:
 
 ```bash
 python run-example.py pybind11-hello
-python run-example.py pybind11-hello build cpp
-python run-example.py pybind11-hello build python
+python run-example.py pybind11-hello --list-steps
+python run-example.py pybind11-hello build-cpp build-python
 ```

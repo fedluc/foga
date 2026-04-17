@@ -7,7 +7,6 @@ build:
     launcher: ["uv", "run"]
 
 install:
-  default_targets: ["dev"]
   targets:
     dev:
       backend: uv

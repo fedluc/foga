@@ -19,8 +19,8 @@ class ExampleSpec:
     name: str
     directory: str
     description: str
-    default_commands: tuple[tuple[str, ...], ...]
     dockerfile: str
+    driver_script: str = "run_example.py"
     aliases: tuple[str, ...] = ()
 
 
@@ -33,11 +33,6 @@ EXAMPLES: tuple[ExampleSpec, ...] = (
         description=(
             "Pure Python package build in a containerized tutorial environment."
         ),
-        default_commands=(
-            ("validate",),
-            ("install",),
-            ("build",),
-        ),
         dockerfile="examples/tutorial/01-python-only/Dockerfile",
         aliases=("01-python-only", "tutorial/01-python-only"),
     ),
@@ -46,12 +41,6 @@ EXAMPLES: tuple[ExampleSpec, ...] = (
         directory="examples/tutorial/02-pybind11-hello",
         description=(
             "Minimal pybind11 example with system packages installed in Docker."
-        ),
-        default_commands=(
-            ("validate",),
-            ("install",),
-            ("build", "cpp"),
-            ("build", "python"),
         ),
         dockerfile="examples/tutorial/02-pybind11-hello/Dockerfile",
         aliases=("02-pybind11-hello", "tutorial/02-pybind11-hello"),
@@ -62,13 +51,6 @@ EXAMPLES: tuple[ExampleSpec, ...] = (
         description=(
             "Mixed C++ and Python example with tests and Ruff linting in Docker."
         ),
-        default_commands=(
-            ("validate",),
-            ("install",),
-            ("build",),
-            ("test",),
-            ("lint",),
-        ),
         dockerfile="examples/tutorial/03-pybind11-tests/Dockerfile",
         aliases=("03-pybind11-tests", "tutorial/03-pybind11-tests"),
     ),
@@ -76,16 +58,6 @@ EXAMPLES: tuple[ExampleSpec, ...] = (
         name="pybind11-profiles",
         directory="examples/tutorial/04-pybind11-profiles",
         description="Mixed C++ and Python example with profiled builds in Docker.",
-        default_commands=(
-            ("validate",),
-            ("install",),
-            ("build", "python"),
-            ("build", "cpp"),
-            ("build", "--profile", "release", "cpp"),
-            ("test",),
-            ("test", "--profile", "release", "cpp"),
-            ("lint",),
-        ),
         dockerfile="examples/tutorial/04-pybind11-profiles/Dockerfile",
         aliases=("04-pybind11-profiles", "tutorial/04-pybind11-profiles"),
     ),
@@ -105,6 +77,12 @@ def example_root(spec: ExampleSpec) -> Path:
     """Return the repository path for one example."""
 
     return REPO_ROOT / spec.directory
+
+
+def driver_path(spec: ExampleSpec) -> Path:
+    """Return the per-example driver script path."""
+
+    return example_root(spec) / spec.driver_script
 
 
 def format_examples() -> str:
@@ -127,19 +105,17 @@ def require_tool(name: str) -> str:
     return path
 
 
-def build_foga_command(spec: ExampleSpec, args: Sequence[str]) -> list[str]:
-    """Build the local foga invocation for one example command."""
+def build_host_command(spec: ExampleSpec, args: Sequence[str]) -> list[str]:
+    """Build the local example-driver command."""
 
     uv = require_tool("uv")
-    config = example_root(spec) / "foga.yml"
     return [
         uv,
         "run",
         "--project",
-        str(REPO_ROOT),
-        "foga",
-        "--config",
-        str(config),
+        str(example_root(spec)),
+        "python",
+        str(driver_path(spec)),
         *args,
     ]
 
@@ -169,7 +145,15 @@ def build_docker_run_command(spec: ExampleSpec, args: Sequence[str]) -> list[str
     """Build the Docker container run command for one example."""
 
     docker = require_tool("docker")
-    return [docker, "run", "--rm", docker_image_tag(spec), *args]
+    return [
+        docker,
+        "run",
+        "--rm",
+        docker_image_tag(spec),
+        "python",
+        spec.driver_script,
+        *args,
+    ]
 
 
 def run_command(command: Sequence[str], *, cwd: Path) -> None:
@@ -182,22 +166,14 @@ def run_command(command: Sequence[str], *, cwd: Path) -> None:
 def run_host_example(spec: ExampleSpec, forwarded_args: Sequence[str]) -> None:
     """Run an example directly on the current machine."""
 
-    commands = (
-        [tuple(forwarded_args)] if forwarded_args else list(spec.default_commands)
-    )
-    for command in commands:
-        run_command(build_foga_command(spec, command), cwd=REPO_ROOT)
+    run_command(build_host_command(spec, forwarded_args), cwd=REPO_ROOT)
 
 
 def run_docker_example(spec: ExampleSpec, forwarded_args: Sequence[str]) -> None:
     """Build and run an example inside its dedicated Docker image."""
 
-    commands = (
-        [tuple(forwarded_args)] if forwarded_args else list(spec.default_commands)
-    )
     run_command(build_docker_build_command(spec), cwd=REPO_ROOT)
-    for command in commands:
-        run_command(build_docker_run_command(spec, command), cwd=REPO_ROOT)
+    run_command(build_docker_run_command(spec, forwarded_args), cwd=REPO_ROOT)
 
 
 def run_example(
@@ -252,11 +228,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Example short name, such as python-only.",
     )
     parser.add_argument(
-        "foga_args",
+        "example_args",
         nargs=argparse.REMAINDER,
-        help=(
-            "Optional foga arguments. When omitted, the example default workflow runs."
-        ),
+        help="Optional walkthrough step names passed to the example driver.",
     )
     parser.add_argument(
         "--list",
@@ -273,22 +247,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     if args.list or args.example is None:
-        print(
-            "Usage: python run-example.py [--mode docker|host] <example> [foga args...]"
-        )
+        print("Usage: python run-example.py [--mode docker|host] <example> [step ...]")
         print("")
         print("Examples:")
         print("  python run-example.py python-only")
-        print(
-            "  python run-example.py pybind11-profiles inspect "
-            "--profile release build cpp"
-        )
-        print("  python run-example.py --mode host pybind11-tests test")
+        print("  python run-example.py pybind11-profiles --list-steps")
+        print("  python run-example.py pybind11-profiles build-release test-release")
+        print("  python run-example.py --mode host pybind11-tests lint")
         print("")
         print(format_examples())
         return 0
 
-    return run_example(args.example, args.foga_args, mode=args.mode)
+    return run_example(args.example, args.example_args, mode=args.mode)
 
 
 if __name__ == "__main__":

@@ -10,4 +10,3 @@ COPY . /workspace/example
 
 RUN uv sync --extra dev
 
-ENTRYPOINT ["uv", "run", "foga", "--config", "foga.yml"]

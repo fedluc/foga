@@ -11,4 +11,3 @@ COPY . /workspace/example
 RUN uv sync --extra dev
 RUN uv run foga --config foga.yml install --target system
 
-ENTRYPOINT ["uv", "run", "foga", "--config", "foga.yml"]

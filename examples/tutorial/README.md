@@ -25,11 +25,13 @@ python run-example.py pybind11-profiles
 ```
 
 Those commands build an example-specific Docker image from the example
-directory and run it by default, so the host machine does not need the example
-toolchain. Each example `pyproject.toml` declares `foga` as a dependency, and
-the Dockerfile installs it through `uv sync` before running any commands. If
-you already have the dependencies and explicitly want a local run, use
-`python run-example.py --mode host <name>`.
+directory and run the example's `run_example.py` walkthrough script by
+default, so the host machine does not need the example toolchain. Each example
+`pyproject.toml` declares `foga` as a dependency, and the Dockerfile installs
+it through `uv sync` before running any commands. To inspect the scripted
+walkthrough steps for one example, run `python run-example.py <name>
+--list-steps`. If you already have the dependencies and explicitly want a
+local run, use `python run-example.py --mode host <name>`.
 
 Once these examples feel familiar, move to the larger real-world references in
 [`examples/qupled`](../qupled/README.md) and

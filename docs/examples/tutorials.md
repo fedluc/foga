@@ -31,20 +31,27 @@ python run-example.py pybind11-profiles
 ```
 
 Those commands build the example-specific Docker image from the example
-directory and execute it in a container by default. Each example installs
-`foga` from PyPI through its own `pyproject.toml` and `uv sync`, so the image no
-longer depends on a copy of this repository. You can still forward an explicit
-`foga` command after the example name, for example:
+directory and execute the example's `run_example.py` walkthrough script in a
+container by default. Each example installs `foga` from PyPI through its own
+`pyproject.toml` and `uv sync`, so the image no longer depends on a copy of
+this repository. To inspect the named walkthrough steps for one example, run:
 
 ```bash
-python run-example.py pybind11-profiles inspect --profile release build cpp
+python run-example.py pybind11-profiles --list-steps
+```
+
+To run specific guided steps instead of the full walkthrough, pass the step
+names after the example name:
+
+```bash
+python run-example.py pybind11-profiles build-release test-release
 ```
 
 If you intentionally want to run an example directly on the current machine, use
 `--mode host`:
 
 ```bash
-python run-example.py --mode host pybind11-tests test
+python run-example.py --mode host pybind11-tests lint
 ```
 
 ## After the tutorials

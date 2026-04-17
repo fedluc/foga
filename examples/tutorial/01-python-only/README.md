@@ -16,16 +16,16 @@ Files:
 - [`foga.yml`](foga.yml)
 - [`pyproject.toml`](pyproject.toml)
 - [`src/vector_demo`](src/vector_demo)
-- [`run-foga`](run-foga)
+- [`run_example.py`](run_example.py)
 
 Typical usage from the repository root:
 
 ```bash
 python run-example.py python-only
-python run-example.py python-only inspect
+python run-example.py python-only --list-steps
 python run-example.py --mode host python-only build
 ```
 
-The default launcher path builds the example Docker image and runs the workflow in
-the container. `--mode host` is available only when you intentionally want a local
-run.
+The default launcher path builds the example Docker image and runs the
+`run_example.py` walkthrough in the container. `--mode host` is available only
+when you intentionally want a local run.
