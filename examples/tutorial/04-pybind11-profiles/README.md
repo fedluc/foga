@@ -1,30 +1,19 @@
 # 04-pybind11-profiles
 
-This example keeps the tested mixed C++/Python project shape and adds
-profile-driven build modes for the C++ side.
+This example keeps the mixed C++/Python project shape from the previous example
+and adds profile-driven build modes for the C++ side.
 
-It shows:
+## What You Learn
 
-- a default debug-oriented C++ build
-- a `release` profile with a separate build directory and `Release` flags
-- matching `ctest` runs for both build modes
-- a Docker image that installs `foga` from PyPI before you install the example
-  package and native tooling inside the container
-
-Files:
-
-- [`Dockerfile`](Dockerfile)
-- [`run-docker.sh`](run-docker.sh)
-- [`foga.yml`](foga.yml)
-- [`pyproject.toml`](pyproject.toml)
-- [`cpp/`](cpp)
-- [`src/hello_bindings`](src/hello_bindings)
-- [`tests/`](tests)
+- how to use profiles to switch between debug and release C++ builds
+- how to keep one example config while varying build and test behavior by profile
+- how to compare default and release workflows from the same tutorial
+- how to grow a validated example without duplicating the whole setup
 
 ## Start the example
 
 ```bash
-./run-docker.sh
+./run-example.sh
 ```
 
 ## Inside the container
@@ -45,7 +34,3 @@ foga lint
 foga inspect --profile release build cpp
 foga clean
 ```
-
-The example runs directly in the container's Python environment without a
-separate project virtual environment. The container also shows a short
-instructions file automatically when the interactive shell starts.

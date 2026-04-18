@@ -37,7 +37,7 @@ test:
 If you want a runnable repository to copy from instead of starting from a blank
 file, use the [tutorial examples](examples/tutorials.md). They follow the same
 incremental adoption path but include working project files and self-contained
-`run-docker.sh` entry scripts.
+`run-example.sh` entry scripts.
 
 ## First commands
 

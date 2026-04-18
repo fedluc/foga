@@ -15,13 +15,13 @@ without forcing you to absorb a large real-world repository first.
    extends the mixed project with Python tests, C++ tests, and Python linting
    and formatting targets.
 4. [`04-pybind11-profiles`](https://github.com/fedluc/foga/blob/main/examples/tutorial/04-pybind11-profiles/README.md)
-   keeps the tested mixed project shape but adds profiles for debug and release
-   C++ builds.
+   keeps the mixed project shape from the previous example but adds profiles for
+   debug and release C++ builds.
 
 ## How to run them
 
 Each tutorial directory is self-contained. You can copy one folder anywhere,
-run its `run-docker.sh` script, and then use the interactive container session
+run its `run-example.sh` script, and then use the interactive container session
 as the example workspace.
 
 The script always rebuilds the Docker image with `--no-cache` and starts a

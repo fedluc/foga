@@ -3,26 +3,17 @@
 This example adds a tiny `pybind11` module while keeping the standalone C++
 build separate from the Python package build.
 
-It shows:
+## What You Learn
 
-- a small shared C++ greeting implementation
-- a standalone CMake executable built through `build cpp`
-- a Python package built through `build python`
-- a Dockerfile that installs `foga` from PyPI in a clean container environment
-
-Files:
-
-- [`Dockerfile`](Dockerfile)
-- [`run-docker.sh`](run-docker.sh)
-- [`foga.yml`](foga.yml)
-- [`pyproject.toml`](pyproject.toml)
-- [`cpp/`](cpp)
-- [`src/hello_bindings`](src/hello_bindings)
+- how to manage a mixed Python and C++ example with one `foga` config
+- how to install native build tools through `foga`
+- how to build the C++ and Python sides separately
+- how to move from a pure Python example to a simple binding workflow
 
 ## Start the example
 
 ```bash
-./run-docker.sh
+./run-example.sh
 ```
 
 ## Inside the container
@@ -39,7 +30,3 @@ foga install --target dev
 hello-demo
 foga inspect build cpp
 ```
-
-The example runs directly in the container's Python environment without a
-separate project virtual environment. The container also shows a short
-instructions file automatically when the interactive shell starts.

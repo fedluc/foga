@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_NAME="foga-tutorial-pybind11-profiles"
 BUILD_LOG="$(mktemp)"
 
-echo "Setting up environment to run test pybind11-profiles"
+echo "Setting up example environment for pybind11-profiles"
 
 if docker build --no-cache -t "${IMAGE_NAME}" "${SCRIPT_DIR}" >"${BUILD_LOG}" 2>&1; then
   rm -f "${BUILD_LOG}"

@@ -2,10 +2,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IMAGE_NAME="foga-tutorial-python-only"
+IMAGE_NAME="foga-tutorial-pybind11-tests"
 BUILD_LOG="$(mktemp)"
 
-echo "Setting up environment to run test python-only"
+echo "Setting up example environment for pybind11-tests"
 
 if docker build --no-cache -t "${IMAGE_NAME}" "${SCRIPT_DIR}" >"${BUILD_LOG}" 2>&1; then
   rm -f "${BUILD_LOG}"

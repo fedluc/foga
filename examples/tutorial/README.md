@@ -13,10 +13,11 @@ Read them in order:
 3. [`03-pybind11-tests`](03-pybind11-tests/README.md): extends the mixed project
    with Python tests, C++ tests, and Python lint and format targets.
 4. [`04-pybind11-profiles`](04-pybind11-profiles/README.md): adds profile-driven
-   debug and release C++ build modes to the tested mixed project.
+   debug and release C++ build modes to the mixed project from the previous
+   example.
 
 Each tutorial folder is self-contained. You can copy any one of them to another
-location, run its `run-docker.sh` script, and then exercise the example from
+location, run its `run-example.sh` script, and then exercise the example from
 inside the interactive container session.
 
 Once these examples feel familiar, move to the larger real-world references in
