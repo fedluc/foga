@@ -36,8 +36,7 @@ test:
 
 If you want a runnable repository to copy from instead of starting from a blank
 file, use the [tutorial examples](examples/tutorials.md). They follow the same
-incremental adoption path but include working project files and a shared
-`examples/tutorial/run-example.py` helper when you are using this checkout.
+incremental adoption path and include working project files.
 
 ## First commands
 

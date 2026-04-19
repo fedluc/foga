@@ -13,7 +13,19 @@ This is the smallest runnable `foga` example in the repository.
 - Python 3.10+
 - `foga`
 
+## Run in Docker
+
+From the repository root:
+
+```bash
+python examples/tutorial/run-example.py 01-python-only
+```
+
 ## Run locally
+
+Install the prerequisites above and work from this directory.
+
+## Commands to run
 
 ```bash
 foga validate
@@ -22,13 +34,3 @@ foga build
 vector-demo
 foga inspect
 ```
-
-## Docker shortcut
-
-From the repository root:
-
-```bash
-python examples/tutorial/run-example.py 01-python-only
-```
-
-Then run the same `foga` commands inside the container shell.

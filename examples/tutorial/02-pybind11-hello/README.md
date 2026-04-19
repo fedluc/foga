@@ -18,7 +18,25 @@ build separate from the Python package build.
 - CMake
 - Ninja
 
+## Run in Docker
+
+From the repository root:
+
+```bash
+python examples/tutorial/run-example.py 02-pybind11-hello
+```
+
+Once the container starts, install the system packages required by the example:
+
+```bash
+foga install --target system
+```
+
 ## Run locally
+
+Install the prerequisites above and work from this directory.
+
+## Commands to run
 
 ```bash
 foga validate
@@ -29,14 +47,3 @@ foga build python
 hello-demo
 foga inspect build cpp
 ```
-
-## Docker shortcut
-
-From the repository root:
-
-```bash
-python examples/tutorial/run-example.py 02-pybind11-hello
-```
-
-Then run `foga install --target system` once inside the container, followed by
-the same commands shown above.

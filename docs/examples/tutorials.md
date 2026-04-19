@@ -20,13 +20,14 @@ to absorb before you move on to denser reference material.
 
 ## How to run them
 
-Each example README lists the local prerequisites for running it directly on
-your machine.
+You can run the tutorials in two ways:
 
-If you are using this repository checkout and want the Docker shortcut, run
-`python examples/tutorial/run-example.py --list` to see the available examples,
-then run `python examples/tutorial/run-example.py <example-name>` from the
-repository root.
+1. In Docker, which only requires Docker and Python and avoids installing the
+   example-specific tools on your machine. From the repository root, run
+   `python examples/tutorial/run-example.py --list` to see the available
+   examples, then run `python examples/tutorial/run-example.py <example-name>`.
+2. Locally, after installing the prerequisites listed in the README for the
+   tutorial you want to run.
 
 The helper rebuilds the selected Docker image with `--no-cache` and opens a
 shell in `/workspace/example`.

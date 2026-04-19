@@ -45,7 +45,8 @@ For runnable examples that build up gradually, start with
 [`examples/tutorial/`](examples/tutorial/) or the
 [Examples guide](docs/examples/tutorials.md). Each tutorial README lists the
 local prerequisites, and this repository also includes
-`examples/tutorial/run-example.py` if you want a Docker-based shortcut.
+`examples/tutorial/run-example.py` if you want to run the tutorials with only
+Docker and Python instead of installing the example-specific tools locally.
 
 ## Quick start
 

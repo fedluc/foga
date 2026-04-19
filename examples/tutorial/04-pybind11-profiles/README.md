@@ -18,7 +18,25 @@ and adds profile-driven build modes for the C++ side.
 - CMake
 - Ninja
 
+## Run in Docker
+
+From the repository root:
+
+```bash
+python examples/tutorial/run-example.py 04-pybind11-profiles
+```
+
+Once the container starts, install the system packages required by the example:
+
+```bash
+foga install --target system
+```
+
 ## Run locally
+
+Install the prerequisites above and work from this directory.
+
+## Commands to run
 
 ```bash
 foga validate
@@ -33,14 +51,3 @@ foga lint
 foga inspect --profile release build cpp
 foga clean
 ```
-
-## Docker shortcut
-
-From the repository root:
-
-```bash
-python examples/tutorial/run-example.py 04-pybind11-profiles
-```
-
-Then run `foga install --target system` once inside the container, followed by
-the same commands shown above.

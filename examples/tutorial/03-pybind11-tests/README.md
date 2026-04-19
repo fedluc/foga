@@ -22,7 +22,25 @@ workflow.
 - CMake
 - Ninja
 
+## Run in Docker
+
+From the repository root:
+
+```bash
+python examples/tutorial/run-example.py 03-pybind11-tests
+```
+
+Once the container starts, install the system packages required by the example:
+
+```bash
+foga install --target system
+```
+
 ## Run locally
+
+Install the prerequisites above and work from this directory.
+
+## Commands to run
 
 ```bash
 foga validate
@@ -36,14 +54,3 @@ foga lint
 foga inspect test
 foga clean
 ```
-
-## Docker shortcut
-
-From the repository root:
-
-```bash
-python examples/tutorial/run-example.py 03-pybind11-tests
-```
-
-Then run `foga install --target system` once inside the container, followed by
-the same commands shown above.
