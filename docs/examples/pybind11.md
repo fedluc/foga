@@ -10,7 +10,7 @@ What it includes:
   development here
 - [`examples/pybind11/foga.yml`](https://github.com/fedluc/foga/blob/main/examples/pybind11/foga.yml): example
   `foga` configuration for `pybind11`
-- [`examples/pybind11/run-foga`](https://github.com/fedluc/foga/blob/main/examples/pybind11/run-foga): helper
+- [`examples/pybind11/run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/pybind11/run-in-docker.py): helper
   that builds the image and runs `foga` inside the container
 
 The Docker image clones `pybind11` at pinned commit
@@ -20,9 +20,9 @@ The Docker image clones `pybind11` at pinned commit
 Typical usage:
 
 ```bash
-examples/pybind11/run-foga
-examples/pybind11/run-foga foga inspect --profile tidy-relaxed build
-examples/pybind11/run-foga foga build --profile release cpp
+examples/pybind11/run-in-docker.py
+examples/pybind11/run-in-docker.py foga inspect --profile tidy-relaxed build
+examples/pybind11/run-in-docker.py foga build --profile release cpp
 ```
 
 The default command is a narrower build:

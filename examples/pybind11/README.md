@@ -8,8 +8,8 @@ What it includes:
 - [`Dockerfile`](Dockerfile): provisions a build environment similar to the
   devcontainer used during development here
 - [`foga.yml`](foga.yml): example `foga` configuration for `pybind11`
-- [`run-foga`](run-foga): helper that builds the image and runs `foga` inside
-  the container
+- [`run-in-docker.py`](run-in-docker.py): helper that builds the image and runs
+  `foga` inside the container
 
 The Docker image clones `pybind11` at pinned commit
 `288913638bb2da563f1c39e7d07071c2f21bfb25`, installs the latest released
@@ -18,9 +18,9 @@ The Docker image clones `pybind11` at pinned commit
 Typical usage:
 
 ```bash
-examples/pybind11/run-foga
-examples/pybind11/run-foga foga inspect --profile tidy-relaxed build
-examples/pybind11/run-foga foga build --profile release cpp
+examples/pybind11/run-in-docker.py
+examples/pybind11/run-in-docker.py foga inspect --profile tidy-relaxed build
+examples/pybind11/run-in-docker.py foga build --profile release cpp
 ```
 
 The default command is a narrower build:

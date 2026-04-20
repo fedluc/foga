@@ -9,8 +9,8 @@ What it includes:
 - [`Dockerfile`](Dockerfile): clones Apache Arrow in Docker, installs a released
   `foga`, and prepares the base environment
 - [`foga.yml`](foga.yml): a working `foga` configuration for the Arrow checkout
-- [`run-foga`](run-foga): helper that builds the image and opens a shell or runs
-  a one-shot command in the container
+- [`run-in-docker.py`](run-in-docker.py): helper that builds the image and opens
+  a shell or runs a one-shot command in the container
 
 This example pins Arrow to commit
 `36c8c9a24aec70fb41441c6a1a2a28b777d351e3`
@@ -19,7 +19,7 @@ This example pins Arrow to commit
 Typical usage:
 
 ```bash
-examples/arrow/run-foga
+examples/arrow/run-in-docker.py
 ```
 
 Once inside the container:
