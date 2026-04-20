@@ -24,8 +24,8 @@ You can run the tutorials in two ways:
 
 1. In Docker, which only requires Docker and Python and avoids installing the
    example-specific tools on your machine. From the repository root, run
-   `python examples/tutorial/run-example.py --list` to see the available
-   examples, then run `python examples/tutorial/run-example.py <example-name>`.
+   `python examples/tutorial/run-tutorial.py --list` to see the available
+   examples, then run `python examples/tutorial/run-tutorial.py <example-name>`.
 2. Locally, after installing the prerequisites listed in the README for the
    tutorial you want to run.
 
@@ -39,5 +39,6 @@ environment is ready.
 
 Once the tutorial examples make sense, move on to the real-world examples:
 
+- [arrow](arrow.md)
 - [qupled](qupled.md)
 - [pybind11](pybind11.md)

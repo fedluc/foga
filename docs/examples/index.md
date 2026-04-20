@@ -10,6 +10,8 @@ reference configurations.
 
 ## Real-world examples
 
+- [arrow](arrow.md): Apache Arrow in Docker with system dependencies, native
+  builds, Python installs, pytest, and Sphinx docs
 - [qupled](qupled.md): C++ CMake build, Python packaging, pytest suites,
   a `ctest` C++ test runner, and MPI-related profiles
 - [pybind11](pybind11.md): pinned containerized example that provisions an
@@ -24,6 +26,7 @@ repository.
 :hidden:
 
 tutorials
+arrow
 qupled
 pybind11
 ```

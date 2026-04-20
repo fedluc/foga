@@ -6,11 +6,14 @@ and Sphinx documentation.
 
 What it includes:
 
-- [`Dockerfile`](Dockerfile): clones Apache Arrow in Docker, installs a released
-  `foga`, and prepares the base environment
-- [`foga.yml`](foga.yml): a working `foga` configuration for the Arrow checkout
-- [`run-in-docker.py`](run-in-docker.py): helper that builds the image and opens
-  a shell or runs a one-shot command in the container
+- [`examples/arrow/Dockerfile`](https://github.com/fedluc/foga/blob/main/examples/arrow/Dockerfile):
+  clones Apache Arrow in Docker, installs a released `foga`, and prepares the
+  base environment
+- [`examples/arrow/foga.yml`](https://github.com/fedluc/foga/blob/main/examples/arrow/foga.yml): a
+  working `foga` configuration for the Arrow checkout
+- [`examples/arrow/run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/arrow/run-in-docker.py): helper
+  that builds the image and opens a shell or runs a one-shot command in the
+  container
 
 This example pins Arrow to commit
 `36c8c9a24aec70fb41441c6a1a2a28b777d351e3`
@@ -45,9 +48,8 @@ Why this example matters:
   toy repository
 - it keeps system setup, native build, Python install, tests, docs, and cleanup
   in one config
-- it exercised real integration edges, including system package gaps, absolute
+- it exercises real integration edges, including system package gaps, absolute
   paths for temp-directory builds, and conservative parallelism for Docker
-
 
 Use this example when you want a credible, containerized demonstration of
 `foga` on a large real-world codebase.
