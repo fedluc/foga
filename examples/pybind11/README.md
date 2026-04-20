@@ -12,9 +12,8 @@ What it includes:
   the container
 
 The Docker image clones `pybind11` at pinned commit
-`288913638bb2da563f1c39e7d07071c2f21bfb25`, prepares its `.venv`, installs
-`foga==0.1.0` from PyPI, and copies in the example
-configuration.
+`288913638bb2da563f1c39e7d07071c2f21bfb25`, installs the latest released
+`foga` from PyPI, and copies in the example configuration.
 
 Typical usage:
 

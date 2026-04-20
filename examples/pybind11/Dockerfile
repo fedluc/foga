@@ -1,36 +1,33 @@
-FROM mcr.microsoft.com/devcontainers/cpp:1-ubuntu-24.04
+FROM python:3.12-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG PYBIND11_REPO=https://github.com/pybind/pybind11.git
 ARG PYBIND11_REF=288913638bb2da563f1c39e7d07071c2f21bfb25
+
+ENV PIP_ROOT_USER_ACTION=ignore \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        clang-format \
-        clang-tidy \
         cmake \
-        gawk \
         git \
         ninja-build \
         python3-dev \
-        python3-pip \
-        python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --break-system-packages --no-cache-dir \
+COPY examples/pybind11/foga.yml /tmp/foga.yml
+
+RUN python3 -m pip install --no-cache-dir \
         build \
-        foga==0.1.0 \
-        nox \
-        pre-commit \
-        uv
+        foga
 
 WORKDIR /workspaces
 
-RUN git clone https://github.com/pybind/pybind11.git \
+RUN git clone --depth 1 "${PYBIND11_REPO}" pybind11 \
     && cd pybind11 \
+    && git fetch --depth 1 origin "${PYBIND11_REF}" \
     && git checkout "${PYBIND11_REF}" \
-    && uv venv .venv \
-    && uv pip install -p .venv/bin/python -r tests/requirements.txt
-
-COPY examples/pybind11/foga.yml /workspaces/pybind11/foga.yml
+    && cp /tmp/foga.yml /workspaces/pybind11/foga.yml
 
 WORKDIR /workspaces/pybind11

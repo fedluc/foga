@@ -15,7 +15,7 @@ RUN apt-get update \
 
 COPY examples/arrow/foga.yml /tmp/foga.yml
 
-RUN python -m pip install --no-cache-dir foga
+RUN python3 -m pip install --no-cache-dir foga
 
 WORKDIR /workspaces
 
