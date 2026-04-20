@@ -39,7 +39,7 @@ def test_example_configs_validate(
 
 def test_tutorial_runner_lists_examples() -> None:
     """The shared tutorial runner should advertise the available examples."""
-    script_path = ROOT / "examples/tutorial/run-example.py"
+    script_path = ROOT / "examples/tutorial/run-tutorial.py"
 
     result = subprocess.run(
         [sys.executable, str(script_path), "--list"],

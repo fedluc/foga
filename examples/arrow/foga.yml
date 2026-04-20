@@ -1,0 +1,219 @@
+project:
+  name: pyarrow
+
+build:
+  default: all
+  cpp:
+    backend: cmake
+    source_dir: cpp
+    build_dir: cpp/build-foga
+    generator: Ninja
+    build_args:
+      - "2"
+    targets:
+      - install
+    configure_args:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=arrow-dist
+      - -DCMAKE_INSTALL_LIBDIR=lib
+      - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - -DPython3_EXECUTABLE=python3
+      - -DARROW_DEPENDENCY_SOURCE=AUTO
+      - -DARROW_BUILD_TESTS=OFF
+      - -DARROW_COMPUTE=ON
+      - -DARROW_CSV=ON
+      - -DARROW_DATASET=ON
+      - -DARROW_FILESYSTEM=ON
+      - -DARROW_HDFS=ON
+      - -DARROW_JSON=ON
+      - -DARROW_PARQUET=ON
+      - -DARROW_WITH_BROTLI=ON
+      - -DARROW_WITH_BZ2=ON
+      - -DARROW_WITH_LZ4=ON
+      - -DARROW_WITH_SNAPPY=ON
+      - -DARROW_WITH_ZLIB=ON
+      - -DARROW_WITH_ZSTD=ON
+      - -DPARQUET_REQUIRE_ENCRYPTION=ON
+    hooks:
+      pre:
+        - ["git", "submodule", "update", "--init"]
+
+  python:
+    backend: python-build
+    args:
+      - --wheel
+      - --sdist
+      - --no-isolation
+      - --outdir
+      - python/dist
+      - python
+    env:
+      ARROW_HOME: /workspaces/arrow/arrow-dist
+      CMAKE_PREFIX_PATH: /workspaces/arrow/arrow-dist
+      LD_LIBRARY_PATH: /workspaces/arrow/arrow-dist/lib
+      PYARROW_CPP_HOME: /workspaces/arrow/arrow-dist
+
+install:
+  targets:
+    system:
+      backend: apt-get
+      args:
+        - -y
+      packages:
+        - build-essential
+        - cmake
+        - libsnappy-dev
+        - libthrift-dev
+        - ninja-build
+        - python3-dev
+      hooks:
+        pre:
+          - ["apt-get", "update"]
+
+    build-env:
+      backend: pip
+      packages:
+        - build
+      args:
+        - -r
+        - python/requirements-build.txt
+
+    test-env:
+      backend: pip
+      packages:
+        - -e
+        - ./python
+      args:
+        - -r
+        - python/requirements-build.txt
+        - -r
+        - python/requirements-test.txt
+        - --no-build-isolation
+      env:
+        ARROW_HOME: /workspaces/arrow/arrow-dist
+        CMAKE_PREFIX_PATH: /workspaces/arrow/arrow-dist
+        CMAKE_BUILD_PARALLEL_LEVEL: "1"
+        LD_LIBRARY_PATH: /workspaces/arrow/arrow-dist/lib
+        PYARROW_CPP_HOME: /workspaces/arrow/arrow-dist
+
+    docs-env:
+      backend: pip
+      packages:
+        - -e
+        - ./python
+      args:
+        - -r
+        - python/requirements-build.txt
+        - -r
+        - docs/requirements.txt
+        - --no-build-isolation
+      env:
+        ARROW_HOME: /workspaces/arrow/arrow-dist
+        CMAKE_PREFIX_PATH: /workspaces/arrow/arrow-dist
+        CMAKE_BUILD_PARALLEL_LEVEL: "1"
+        LD_LIBRARY_PATH: /workspaces/arrow/arrow-dist/lib
+        PYARROW_CPP_HOME: /workspaces/arrow/arrow-dist
+
+test:
+  default: python
+  default_runners:
+    - unit
+  runners:
+    unit:
+      backend: pytest
+      path: python/pyarrow/tests
+      args:
+        - -v
+      env:
+        ARROW_HOME: /workspaces/arrow/arrow-dist
+        CMAKE_PREFIX_PATH: /workspaces/arrow/arrow-dist
+        LD_LIBRARY_PATH: /workspaces/arrow/arrow-dist/lib
+        PYARROW_CPP_HOME: /workspaces/arrow/arrow-dist
+        ARROW_TEST_DATA: /workspaces/arrow/testing/data
+        PARQUET_TEST_DATA: /workspaces/arrow/cpp/submodules/parquet-testing/data
+      hooks:
+        pre:
+          - ["git", "submodule", "update", "--init"]
+
+docs:
+  default_targets:
+    - python-html
+  targets:
+    python-html:
+      backend: sphinx
+      source_dir: docs/source/python
+      build_dir: docs/_build/html/python
+      args:
+        - -c
+        - docs/source
+        - -j8
+      env:
+        ARROW_HOME: /workspaces/arrow/arrow-dist
+        CMAKE_PREFIX_PATH: /workspaces/arrow/arrow-dist
+        LD_LIBRARY_PATH: /workspaces/arrow/arrow-dist/lib
+        PYARROW_CPP_HOME: /workspaces/arrow/arrow-dist
+      hooks:
+        pre:
+          - ["foga", "build", "--profile", "docs", "cpp"]
+          - ["foga", "install", "--target", "docs-env"]
+
+    site-html:
+      backend: sphinx
+      source_dir: docs/source
+      build_dir: docs/_build/html
+      args:
+        - -j8
+      env:
+        ARROW_HOME: /workspaces/arrow/arrow-dist
+        CMAKE_PREFIX_PATH: /workspaces/arrow/arrow-dist
+        LD_LIBRARY_PATH: /workspaces/arrow/arrow-dist/lib
+        PYARROW_CPP_HOME: /workspaces/arrow/arrow-dist
+      hooks:
+        pre:
+          - ["foga", "build", "--profile", "docs", "cpp"]
+          - ["foga", "install", "--target", "docs-env"]
+          - ["python3", "-c", "import subprocess; subprocess.run(['doxygen'], cwd='cpp/apidoc', check=True)"]
+
+profiles:
+  docs:
+    build:
+      cpp:
+        build_dir: cpp/build-foga-docs
+        build_args:
+          - "1"
+        configure_args:
+          - -DCMAKE_BUILD_TYPE=Release
+          - -DCMAKE_INSTALL_PREFIX=arrow-dist
+          - -DCMAKE_INSTALL_LIBDIR=lib
+          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          - -DPython3_EXECUTABLE=python3
+          - -DARROW_DEPENDENCY_SOURCE=AUTO
+          - -DARROW_BUILD_TESTS=OFF
+          - -DARROW_COMPUTE=ON
+          - -DARROW_CSV=ON
+          - -DARROW_DATASET=ON
+          - -DARROW_FILESYSTEM=ON
+          - -DARROW_HDFS=ON
+          - -DARROW_JSON=ON
+          - -DARROW_PARQUET=ON
+          - -DARROW_SUBSTRAIT=ON
+          - -DARROW_WITH_BROTLI=ON
+          - -DARROW_WITH_BZ2=ON
+          - -DARROW_WITH_LZ4=ON
+          - -DARROW_WITH_SNAPPY=ON
+          - -DARROW_WITH_ZLIB=ON
+          - -DARROW_WITH_ZSTD=ON
+          - -DPARQUET_REQUIRE_ENCRYPTION=ON
+
+clean:
+  paths:
+    - arrow-dist
+    - cpp/build-foga
+    - cpp/build-foga-docs
+    - cpp/apidoc/html
+    - cpp/apidoc/xml
+    - docs/_build
+    - docs/source/python/generated
+    - python/build
+    - python/dist
+    - python/pyarrow.egg-info

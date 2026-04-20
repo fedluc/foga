@@ -10,6 +10,8 @@ projects.
 
 ## Real-world reference examples
 
+- [`arrow`](arrow/README.md): containerized Apache Arrow example with native
+  dependencies, a C++ build, PyArrow install/test flow, and docs support.
 - [`qupled`](qupled/README.md): C++ CMake build, Python packaging, pytest
   suites, and a `ctest` C++ test runner with MPI-related profiles.
 - [`pybind11`](pybind11/README.md): pinned containerized example that provisions

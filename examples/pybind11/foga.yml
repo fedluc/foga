@@ -15,6 +15,7 @@ build:
       - -DDOWNLOAD_EIGEN=ON
       - -DPYBIND11_FINDPYTHON=NEW
       - -DPYBIND11_WERROR=ON
+      - -DCMAKE_COLOR_DIAGNOSTICS=ON
     build_args:
       - "2"
     targets:
@@ -22,8 +23,47 @@ build:
   python:
     backend: python-build
 
+install:
+  default_targets:
+    - system
+    - python-deps
+    - project
+  targets:
+    system:
+      backend: apt-get
+      args:
+        - -y
+        - --no-install-recommends
+      packages:
+        - cmake
+        - doxygen
+        - ninja-build
+        - python3-dev
+      hooks:
+        pre:
+          - ["apt-get", "update"]
+    python-deps:
+      backend: pip
+      args:
+        - -r
+        - tests/requirements.txt
+      packages:
+        - pip
+        - build
+    project:
+      backend: pip
+      path: .
+    docs-env:
+      backend: pip
+      path: .
+      args:
+        - -r
+        - docs/requirements.txt
+
 test:
   default: python
+  default_runners:
+    - packaging
   runners:
     packaging:
       backend: pytest
@@ -31,17 +71,27 @@ test:
       args:
         - -v
 
+docs:
+  default_targets:
+    - site-html
+  targets:
+    site-html:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/.build/html
+      hooks:
+        pre:
+          - ["foga", "install", "--target", "docs-env"]
+
 clean:
   paths:
     - build-foga
+    - build-foga-debug
     - build-foga-release
-    - build-foga-relwithdebinfo
     - build-foga-venv
-    - build-foga-tidy
-    - build-foga-tidy-relaxed
-    - build-foga-tidy-cpptest
     - build-foga-focused
     - dist
+    - docs/.build
 
 profiles:
   release:
@@ -55,18 +105,7 @@ profiles:
           - -DDOWNLOAD_EIGEN=ON
           - -DPYBIND11_FINDPYTHON=NEW
           - -DPYBIND11_WERROR=ON
-
-  relwithdebinfo:
-    build:
-      cpp:
-        build_dir: build-foga-relwithdebinfo
-        configure_args:
-          - -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          - -DDOWNLOAD_CATCH=ON
-          - -DDOWNLOAD_EIGEN=ON
-          - -DPYBIND11_FINDPYTHON=NEW
-          - -DPYBIND11_WERROR=ON
+          - -DCMAKE_COLOR_DIAGNOSTICS=ON
 
   venv:
     build:
@@ -79,12 +118,13 @@ profiles:
           - -DDOWNLOAD_EIGEN=ON
           - -DPYBIND11_FINDPYTHON=NEW
           - -DPYBIND11_WERROR=ON
+          - -DCMAKE_COLOR_DIAGNOSTICS=ON
           - -DPYBIND11_CREATE_WITH_UV=python3
 
-  tidy:
+  debug:
     build:
       cpp:
-        build_dir: build-foga-tidy
+        build_dir: build-foga-debug
         build_args:
           - "1"
         targets: []
@@ -95,43 +135,7 @@ profiles:
           - -DDOWNLOAD_EIGEN=ON
           - -DPYBIND11_FINDPYTHON=NEW
           - -DPYBIND11_WERROR=ON
-          - -DCMAKE_CXX_STANDARD=17
-          - -DCMAKE_CXX_CLANG_TIDY=clang-tidy;--use-color;--warnings-as-errors=*
-
-  tidy-relaxed:
-    build:
-      cpp:
-        build_dir: build-foga-tidy-relaxed
-        build_args:
-          - "1"
-        targets: []
-        configure_args:
-          - -DCMAKE_BUILD_TYPE=Debug
-          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          - -DDOWNLOAD_CATCH=ON
-          - -DDOWNLOAD_EIGEN=ON
-          - -DPYBIND11_FINDPYTHON=NEW
-          - -DPYBIND11_WERROR=ON
-          - -DCMAKE_CXX_STANDARD=17
-          - -DCMAKE_CXX_CLANG_TIDY=clang-tidy;--use-color
-
-  tidy-cpptest:
-    build:
-      cpp:
-        build_dir: build-foga-tidy-cpptest
-        build_args:
-          - "1"
-        targets:
-          - cpptest
-        configure_args:
-          - -DCMAKE_BUILD_TYPE=Debug
-          - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          - -DDOWNLOAD_CATCH=ON
-          - -DDOWNLOAD_EIGEN=ON
-          - -DPYBIND11_FINDPYTHON=NEW
-          - -DPYBIND11_WERROR=ON
-          - -DCMAKE_CXX_STANDARD=17
-          - -DCMAKE_CXX_CLANG_TIDY=clang-tidy;--use-color
+          - -DCMAKE_COLOR_DIAGNOSTICS=ON
 
   cpptest:
     build:
@@ -151,6 +155,12 @@ profiles:
         targets:
           - test_cmake_build
 
+  cross-module-rtti:
+    build:
+      cpp:
+        targets:
+          - test_cross_module_rtti
+
   focused-callbacks-pickling:
     build:
       cpp:
@@ -162,4 +172,5 @@ profiles:
           - -DDOWNLOAD_EIGEN=ON
           - -DPYBIND11_FINDPYTHON=NEW
           - -DPYBIND11_WERROR=ON
+          - -DCMAKE_COLOR_DIAGNOSTICS=ON
           - -DPYBIND11_TEST_OVERRIDE=test_callbacks;test_pickling
