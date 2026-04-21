@@ -132,13 +132,7 @@ def _meson_plan(config: MesonBuildConfig, request: BuildRequest) -> list[Command
         config.source_dir,
         *config.setup_args,
     ]
-    compile_command = [
-        "meson",
-        "compile",
-        "-C",
-        config.build_dir,
-        *config.compile_args,
-    ]
+    compile_command = ["meson", "compile", "-C", config.build_dir, *config.compile_args]
     return _plan_cpp_build_workflow(
         config=config,
         request=request,
