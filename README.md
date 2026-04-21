@@ -32,22 +32,10 @@ pip install foga
 
 ## Quick start
 
-Create a small `foga.yml` first:
-
-```yaml
-project:
-  name: demo
-
-build:
-  python:
-    backend: python-build
-
-test:
-  runners:
-    unit:
-      backend: pytest
-      path: tests
-```
+Start from one of the examples rather than from a blank file if you want a
+working baseline quickly. The tutorial examples are the best starting point for
+new users, and the larger reference examples show how `foga` looks in more
+realistic repositories.
 
 Then validate and inspect before you run anything for real:
 
@@ -56,23 +44,6 @@ foga validate
 foga inspect
 foga build --dry-run
 foga test --dry-run
-```
-
-## Minimal example
-
-```yaml
-project:
-  name: demo
-
-build:
-  python:
-    backend: python-build
-
-test:
-  runners:
-    unit:
-      backend: pytest
-      path: tests
 ```
 
 For runnable examples that build up gradually, start with
