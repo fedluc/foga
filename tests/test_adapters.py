@@ -132,6 +132,37 @@ def test_plan_build_generates_meson_commands() -> None:
     assert specs[2].env == {"CC": "clang"}
 
 
+def test_plan_build_respects_custom_meson_command() -> None:
+    """Build planning can override the Meson executable command."""
+    config = BuildConfig(
+        cpp=MesonBuildConfig(
+            backend="meson",
+            command=["python3", "vendored-meson/meson/meson.py"],
+            source_dir="src/cpp",
+            build_dir="build/meson",
+        )
+    )
+
+    specs = plan_build(config).specs
+
+    assert [spec.command for spec in specs] == [
+        [
+            "python3",
+            "vendored-meson/meson/meson.py",
+            "setup",
+            "build/meson",
+            "src/cpp",
+        ],
+        [
+            "python3",
+            "vendored-meson/meson/meson.py",
+            "compile",
+            "-C",
+            "build/meson",
+        ],
+    ]
+
+
 def test_plan_build_can_select_only_python_backends() -> None:
     """Build planning can narrow execution to Python workflows."""
     config = BuildConfig(

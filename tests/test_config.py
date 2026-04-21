@@ -290,6 +290,34 @@ test:
     assert config.build.cpp.setup_args == ["--buildtype=release"]
     assert config.build.cpp.compile_args == ["-j4"]
     assert config.build.cpp.targets == ["app"]
+    assert config.build.cpp.command == ["meson"]
+
+
+def test_load_config_accepts_meson_command_override(tmp_path: Path) -> None:
+    """Meson build config can override the Meson command array."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  cpp:
+    backend: meson
+    command: ["python3", "vendored-meson/meson/meson.py"]
+    source_dir: cpp
+    build_dir: build
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.build.cpp is not None
+    assert config.build.cpp.command == ["python3", "vendored-meson/meson/meson.py"]
 
 
 def test_load_config_parses_hook_command_arrays(tmp_path: Path) -> None:

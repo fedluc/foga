@@ -1090,6 +1090,49 @@ build:
     ]
 
 
+def test_build_cli_plans_custom_meson_command(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """CLI build planning respects a custom Meson command array."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  cpp:
+    backend: meson
+    command: ["python3", "vendored-meson/meson/meson.py"]
+    source_dir: cpp
+    build_dir: build
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["commands"] = [spec.command for spec in specs]
+        captured["dry_run"] = dry_run
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "build",
+            "--dry-run",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["dry_run"] is True
+    assert captured["commands"] == [
+        ["python3", "vendored-meson/meson/meson.py", "setup", "build", "cpp"],
+        ["python3", "vendored-meson/meson/meson.py", "compile", "-C", "build"],
+    ]
+
+
 def test_build_selection_runs_only_selected_workflow_kind(
     tmp_path: Path, monkeypatch
 ) -> None:

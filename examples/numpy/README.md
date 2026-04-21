@@ -32,9 +32,11 @@ foga test
 `foga build` also works because this example sets `build.default: all`.
 
 `build.cpp` uses the `meson` backend to compile NumPy's native extension tree in
-`build-foga` independently from the Python packaging workflow. `build.python`
-still uses `python-build` for wheels and sdists, so you can exercise the native
-and Python build paths separately when needed.
+`build-foga` independently from the Python packaging workflow. The example
+points that backend at NumPy's vendored Meson entrypoint rather than the plain
+`meson` executable, because upstream NumPy requires its patched Meson build.
+`build.python` still uses `python-build` for wheels and sdists, so you can
+exercise the native and Python build paths separately when needed.
 
 `foga test` installs the `test-env` target in a pre-hook so `pytest` and the
 editable package are available before the test runner starts.

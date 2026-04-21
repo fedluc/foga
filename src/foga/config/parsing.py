@@ -225,6 +225,12 @@ def _parse_build_backend(
     if backend == BUILD_MESON:
         return MesonBuildConfig(
             backend=backend,
+            command=command_array(
+                data.get("command"),
+                f"{path}.command",
+                field_name="command",
+            )
+            or ["meson"],
             source_dir=required_str(data, "source_dir", f"{path}.source_dir"),
             build_dir=required_str(data, "build_dir", f"{path}.build_dir"),
             launcher=command_array(

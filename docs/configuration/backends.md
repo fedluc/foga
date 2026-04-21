@@ -28,6 +28,7 @@ command for the configured entry.
 `build.cpp.backend: meson` generates a `meson setup` step and one or more
 `meson compile` steps. Its fields mean:
 
+- `command`: optional Meson command array, defaulting to `["meson"]`
 - `source_dir`: source tree passed to `meson setup`
 - `build_dir`: build tree passed to `meson setup` and reused for
   `meson compile -C`

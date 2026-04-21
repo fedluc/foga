@@ -5,6 +5,9 @@ build:
   default: all
   cpp:
     backend: meson
+    command:
+      - python3
+      - vendored-meson/meson/meson.py
     source_dir: .
     build_dir: build-foga
     hooks:
