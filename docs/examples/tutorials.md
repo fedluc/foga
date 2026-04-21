@@ -40,5 +40,6 @@ environment is ready.
 Once the tutorial examples make sense, move on to the real-world examples:
 
 - [arrow](arrow.md)
+- [numpy](numpy.md)
 - [qupled](qupled.md)
 - [pybind11](pybind11.md)

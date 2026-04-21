@@ -27,7 +27,7 @@ workflow.
 From the repository root:
 
 ```bash
-python examples/tutorial/run-example.py 03-pybind11-tests
+python examples/tutorial/run-tutorial.py 03-pybind11-tests
 ```
 
 Once the container starts, install the system packages required by the example:

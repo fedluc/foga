@@ -18,7 +18,7 @@ This is the smallest runnable `foga` example in the repository.
 From the repository root:
 
 ```bash
-python examples/tutorial/run-example.py 01-python-only
+python examples/tutorial/run-tutorial.py 01-python-only
 ```
 
 ## Run locally

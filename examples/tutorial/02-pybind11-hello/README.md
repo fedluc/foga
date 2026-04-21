@@ -23,7 +23,7 @@ build separate from the Python package build.
 From the repository root:
 
 ```bash
-python examples/tutorial/run-example.py 02-pybind11-hello
+python examples/tutorial/run-tutorial.py 02-pybind11-hello
 ```
 
 Once the container starts, install the system packages required by the example:

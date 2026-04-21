@@ -20,8 +20,8 @@ Each example README lists the local prerequisites for running it directly on
 your machine.
 
 If you are using this repository checkout and want the Docker shortcut, run
-`python examples/tutorial/run-example.py --list` to see the available examples,
-then run `python examples/tutorial/run-example.py <example-name>` from the
+`python examples/tutorial/run-tutorial.py --list` to see the available examples,
+then run `python examples/tutorial/run-tutorial.py <example-name>` from the
 repository root.
 
 Once these examples feel familiar, move to the larger real-world references in

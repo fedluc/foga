@@ -79,7 +79,7 @@ For runnable examples that build up gradually, start with
 [`examples/tutorial/`](examples/tutorial/) or the
 [Examples guide](docs/examples/tutorials.md). Each tutorial README lists the
 local prerequisites, and this repository also includes
-`examples/tutorial/run-example.py` if you want to run the tutorials with only
+`examples/tutorial/run-tutorial.py` if you want to run the tutorials with only
 Docker and Python instead of installing the example-specific tools locally.
 
 If you are using Codex or another agentic tool to draft `foga.yml`, give it the

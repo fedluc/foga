@@ -103,6 +103,10 @@ The repository includes two kinds of examples:
 
 - [Tutorial examples](examples/tutorials.md): staged starting points that help
   you learn `foga` one step at a time before you adapt it to a larger project
+- [`arrow`](examples/arrow.md): large upstream mixed C++/Python project with
+  system dependencies, docs, and a heavier integration surface
+- [`numpy`](examples/numpy.md): upstream Python/native project that uses a
+  separate Meson native build and Python packaging workflow
 - [`qupled`](examples/qupled.md): mixed Python/C++ project with C++ CMake
   builds, Python packaging, pytest suites, and profile overrides
 - [`pybind11`](examples/pybind11.md): pinned containerized example that runs

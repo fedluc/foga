@@ -19,6 +19,10 @@ The examples are meant to answer two different questions:
 - [arrow](arrow.md): Apache Arrow in Docker with system dependencies, native
   builds, Python installs, pytest, and Sphinx docs. This is the heaviest
   example and shows `foga` coordinating a large upstream project.
+- [numpy](numpy.md): NumPy in Docker with a separate Meson native build,
+  Python packaging, pytest, and docs. This is the best example when you need
+  to understand how `foga` can model a native build independently from Python
+  packaging.
 - [qupled](qupled.md): C++ CMake build, Python packaging, pytest suites,
   a `ctest` C++ test runner, and MPI-related profiles. This is the clearest
   single-file reference when you want one config that mixes Python and C++
@@ -37,6 +41,7 @@ repository shape.
 
 tutorials
 arrow
+numpy
 qupled
 pybind11
 ```

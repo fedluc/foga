@@ -23,7 +23,7 @@ and adds profile-driven build modes for the C++ side.
 From the repository root:
 
 ```bash
-python examples/tutorial/run-example.py 04-pybind11-profiles
+python examples/tutorial/run-tutorial.py 04-pybind11-profiles
 ```
 
 Once the container starts, install the system packages required by the example:
