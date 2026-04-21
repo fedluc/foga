@@ -53,14 +53,13 @@ local prerequisites, and this repository also includes
 `examples/tutorial/run-tutorial.py` if you want to run the tutorials with only
 Docker and Python instead of installing the example-specific tools locally.
 
-If you are using Codex or another agentic tool to draft `foga.yml`, give it the
-repository's existing build, test, docs, and deploy commands and ask it to map
-them to built-in `foga` backends first. If you are using Codex or another tool
-that supports local skills, use the skill at
-[`skills/foga-config-authoring/SKILL.md`](skills/foga-config-authoring/SKILL.md)
-to generate a `foga.yml` file or at least a first draft/skeleton. Then verify
-the result with `foga validate`, `foga inspect`, and dry-run commands before
-replacing scripts or CI jobs.
+Use Codex or another agentic tool to draft `foga.yml` from the repository's
+existing build, test, docs, and deploy commands, and ask it to map those
+workflows to built-in `foga` backends first. If the tool supports local
+skills, use [`skills/foga-config-authoring/SKILL.md`](skills/foga-config-authoring/SKILL.md)
+to produce the initial config or a first draft. Then verify the result with
+`foga validate`, `foga inspect`, and dry-run commands before replacing scripts
+or CI jobs.
 
 ## Common commands
 
