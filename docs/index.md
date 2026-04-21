@@ -35,8 +35,8 @@ The usual `foga` shape is:
 5. Use `validate`, `inspect`, and dry-run commands before switching CI or
    developer workflows over to `foga`
 
-That gives readers a single source of truth without pretending every repository
-should become a generic YAML task runner.
+That gives readers a single source of truth while keeping hooks as a small
+escape hatch rather than the primary programming model.
 
 ## Start here
 

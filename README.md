@@ -7,11 +7,11 @@ with C or C++ bindings. It replaces ad-hoc repository scripts with a
 single YAML configuration file that drives build, test, docs, format, lint,
 install, deploy, inspect, and cleanup workflows.
 
-The goal is not to turn YAML into a generic task runner. The core idea is
-smaller and more opinionated: keep the stable repository workflows in one
-structured file, use built-in backends for common tools, use `launcher` when a
-tool needs a wrapper like `uv run`, and keep project-specific orchestration in
-small hooks or scripts.
+`foga` is for standard repository workflows with structured backends. The core
+idea is smaller and more opinionated: keep the stable repository workflows in
+one structured file, use built-in backends for common tools, use `launcher`
+when a tool needs a wrapper like `uv run`, and keep project-specific
+orchestration in small hooks or scripts.
 
 ## What foga does
 
