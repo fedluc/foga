@@ -13,6 +13,7 @@ from ..adapters.formatting import FORMAT_BACKENDS
 from ..adapters.install import INSTALL_BACKENDS
 from ..adapters.kinds import (
     BUILD_CMAKE,
+    BUILD_MESON,
     BUILD_PYTHON,
     format_backend_kind,
     lint_backend_kind,
@@ -56,6 +57,7 @@ from .models import (
     InstallTargetConfig,
     LintConfig,
     LintTargetConfig,
+    MesonBuildConfig,
     ProjectConfig,
     PythonBuildConfig,
     TestConfig,
@@ -170,7 +172,9 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
             BUILD_SECTION, config.backend, BUILD_BACKENDS
         ).validate(config)
         entries[name] = config
-        if name == CPP_WORKFLOW_KIND and isinstance(config, CppBuildConfig):
+        if name == CPP_WORKFLOW_KIND and isinstance(
+            config, (CppBuildConfig, MesonBuildConfig)
+        ):
             cpp_build = config
         if name == PYTHON_WORKFLOW_KIND and isinstance(config, PythonBuildConfig):
             python_build = config
@@ -182,7 +186,7 @@ def _parse_build(data: dict[str, Any]) -> BuildConfig:
 
 def _parse_build_backend(
     name: str, data: dict[str, Any], backend: str
-) -> CppBuildConfig | PythonBuildConfig:
+) -> CppBuildConfig | MesonBuildConfig | PythonBuildConfig:
     """Parse a configured build backend by backend type.
 
     Args:
@@ -213,6 +217,23 @@ def _parse_build_backend(
                 data.get("configure_args"), f"{path}.configure_args"
             ),
             build_args=string_list(data.get("build_args"), f"{path}.build_args"),
+            targets=string_list(data.get("targets"), f"{path}.targets"),
+            env=string_mapping(data.get("env"), f"{path}.env"),
+            hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
+        )
+
+    if backend == BUILD_MESON:
+        return MesonBuildConfig(
+            backend=backend,
+            source_dir=required_str(data, "source_dir", f"{path}.source_dir"),
+            build_dir=required_str(data, "build_dir", f"{path}.build_dir"),
+            launcher=command_array(
+                data.get(LAUNCHER_KEY),
+                f"{path}.{LAUNCHER_KEY}",
+                field_name=LAUNCHER_KEY,
+            ),
+            setup_args=string_list(data.get("setup_args"), f"{path}.setup_args"),
+            compile_args=string_list(data.get("compile_args"), f"{path}.compile_args"),
             targets=string_list(data.get("targets"), f"{path}.targets"),
             env=string_mapping(data.get("env"), f"{path}.env"),
             hooks=parse_hooks(data.get("hooks"), f"{path}.hooks"),
@@ -841,7 +862,7 @@ def _build_backends_for_entry(name: str) -> set[str]:
     """
 
     if name == CPP_WORKFLOW_KIND:
-        return {BUILD_CMAKE}
+        return {BUILD_CMAKE, BUILD_MESON}
     if name == PYTHON_WORKFLOW_KIND:
         return {BUILD_PYTHON}
     raise ConfigError(f"`{BUILD_SECTION}.{name}` is not a supported build entry")

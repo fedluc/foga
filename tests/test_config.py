@@ -258,6 +258,40 @@ test:
         load_config(config_path)
 
 
+def test_load_config_accepts_meson_cpp_build_backend(tmp_path: Path) -> None:
+    """Build config accepts Meson as a C++ backend with Meson-native fields."""
+    config_path = write_config(
+        tmp_path,
+        """
+project:
+  name: demo
+build:
+  cpp:
+    backend: meson
+    source_dir: cpp
+    build_dir: build
+    setup_args: ["--buildtype=release"]
+    compile_args: ["-j4"]
+    targets: ["app"]
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.build.cpp is not None
+    assert config.build.cpp.backend == "meson"
+    assert config.build.cpp.source_dir == "cpp"
+    assert config.build.cpp.build_dir == "build"
+    assert config.build.cpp.setup_args == ["--buildtype=release"]
+    assert config.build.cpp.compile_args == ["-j4"]
+    assert config.build.cpp.targets == ["app"]
+
+
 def test_load_config_parses_hook_command_arrays(tmp_path: Path) -> None:
     """Hook commands use direct command arrays."""
     config_path = write_config(
@@ -625,7 +659,9 @@ build:
 
     with pytest.raises(
         ConfigError,
-        match=("Unsupported build backend: python-build. Supported backends: cmake"),
+        match=(
+            "Unsupported build backend: python-build. Supported backends: cmake, meson"
+        ),
     ):
         load_config(config_path)
 
@@ -688,7 +724,7 @@ build:
 
     with pytest.raises(
         ConfigError,
-        match=("Unsupported build backend: unknown. Supported backends: cmake"),
+        match=("Unsupported build backend: unknown. Supported backends: cmake, meson"),
     ):
         load_config(config_path)
 

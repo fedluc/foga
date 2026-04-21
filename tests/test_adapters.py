@@ -20,6 +20,7 @@ from foga.config.models import (
     HookConfig,
     InstallTargetConfig,
     LintTargetConfig,
+    MesonBuildConfig,
     PythonBuildConfig,
     TestRunnerConfig,
 )
@@ -94,6 +95,43 @@ def test_plan_build_returns_registered_backend_specs_in_order() -> None:
     ]
 
 
+def test_plan_build_generates_meson_commands() -> None:
+    """Build planning includes Meson setup and compile commands."""
+    config = BuildConfig(
+        cpp=MesonBuildConfig(
+            backend="meson",
+            source_dir="src/cpp",
+            build_dir="build/meson",
+            setup_args=["--buildtype=release"],
+            compile_args=["-j4"],
+            targets=["cpp_tests"],
+            env={"CC": "clang"},
+            hooks=HookConfig(pre=[["echo", "prep"]]),
+        )
+    )
+
+    specs = plan_build(config).specs
+
+    assert specs[0].command == ["echo", "prep"]
+    assert specs[1].command == [
+        "meson",
+        "setup",
+        "build/meson",
+        "src/cpp",
+        "--buildtype=release",
+    ]
+    assert specs[2].command == [
+        "meson",
+        "compile",
+        "-C",
+        "build/meson",
+        "-j4",
+        "cpp_tests",
+    ]
+    assert specs[1].env == {"CC": "clang"}
+    assert specs[2].env == {"CC": "clang"}
+
+
 def test_plan_build_can_select_only_python_backends() -> None:
     """Build planning can narrow execution to Python workflows."""
     config = BuildConfig(
@@ -147,6 +185,34 @@ def test_plan_build_prepends_launchers_to_generated_commands() -> None:
             "cpp_tests",
         ],
         ["uv", "run", "python3", "-m", "build", "--wheel"],
+    ]
+
+
+def test_plan_build_prepends_launchers_to_meson_commands() -> None:
+    """Build planning prepends launchers to Meson setup and compile commands."""
+    config = BuildConfig(
+        cpp=MesonBuildConfig(
+            backend="meson",
+            source_dir="src/cpp",
+            build_dir="build/meson",
+            launcher=["uv", "run"],
+            targets=["cpp_tests"],
+        )
+    )
+
+    specs = plan_build(config).specs
+
+    assert [spec.command for spec in specs] == [
+        ["uv", "run", "meson", "setup", "build/meson", "src/cpp"],
+        [
+            "uv",
+            "run",
+            "meson",
+            "compile",
+            "-C",
+            "build/meson",
+            "cpp_tests",
+        ],
     ]
 
 

@@ -23,6 +23,22 @@ command for the configured entry.
 - `env`: environment variables added to the generated commands
 - `hooks`: pre/post commands run around the C++ workflow
 
+### `meson`
+
+`build.cpp.backend: meson` generates a `meson setup` step and one or more
+`meson compile` steps. Its fields mean:
+
+- `source_dir`: source tree passed to `meson setup`
+- `build_dir`: build tree passed to `meson setup` and reused for
+  `meson compile -C`
+- `launcher`: optional command prefix prepended to setup and compile steps
+- `setup_args`: extra flags appended to the setup step
+- `compile_args`: extra flags appended to the compile step
+- `targets`: default C++ targets to compile when the CLI does not override
+  them
+- `env`: environment variables added to the generated commands
+- `hooks`: pre/post commands run around the C++ workflow
+
 ### `python-build`
 
 `build.python.backend: python-build` runs `python3 -m build` with optional

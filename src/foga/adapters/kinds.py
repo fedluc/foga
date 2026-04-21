@@ -7,6 +7,7 @@ from ..errors import ConfigError
 
 # Build backend names
 BUILD_CMAKE = "cmake"
+BUILD_MESON = "meson"
 BUILD_PYTHON = "python-build"
 
 # Test backend names

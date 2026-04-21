@@ -101,7 +101,7 @@ class PathTargetConfig(NamedBackendConfig):
 
 @dataclass(frozen=True)
 class CppBuildConfig:
-    """Configuration for a C++ CMake build workflow.
+    """Configuration for a CMake-backed C++ build workflow.
 
     Attributes:
         backend: C++ build backend identifier.
@@ -123,6 +123,34 @@ class CppBuildConfig:
     launcher: list[str] = field(default_factory=list)
     configure_args: list[str] = field(default_factory=list)
     build_args: list[str] = field(default_factory=list)
+    targets: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
+    hooks: HookConfig = field(default_factory=HookConfig)
+
+
+@dataclass(frozen=True)
+class MesonBuildConfig:
+    """Configuration for a Meson-backed C++ build workflow.
+
+    Attributes:
+        backend: C++ build backend identifier.
+        source_dir: Source directory passed to ``meson setup``.
+        build_dir: Build directory passed to ``meson setup`` and reused for
+            ``meson compile``.
+        launcher: Optional command prefix prepended before Meson commands.
+        setup_args: Extra arguments passed to ``meson setup``.
+        compile_args: Extra arguments passed to ``meson compile``.
+        targets: Default C++ targets to compile when none are requested.
+        env: Environment variables applied to generated commands.
+        hooks: Commands executed around C++ build steps.
+    """
+
+    backend: str
+    source_dir: str
+    build_dir: str
+    launcher: list[str] = field(default_factory=list)
+    setup_args: list[str] = field(default_factory=list)
+    compile_args: list[str] = field(default_factory=list)
     targets: list[str] = field(default_factory=list)
     env: dict[str, str] = field(default_factory=dict)
     hooks: HookConfig = field(default_factory=HookConfig)
@@ -160,13 +188,15 @@ class BuildConfig(WorkflowSelectionConfig):
         python: Optional Python build configuration.
     """
 
-    entries: dict[str, CppBuildConfig | PythonBuildConfig] = field(default_factory=dict)
-    cpp: CppBuildConfig | None = None
+    entries: dict[str, CppBuildConfig | MesonBuildConfig | PythonBuildConfig] = field(
+        default_factory=dict
+    )
+    cpp: CppBuildConfig | MesonBuildConfig | None = None
     python: PythonBuildConfig | None = None
 
     def configured_backends(
         self, selection: str | None = None
-    ) -> list[CppBuildConfig | PythonBuildConfig]:
+    ) -> list[CppBuildConfig | MesonBuildConfig | PythonBuildConfig]:
         """Return configured build backends in execution order.
 
         Args:
@@ -185,7 +215,7 @@ class BuildConfig(WorkflowSelectionConfig):
                 if build_kind(config) in active_kinds
             ]
 
-        backends: list[CppBuildConfig | PythonBuildConfig] = []
+        backends: list[CppBuildConfig | MesonBuildConfig | PythonBuildConfig] = []
         if self.cpp is not None and CPP_WORKFLOW_KIND in active_kinds:
             backends.append(self.cpp)
         if self.python is not None and PYTHON_WORKFLOW_KIND in active_kinds:
@@ -660,7 +690,7 @@ class FogaConfig:
     raw: dict[str, Any] = field(repr=False)
 
 
-def build_kind(config: CppBuildConfig | PythonBuildConfig) -> str:
+def build_kind(config: CppBuildConfig | MesonBuildConfig | PythonBuildConfig) -> str:
     """Return the logical kind for a parsed build backend config.
 
     Args:
@@ -670,7 +700,7 @@ def build_kind(config: CppBuildConfig | PythonBuildConfig) -> str:
         Logical build kind associated with the backend config.
     """
 
-    if isinstance(config, CppBuildConfig):
+    if isinstance(config, (CppBuildConfig, MesonBuildConfig)):
         return CPP_WORKFLOW_KIND
     return PYTHON_WORKFLOW_KIND
 

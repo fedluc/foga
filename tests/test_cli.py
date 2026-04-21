@@ -1043,6 +1043,53 @@ build:
     ]
 
 
+def test_build_cli_plans_meson_commands_with_target_overrides(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """CLI build planning uses Meson setup and compile commands."""
+    config = tmp_path / "foga.yml"
+    config.write_text(
+        """
+project:
+  name: demo
+build:
+  cpp:
+    backend: meson
+    source_dir: cpp
+    build_dir: build
+    setup_args: ["--buildtype=release"]
+    compile_args: ["-j4"]
+    targets: ["base-target"]
+""",
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_run_specs(self, specs, dry_run=False):
+        captured["commands"] = [spec.command for spec in specs]
+        captured["dry_run"] = dry_run
+
+    monkeypatch.setattr("foga.executor.CommandExecutor.run_specs", fake_run_specs)
+
+    exit_code = cli.main(
+        [
+            "--config",
+            str(config),
+            "build",
+            "--target",
+            "cli-target",
+            "--dry-run",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["dry_run"] is True
+    assert captured["commands"] == [
+        ["meson", "setup", "build", "cpp", "--buildtype=release"],
+        ["meson", "compile", "-C", "build", "-j4", "cli-target"],
+    ]
+
+
 def test_build_selection_runs_only_selected_workflow_kind(
     tmp_path: Path, monkeypatch
 ) -> None:
