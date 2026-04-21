@@ -1,8 +1,15 @@
 # Getting Started
 
-## Install for development
+## Install
 
-If you are evaluating `foga` in a local checkout, install it in editable mode:
+Install `foga` as a normal user with:
+
+```bash
+pip install foga
+```
+
+If you are evaluating `foga` from a local checkout, install it in editable mode
+instead:
 
 ```bash
 pip install -e .[dev]
@@ -37,6 +44,22 @@ test:
 If you want a runnable repository to copy from instead of starting from a blank
 file, use the [tutorial examples](examples/tutorials.md). They follow the same
 incremental adoption path and include working project files.
+
+## Authoring with agents
+
+Agentic tools can help draft `foga.yml` quickly when you already have build,
+test, docs, or deploy scripts in a repository.
+
+Recommended approach:
+
+1. Give the agent the current commands or CI snippets that already work.
+2. Ask it to map those commands to built-in `foga` backends before it reaches
+   for hooks.
+3. If your environment exposes a dedicated `foga.yml` or config-authoring
+   skill, use that instead of a generic prompt.
+4. Review the result with `foga validate`, `foga inspect`, and dry-run output.
+
+That keeps the generated config close to the structure `foga` actually expects.
 
 ## First commands
 
@@ -74,3 +97,15 @@ The usual workflow for adopting `foga` in a repository is:
 
 That sequence keeps adoption incremental. You do not need to encode every
 project script on day one.
+
+## Practical limitations
+
+`foga` works best for repeatable repository workflows. It is a worse fit for:
+
+- long one-time bootstrap flows
+- infrastructure provisioning
+- large shell pipelines that depend on shell parsing
+- commands that are so project-specific that a small script is clearer than YAML
+
+Use hooks for small orchestration steps. Keep genuinely complex logic in a
+project script and call that script from `foga`.

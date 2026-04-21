@@ -2,6 +2,11 @@
 
 `foga` expects a root-level YAML mapping with these top-level sections.
 
+Use this page to find the top-level structure and the role of each section.
+Use [Backends](backends.md) for exact backend fields and
+[Profiles And Hooks](profiles-and-hooks.md) for override and escape-hatch
+behavior.
+
 Required sections:
 
 - `project`: project metadata
@@ -88,6 +93,16 @@ profiles:
       python:
         args: ["--wheel"]
 ```
+
+## How to read this reference
+
+- Search this page by top-level section name such as `build`, `test`, or
+  `install` when you need the container shape.
+- Search [Backends](backends.md) by backend name such as `pytest`, `cmake`,
+  `pip`, or `twine` when you need the exact configurable fields.
+- Search [Profiles And Hooks](profiles-and-hooks.md) when you need override
+  rules, hook behavior, or the boundary between built-in workflows and custom
+  scripts.
 
 ## Top-level sections
 
@@ -206,6 +221,14 @@ Each deploy target may also set `launcher` to prepend a command prefix.
 removes.
 
 `clean` is optional.
+
+## Reference map
+
+- [Backends](backends.md): exact fields for every supported backend
+- [Profiles And Hooks](profiles-and-hooks.md): profile merge behavior and hook
+  constraints
+- [CLI Reference](../cli.md): command-line selection, dry-run, and inspect
+  behavior
 
 ```{toctree}
 :maxdepth: 1
