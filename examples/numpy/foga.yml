@@ -1,0 +1,103 @@
+project:
+  name: numpy
+
+build:
+  python:
+    backend: python-build
+    args:
+      - --wheel
+      - --sdist
+      - --no-isolation
+      - --outdir
+      - dist
+    hooks:
+      pre:
+        - ["git", "submodule", "update", "--init"]
+
+install:
+  default_targets:
+    - system
+    - build-env
+  targets:
+    system:
+      backend: apt-get
+      args:
+        - -y
+      packages:
+        - build-essential
+        - gfortran
+        - liblapack-dev
+        - libopenblas-dev
+        - pkg-config
+        - python3-dev
+      hooks:
+        pre:
+          - ["apt-get", "update"]
+
+    build-env:
+      backend: pip
+      packages:
+        - build
+        - patchelf>=0.11.0
+      args:
+        - -r
+        - requirements/build_requirements.txt
+
+    test-env:
+      backend: pip
+      packages:
+        - patchelf>=0.11.0
+        - -e
+        - .
+      args:
+        - -r
+        - requirements/test_requirements.txt
+        - --no-build-isolation
+
+    docs-env:
+      backend: pip
+      packages:
+        - patchelf>=0.11.0
+        - -e
+        - .
+      args:
+        - -r
+        - requirements/doc_requirements.txt
+        - --no-build-isolation
+
+test:
+  default: python
+  default_runners:
+    - core
+  runners:
+    core:
+      backend: pytest
+      path: numpy/_core/tests
+      args:
+        - -v
+        - -k
+        - not slow
+      hooks:
+        pre:
+          - ["foga", "install", "--target", "test-env"]
+          - ["git", "submodule", "update", "--init"]
+
+docs:
+  default_targets:
+    - html
+  targets:
+    html:
+      backend: sphinx
+      source_dir: doc/source
+      build_dir: doc/build/html
+      hooks:
+        pre:
+          - ["git", "submodule", "update", "--init"]
+          - ["foga", "install", "--target", "docs-env"]
+
+clean:
+  paths:
+    - build
+    - dist
+    - .pytest_cache
+    - doc/build
