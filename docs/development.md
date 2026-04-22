@@ -37,6 +37,13 @@ repository environment with the extras used in development and documentation:
 uv sync --extra dev --extra docs
 ```
 
+If you only need a plain editable install from a local checkout, this also
+works:
+
+```bash
+pip install -e .[dev]
+```
+
 Standard verification:
 
 ```bash
@@ -44,6 +51,12 @@ uv run ruff check .
 uv run pytest
 uv run python -m build
 uv run sphinx-build -W --keep-going -b html docs docs/_build/html
+```
+
+For a quick lint-only pass outside `uv`, run:
+
+```bash
+ruff check .
 ```
 
 When dependency metadata changes, refresh the committed lockfile with:

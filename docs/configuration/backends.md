@@ -23,6 +23,16 @@ command for the configured entry.
 - `env`: environment variables added to the generated commands
 - `hooks`: pre/post commands run around the C++ workflow
 
+Example:
+
+```yaml
+build:
+  cpp:
+    backend: cmake
+    source_dir: cpp
+    build_dir: build
+```
+
 ### `meson`
 
 `build.cpp.backend: meson` generates a `meson setup` step and one or more
@@ -39,6 +49,16 @@ command for the configured entry.
 - `env`: environment variables added to the generated commands
 - `hooks`: pre/post commands run around the C++ workflow
 
+Example:
+
+```yaml
+build:
+  cpp:
+    backend: meson
+    source_dir: cpp
+    build_dir: build
+```
+
 ### `python-build`
 
 `build.python.backend: python-build` runs `python3 -m build` with optional
@@ -54,6 +74,15 @@ Its fields mean:
 - `env`: environment variables added to the build command
 - `hooks`: pre/post commands run around the Python package build
 
+Example:
+
+```yaml
+build:
+  python:
+    backend: python-build
+    args: ["--wheel"]
+```
+
 ## Test backends
 
 ### `pytest`
@@ -68,6 +97,16 @@ This backend runs `pytest`. Its fields mean:
 - `env`: environment variables added to the runner command
 - `hooks`: pre/post commands run around the runner
 
+Example:
+
+```yaml
+test:
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+```
+
 ### `tox`
 
 This backend runs `tox -e <env>`. Its fields mean:
@@ -78,6 +117,16 @@ This backend runs `tox -e <env>`. Its fields mean:
 - `args`: extra flags appended after `tox -e <env>`
 - `env`: environment variables added to the runner command
 - `hooks`: pre/post commands run around the runner
+
+Example:
+
+```yaml
+test:
+  runners:
+    py311:
+      backend: tox
+      tox_env: py311
+```
 
 ### `ctest`
 
@@ -97,6 +146,16 @@ fields mean:
 - `env`: environment variables added to generated commands
 - `hooks`: pre/post commands run around the C++ test workflow
 
+Example:
+
+```yaml
+test:
+  runners:
+    cpp:
+      backend: ctest
+      build_dir: build
+```
+
 ## Docs backends
 
 ### `sphinx`
@@ -111,6 +170,17 @@ fields mean:
 - `env`: environment variables added to the docs command
 - `hooks`: pre/post commands run around the docs workflow
 
+Example:
+
+```yaml
+docs:
+  targets:
+    site:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build/html
+```
+
 ### `mkdocs`
 
 `docs.targets.<name>.backend: mkdocs` runs `mkdocs build`. Its fields mean:
@@ -122,6 +192,16 @@ fields mean:
 - `env`: environment variables added to the docs command
 - `hooks`: pre/post commands run around the docs workflow
 
+Example:
+
+```yaml
+docs:
+  targets:
+    site:
+      backend: mkdocs
+      config_file: mkdocs.yml
+```
+
 ### `doxygen`
 
 `docs.targets.<name>.backend: doxygen` runs `doxygen`. Its fields mean:
@@ -131,6 +211,16 @@ fields mean:
 - `args`: extra flags appended after the config file
 - `env`: environment variables added to the docs command
 - `hooks`: pre/post commands run around the docs workflow
+
+Example:
+
+```yaml
+docs:
+  targets:
+    api:
+      backend: doxygen
+      config_file: Doxyfile
+```
 
 ## Format backends
 
@@ -145,6 +235,16 @@ Its fields mean:
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter
 
+Example:
+
+```yaml
+format:
+  targets:
+    python-style:
+      backend: black
+      paths: ["src", "tests"]
+```
+
 ### `ruff-format`
 
 `format.targets.<name>.backend: ruff-format` runs `ruff format` on the
@@ -156,6 +256,16 @@ configured paths. Its fields mean:
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter
 
+Example:
+
+```yaml
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+```
+
 ### `clang-format`
 
 `format.targets.<name>.backend: clang-format` runs `clang-format -i` on the
@@ -166,6 +276,16 @@ configured paths. Its fields mean:
 - `args`: extra flags appended after `-i` and before the paths
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter
+
+Example:
+
+```yaml
+format:
+  targets:
+    cpp-style:
+      backend: clang-format
+      paths: ["src/**/*.cc", "include/**/*.h"]
+```
 
 ## Lint backends
 
@@ -180,6 +300,16 @@ paths. Its fields mean:
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
 
+Example:
+
+```yaml
+lint:
+  targets:
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
+```
+
 ### `pylint`
 
 `lint.targets.<name>.backend: pylint` runs `pylint` on the configured paths.
@@ -191,6 +321,16 @@ Its fields mean:
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
 
+Example:
+
+```yaml
+lint:
+  targets:
+    python-style:
+      backend: pylint
+      paths: ["src"]
+```
+
 ### `clang-tidy`
 
 `lint.targets.<name>.backend: clang-tidy` runs `clang-tidy` on the configured
@@ -201,6 +341,16 @@ paths. Its fields mean:
 - `args`: extra flags appended before the paths
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
+
+Example:
+
+```yaml
+lint:
+  targets:
+    cpp-style:
+      backend: clang-tidy
+      paths: ["src/main.cc"]
+```
 
 ## Install backends
 
@@ -216,6 +366,17 @@ mean:
 - `args`: extra flags appended before packages or paths
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
+
+Example:
+
+```yaml
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
+```
 
 ### `uv`
 
@@ -258,6 +419,16 @@ install:
 
 `poetry` does not use `path`, `packages`, or `editable`.
 
+Example:
+
+```yaml
+install:
+  targets:
+    dev:
+      backend: poetry
+      args: ["--with", "dev"]
+```
+
 ### `npm`
 
 `install.targets.<name>.backend: npm` runs `npm install`.
@@ -269,6 +440,16 @@ install:
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
 
+Example:
+
+```yaml
+install:
+  targets:
+    ui:
+      backend: npm
+      path: web
+```
+
 ### `apt-get`
 
 `install.targets.<name>.backend: apt-get` runs `apt-get install`.
@@ -278,6 +459,17 @@ install:
 - `args`: extra flags appended before packages, such as `-y`
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
+
+Example:
+
+```yaml
+install:
+  targets:
+    system-deps:
+      backend: apt-get
+      launcher: ["sudo"]
+      packages: ["cmake", "ninja-build"]
+```
 
 ### `brew`
 
@@ -289,6 +481,16 @@ install:
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
 
+Example:
+
+```yaml
+install:
+  targets:
+    macos-deps:
+      backend: brew
+      packages: ["cmake", "ninja"]
+```
+
 ### `yum`
 
 `install.targets.<name>.backend: yum` runs `yum install`.
@@ -298,6 +500,17 @@ install:
 - `args`: extra flags appended before packages
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
+
+Example:
+
+```yaml
+install:
+  targets:
+    system-deps:
+      backend: yum
+      launcher: ["sudo"]
+      packages: ["cmake", "ninja-build"]
+```
 
 ## Deploy backends
 
@@ -313,3 +526,13 @@ This backend runs `twine upload`. Its fields mean:
 - `args`: extra flags appended before artifact paths
 - `env`: environment variables added to the upload command
 - `hooks`: pre/post commands run around the upload step
+
+Example:
+
+```yaml
+deploy:
+  targets:
+    pypi:
+      backend: twine
+      artifacts: ["dist/*"]
+```

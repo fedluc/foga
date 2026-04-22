@@ -29,12 +29,6 @@ You can run the tutorials in two ways:
 2. Locally, after installing the prerequisites listed in the README for the
    tutorial you want to run.
 
-The helper rebuilds the selected Docker image with `--no-cache` and opens a
-shell in `/workspace/example`.
-
-The per-example README lists the concrete `foga` commands to run once the
-environment is ready.
-
 ## After the tutorials
 
 Once the tutorial examples make sense, move on to the real-world examples:
