@@ -5,10 +5,10 @@ Docker.
 
 What it includes:
 
-- [`Dockerfile`](Dockerfile): provisions a build environment similar to the
+- [`Dockerfile`](https://github.com/fedluc/foga/blob/main/examples/pybind11/Dockerfile): provisions a build environment similar to the
   devcontainer used during development here
-- [`foga.yml`](foga.yml): example `foga` configuration for `pybind11`
-- [`run-in-docker.py`](run-in-docker.py): helper that builds the image and opens
+- [`foga.yml`](https://github.com/fedluc/foga/blob/main/examples/pybind11/foga.yml): example `foga` configuration for `pybind11`
+- [`run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/pybind11/run-in-docker.py): helper that builds the image and opens
   a shell or runs a one-shot command in the container
 
 The Docker image clones `pybind11` at pinned commit

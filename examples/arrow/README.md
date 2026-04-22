@@ -6,10 +6,10 @@ and Sphinx documentation.
 
 What it includes:
 
-- [`Dockerfile`](Dockerfile): clones Apache Arrow in Docker, installs a released
+- [`Dockerfile`](https://github.com/fedluc/foga/blob/main/examples/arrow/Dockerfile): clones Apache Arrow in Docker, installs a released
   `foga`, and prepares the base environment
-- [`foga.yml`](foga.yml): a working `foga` configuration for the Arrow checkout
-- [`run-in-docker.py`](run-in-docker.py): helper that builds the image and opens
+- [`foga.yml`](https://github.com/fedluc/foga/blob/main/examples/arrow/foga.yml): a working `foga` configuration for the Arrow checkout
+- [`run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/arrow/run-in-docker.py): helper that builds the image and opens
   a shell or runs a one-shot command in the container
 
 This example pins Arrow to commit

@@ -2,24 +2,17 @@
 
 ## Project Structure & Module Organization
 
-Application code lives under `src/foga/`.
+* Application code lives under `src/foga/`.
 
-- `src/foga/cli/` contains CLI entrypoints and command wiring
-- `src/foga/config/` contains configuration loading, parsing, and models
-- `src/foga/executor.py` contains command execution orchestration
-- `src/foga/adapters/` contains backend-specific command builders
+  * `src/foga/cli/` contains CLI entrypoints and command wiring
+  * `src/foga/config/` contains configuration loading, parsing, and models
+  * `src/foga/executor.py` contains command execution orchestration
+  * `src/foga/adapters/` contains backend-specific command builders
 
-Tests live in `tests/` and cover config loading, adapter behavior, and CLI
+* Tests live in `tests/` and cover config loading, adapter behavior, and CLI
 routing.
 
-Examples live under `examples/`, especially:
-
-- `examples/qupled/foga.yml`
-- `examples/pybind11/`
-
-Use `README.md` for a quick overview of package capabilities and
-`fedluc.github.io/foga/` for the full user documentation. Track product work in
-GitHub issues and milestones.
+* Examples live under `examples/`, especially:
 
 ## Development Commands
 
@@ -50,17 +43,17 @@ foga deploy --dry-run
 
 This repository relies on shared skills. Use them.
 
-- `python-development`
+* `python-development`
   Use for changes to Python code, tests, packaging, or tooling.
   This is the source of truth for coding style, testing expectations,
   docstrings, and verification.
 
-- `github-issue-workflow`
+* `github-issue-workflow`
   Use when starting from GitHub issues or when the task should end with an
   opened pull request.
   This is the source of truth for branching, issue pickup, and PR flow.
 
-- `pr-review-loop`
+* `pr-review-loop`
   Use when implementing or coordinating GitHub PR review feedback.
 
 If a task matches a skill, follow the skill unless this file gives a

@@ -10,7 +10,7 @@ This example shows a mixed Python/C++ project with:
 
 Files:
 
-- [`foga.yml`](foga.yml)
+- [`foga.yml`](https://github.com/fedluc/foga/blob/main/examples/qupled/foga.yml)
 
 Use this example when you want to see a config that combines Python workflows,
 C++ workflows, hooks for test fixture staging, and real profile overrides.

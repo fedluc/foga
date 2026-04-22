@@ -6,10 +6,10 @@ documentation.
 
 What it includes:
 
-- [`Dockerfile`](Dockerfile): clones NumPy in Docker, installs a released
+- [`Dockerfile`](https://github.com/fedluc/foga/blob/main/examples/numpy/Dockerfile): clones NumPy in Docker, installs a released
   `foga` from this checkout, and prepares the base environment
-- [`foga.yml`](foga.yml): a working `foga` configuration for the NumPy checkout
-- [`run-in-docker.py`](run-in-docker.py): helper that builds the image and
+- [`foga.yml`](https://github.com/fedluc/foga/blob/main/examples/numpy/foga.yml): a working `foga` configuration for the NumPy checkout
+- [`run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/numpy/run-in-docker.py): helper that builds the image and
   opens a shell or runs a one-shot command in the container
 
 This example pins NumPy to tag `v2.4.4` so the demo remains reproducible.

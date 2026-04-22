@@ -1,35 +1,5 @@
 # Development
 
-## Repository workflow
-
-Repositories adopting `foga` usually already have shell scripts, Make targets,
-or CI snippets for build and test commands. The migration goal is not to delete
-everything immediately. Start by moving the stable workflow definition into
-`foga.yml`.
-
-Suggested migration path:
-
-1. Inventory the commands your repository already uses for build, test, deploy,
-   and cleanup.
-2. Map each stable workflow to a built-in backend first:
-   `python -m build` becomes `python-build`, `pytest` becomes `pytest`,
-   `tox -e <env>` becomes `tox`, and `cmake` or `ctest` become C++
-   backends.
-3. Keep repo-specific scripts only for logic that is genuinely project-specific.
-4. Wrap small prep or cleanup steps with hooks instead of copying full shell
-   scripts into YAML.
-5. Replace CI shell fragments with `foga` commands once dry-run output and
-   local execution are stable.
-6. Remove obsolete scripts only after the `foga` workflow is trusted.
-
-Good candidates to keep outside `foga`:
-
-- long project bootstrap flows
-- commands that provision external infrastructure
-- heavy orchestration that is better expressed in Python or shell than YAML
-
-## Working on this repository
-
 Install `uv` first if it is not already available in your shell, then sync the
 repository environment with the extras used in development and documentation:
 
@@ -47,16 +17,14 @@ pip install -e .[dev]
 Standard verification:
 
 ```bash
+# Lint the codebase for style and static issues.
 uv run ruff check .
+# Run the automated test suite.
 uv run pytest
+# Build source and wheel distributions.
 uv run python -m build
+# Build the docs and fail on warnings.
 uv run sphinx-build -W --keep-going -b html docs docs/_build/html
-```
-
-For a quick lint-only pass outside `uv`, run:
-
-```bash
-ruff check .
 ```
 
 When dependency metadata changes, refresh the committed lockfile with:

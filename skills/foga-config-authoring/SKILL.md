@@ -46,10 +46,3 @@ Use this skill to translate an existing repository workflow into a working `foga
 ## References
 
 - Read [references/checklist.md](references/checklist.md) for the inspection checklist and mapping heuristics.
-
-## Work Log
-
-- 2026-04-13: Derived `pybind11/foga.yml` from the checked-in contributing guide, `CMakePresets.json`, and test targets. Recorded three reusable heuristics: prefer direct CMake targets over `ctest` when the repo exposes stable targets like `check` or `cpptest`; start with a hook-free config when the environment is already provisioned; and keep profiles minimal but aligned with documented variants such as `release`, `venv`, or `tidy`.
-
-- 2026-04-12: Derived `examples/qupled/foga.yml` by inspecting `qupled` build scripts, `tox.ini`, CMake files, and pytest markers instead of assuming a generic Python package layout.
-- 2026-04-12: Recorded reusable guidance from that work: prefer direct backends over thin wrappers, model standalone C++ test builds separately from extension-module builds when the repo does, and use hooks only for missing setup behavior such as integration-test fixture staging.

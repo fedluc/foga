@@ -16,14 +16,8 @@ Read them in order:
 
 ## Running the tutorials
 
-Each example README lists the local prerequisites for running it directly on
-your machine.
-
-If you are using this repository checkout and want the Docker shortcut, run
-`python examples/tutorial/run-tutorial.py --list` to see the available examples,
+Use `python examples/tutorial/run-tutorial.py --list` to see the available tutorial examples,
 then run `python examples/tutorial/run-tutorial.py <example-name>` from the
-repository root.
-
-Once these examples feel familiar, move to the larger real-world references in
-[`examples/qupled`](../qupled/README.md) and
-[`examples/pybind11`](../pybind11/README.md).
+repository root to start a Docker container that will be used to run the example. If you prefer to avoid Docker,
+you can also run the examples in directly on your machine, in this case you have to install the prerequisites 
+that are listed in the README of each tutorial required to run each example

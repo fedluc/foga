@@ -2,7 +2,7 @@
 
 ## Install
 
-Install `foga` as a normal user with:
+Install `foga` with
 
 ```bash
 pip install foga
@@ -77,8 +77,7 @@ Recommended approach:
 1. Give the agent the current commands or CI snippets that already work.
 2. Ask it to map those commands to built-in `foga` backends before it reaches
    for hooks.
-3. If your environment exposes a dedicated `foga.yml` or config-authoring
-   skill, use that instead of a generic prompt.
+3. If your tool supports local skills, use [`skills/foga-config-authoring/SKILL.md`](https://github.com/fedluc/foga/blob/main/skills/foga-config-authoring/SKILL.md) to produce the initial config or a first draft.
 4. Review the result with `foga validate`, `foga inspect`, and dry-run output.
 
 That keeps the generated config close to the structure `foga` actually expects.
