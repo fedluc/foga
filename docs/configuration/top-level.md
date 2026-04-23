@@ -1,11 +1,14 @@
 # Top-level sections
 
+This page describes the top-level sections of `foga.yml`. Use it to understand
+where each workflow belongs before choosing backend-specific fields.
+
 ## `project`
 
 `project.name` is required and identifies the configured project in validation
 output.
 
-Example:
+Minimal example:
 
 ```yaml
 project:
@@ -18,7 +21,7 @@ project:
 builds, `build.python` for package builds, and `build.default` when one kind
 should be selected by default.
 
-Example:
+Minimal example:
 
 ```yaml
 build:
@@ -32,7 +35,7 @@ build:
 `test.runners` is a mapping keyed by runner name. Each runner chooses a backend
 such as `pytest`, `tox`, or `ctest`.
 
-Example:
+Minimal example:
 
 ```yaml
 test:
@@ -48,7 +51,7 @@ test:
 `docs.targets` is a mapping keyed by target name. Use `docs.default_targets`
 when `foga docs` should choose one or more targets automatically.
 
-Example:
+Minimal example:
 
 ```yaml
 docs:
@@ -65,7 +68,7 @@ docs:
 `format.default_targets` control what runs when the CLI does not select a
 specific kind or target.
 
-Example:
+Minimal example:
 
 ```yaml
 format:
@@ -81,7 +84,7 @@ format:
 `lint.targets` declares linter targets. `lint.default` and
 `lint.default_targets` work the same way as the `format` section.
 
-Example:
+Minimal example:
 
 ```yaml
 lint:
@@ -98,7 +101,7 @@ lint:
 sync tools, or system package managers. `install.default_targets` controls what
 `foga install` runs by default.
 
-Example:
+Minimal example:
 
 ```yaml
 install:
@@ -116,7 +119,7 @@ install:
 `deploy.default_targets` when `foga deploy` should select a target without an
 explicit `--target`.
 
-Example:
+Minimal example:
 
 ```yaml
 deploy:
@@ -131,7 +134,7 @@ deploy:
 
 `clean.paths` lists repository-relative paths that `foga clean` removes.
 
-Example:
+Minimal example:
 
 ```yaml
 clean:
@@ -143,7 +146,7 @@ clean:
 `profiles` defines named overrides that apply on top of the base config. Use
 them for environment-specific differences without copying the full file.
 
-Example:
+Minimal example:
 
 ```yaml
 profiles:

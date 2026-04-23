@@ -31,10 +31,6 @@ The examples are meant to answer two different questions:
   upstream repository in Docker and runs `foga` against it. This is useful
   when you want a realistic upstream checkout without the weight of Arrow.
 
-Use the tutorial set when you are learning `foga` for the first time. Use the
-real-world examples when you want denser reference material for an existing
-repository shape.
-
 ```{toctree}
 :maxdepth: 1
 :hidden:

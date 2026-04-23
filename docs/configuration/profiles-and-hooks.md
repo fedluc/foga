@@ -1,4 +1,8 @@
-# Profiles And Hooks
+# Profiles and Hooks
+
+Profiles and hooks adapt a base `foga.yml` without turning it into a
+collection of one-off scripts. Profiles handle environment-specific
+configuration. Hooks add small commands around generated backend commands.
 
 ## Profiles
 

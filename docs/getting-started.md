@@ -1,5 +1,8 @@
 # Getting Started
 
+This guide shows how to create a minimal `foga.yml`, validate it, preview the
+commands it would run, and then run configured workflows.
+
 ## Install
 
 Install `foga` with
@@ -8,7 +11,14 @@ Install `foga` with
 pip install foga
 ```
 
-## Minimal config
+Then check what version you installed with `foga --version`. 
+
+## Create the first config
+
+You can start with a small hand-written config, or ask an agent to draft one
+from commands your project already uses.
+
+### Start from a minimal config
 
 Add a root-level `foga.yml` file to your project and start with a small
 configuration:
@@ -28,59 +38,55 @@ test:
       path: tests
 ```
 
+This config declares the project name, a Python package build using the
+`python-build` backend, and a pytest runner named `unit`.
+
 If you want a runnable repository to copy from instead of starting from a blank
-file, use the [tutorial examples](examples/tutorials.md). They follow the same
+file, use the [tutorial examples](examples/tutorials.md). They follow an
 incremental adoption path and include working project files.
 
-## Adoption workflow
+### Start with an agent
 
-The usual workflow for adopting `foga` in a repository is:
+If your repository already has working build, test, docs, or deploy commands,
+an agent can draft the first `foga.yml` for you. Give it the current commands,
+Make targets, CI snippets, or README instructions that already work, then ask
+it to map them to built-in `foga` backends before using hooks.
 
-1. Create `foga.yml` with your project name and at least one build or test
-   workflow.
-2. Run `foga validate` until the configuration passes.
-3. Run `foga inspect` to check the merged effective config, or a command-specific
+If your tool supports local skills, use the provided
+[`foga-config-authoring` skill](https://github.com/fedluc/foga/blob/main/skills/foga-config-authoring/SKILL.md)
+to produce the initial config or a first draft.
+
+After the draft is generated, review it with `foga validate`, `foga inspect`,
+and dry-run output before replacing existing project workflows.
+
+## Validate and preview
+
+After you have a `foga.yml`, use this sequence to adopt `foga` incrementally:
+
+1. Run `foga validate` until the configuration passes.
+2. Run `foga inspect` to check the merged effective config, or a command-specific
    inspect such as `foga inspect test` to preview the resolved workflow and
    planned commands.
-4. Use a dry-run command such as `foga build --dry-run` or
+3. Use a dry-run command such as `foga build --dry-run` or
    `foga test --dry-run` when you want the execution-oriented preview of the
    exact commands that would run.
-5. Run the real command once the plan looks right.
-6. Add profiles only after the base config is working.
+4. Run the real command once the plan looks right.
+5. Add profiles only after the base config is working.
 
 That sequence keeps adoption incremental. You do not need to encode every
 project script on day one.
 
-These examples assume you are running `foga` from a project root that already
-contains `foga.yml`:
+From the project root that contains `foga.yml`, start with these commands:
 
 ```bash
-foga validate                  # Check that foga.yml is well-formed
-foga inspect                   # Print the resolved configuration
-foga inspect format            # Inspect selected format config and commands
-foga build --dry-run           # Show planned build commands without executing
-foga test --dry-run            # Show planned test commands without executing
-foga docs --dry-run            # Show planned docs commands without executing
-foga format --dry-run          # Show planned format commands without executing
-foga lint --dry-run            # Show planned lint commands without executing
-foga install --dry-run         # Show planned install commands without executing
-foga deploy --target pypi --dry-run # Preview the deploy command
+foga validate          # Check that foga.yml is well-formed
+foga inspect           # Print the resolved configuration
+foga build --dry-run   # Show planned build commands without executing
+foga test --dry-run    # Show planned test commands without executing
 ```
 
-### Authoring with agents
-
-Agentic tools can help draft `foga.yml` quickly when you already have build,
-test, docs, or deploy scripts in a repository.
-
-Recommended approach:
-
-1. Give the agent the current commands or CI snippets that already work.
-2. Ask it to map those commands to built-in `foga` backends before it reaches
-   for hooks.
-3. If your tool supports local skills, use [`skills/foga-config-authoring/SKILL.md`](https://github.com/fedluc/foga/blob/main/skills/foga-config-authoring/SKILL.md) to produce the initial config or a first draft.
-4. Review the result with `foga validate`, `foga inspect`, and dry-run output.
-
-That keeps the generated config close to the structure `foga` actually expects.
+Use [CLI Usage](cli.md) for the full command set, including docs,
+format, lint, install, deploy, and clean workflows.
 
 ## Practical limitations
 
@@ -93,3 +99,12 @@ That keeps the generated config close to the structure `foga` actually expects.
 
 Use hooks for small orchestration steps. Keep genuinely complex logic in a
 project script and call that script from `foga`.
+
+## Next steps
+
+- Read the [Configuration Overview](configuration/index.md) to understand the
+  available `foga.yml` sections.
+- Use the [Examples](examples/index.md) when you want complete reference
+  configurations.
+- Use [CLI Usage](cli.md) when you need command options and filtering
+  behavior.

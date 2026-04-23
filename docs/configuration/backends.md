@@ -1,5 +1,9 @@
 # Backends
 
+Backends define how `foga` turns a workflow entry into commands. Each backend
+belongs to a specific top-level section, such as `build`, `test`, `docs`, or
+`install`, and accepts its own set of fields.
+
 Every backend-backed workflow entry also accepts an optional `launcher` field.
 `launcher` must be a non-empty command array such as `["uv", "run"]` or
 `["pipx", "run"]`. `foga` prepends that launcher to each generated backend
@@ -23,7 +27,7 @@ command for the configured entry.
 - `env`: environment variables added to the generated commands
 - `hooks`: pre/post commands run around the C++ workflow
 
-Example:
+Minimal example:
 
 ```yaml
 build:
@@ -49,7 +53,7 @@ build:
 - `env`: environment variables added to the generated commands
 - `hooks`: pre/post commands run around the C++ workflow
 
-Example:
+Minimal example:
 
 ```yaml
 build:
@@ -74,7 +78,7 @@ Its fields mean:
 - `env`: environment variables added to the build command
 - `hooks`: pre/post commands run around the Python package build
 
-Example:
+Minimal example:
 
 ```yaml
 build:
@@ -84,6 +88,34 @@ build:
 ```
 
 ## Test backends
+
+### `ctest`
+
+This backend can configure and build C++ tests before running `ctest`. Its
+fields mean:
+
+- `build_dir`: build tree used by `ctest --test-dir`; this is required
+- `source_dir`: optional source tree; when present, `foga` also runs a CMake
+  configure step before testing
+- `generator`: optional generator name for the configure step
+- `launcher`: optional command prefix prepended to configure, build, and test
+  steps
+- `configure_args`: extra flags appended to the configure step
+- `build_args`: extra flags appended to the C++ build step
+- `target`: optional build target compiled before tests run
+- `args`: extra flags appended to the final `ctest` command
+- `env`: environment variables added to generated commands
+- `hooks`: pre/post commands run around the C++ test workflow
+
+Minimal example:
+
+```yaml
+test:
+  runners:
+    cpp:
+      backend: ctest
+      build_dir: build
+```
 
 ### `pytest`
 
@@ -97,7 +129,7 @@ This backend runs `pytest`. Its fields mean:
 - `env`: environment variables added to the runner command
 - `hooks`: pre/post commands run around the runner
 
-Example:
+Minimal example:
 
 ```yaml
 test:
@@ -118,7 +150,7 @@ This backend runs `tox -e <env>`. Its fields mean:
 - `env`: environment variables added to the runner command
 - `hooks`: pre/post commands run around the runner
 
-Example:
+Minimal example:
 
 ```yaml
 test:
@@ -128,57 +160,26 @@ test:
       tox_env: py311
 ```
 
-### `ctest`
-
-This backend can configure and build C++ tests before running `ctest`. Its
-fields mean:
-
-- `build_dir`: build tree used by `ctest --test-dir`; this is required
-- `source_dir`: optional source tree; when present, `foga` also runs a CMake
-  configure step before testing
-- `generator`: optional generator name for the configure step
-- `launcher`: optional command prefix prepended to configure, build, and test
-  steps
-- `configure_args`: extra flags appended to the configure step
-- `build_args`: extra flags appended to the C++ build step
-- `target`: optional build target compiled before tests run
-- `args`: extra flags appended to the final `ctest` command
-- `env`: environment variables added to generated commands
-- `hooks`: pre/post commands run around the C++ test workflow
-
-Example:
-
-```yaml
-test:
-  runners:
-    cpp:
-      backend: ctest
-      build_dir: build
-```
-
 ## Docs backends
 
-### `sphinx`
+### `doxygen`
 
-`docs.targets.<name>.backend: sphinx` runs `sphinx-build`. Its fields mean:
+`docs.targets.<name>.backend: doxygen` runs `doxygen`. Its fields mean:
 
-- `source_dir`: source tree passed to `sphinx-build`; this is required
-- `build_dir`: output tree passed to `sphinx-build`; this is required
-- `builder`: optional Sphinx builder name such as `html` or `dirhtml`
+- `config_file`: Doxygen config file passed to `doxygen`; this is required
 - `launcher`: optional command prefix prepended to the docs command
-- `args`: extra flags appended after the positional arguments
+- `args`: extra flags appended after the config file
 - `env`: environment variables added to the docs command
 - `hooks`: pre/post commands run around the docs workflow
 
-Example:
+Minimal example:
 
 ```yaml
 docs:
   targets:
-    site:
-      backend: sphinx
-      source_dir: docs
-      build_dir: docs/_build/html
+    api:
+      backend: doxygen
+      config_file: Doxyfile
 ```
 
 ### `mkdocs`
@@ -192,7 +193,7 @@ docs:
 - `env`: environment variables added to the docs command
 - `hooks`: pre/post commands run around the docs workflow
 
-Example:
+Minimal example:
 
 ```yaml
 docs:
@@ -202,24 +203,27 @@ docs:
       config_file: mkdocs.yml
 ```
 
-### `doxygen`
+### `sphinx`
 
-`docs.targets.<name>.backend: doxygen` runs `doxygen`. Its fields mean:
+`docs.targets.<name>.backend: sphinx` runs `sphinx-build`. Its fields mean:
 
-- `config_file`: Doxygen config file passed to `doxygen`; this is required
+- `source_dir`: source tree passed to `sphinx-build`; this is required
+- `build_dir`: output tree passed to `sphinx-build`; this is required
+- `builder`: optional Sphinx builder name such as `html` or `dirhtml`
 - `launcher`: optional command prefix prepended to the docs command
-- `args`: extra flags appended after the config file
+- `args`: extra flags appended after the positional arguments
 - `env`: environment variables added to the docs command
 - `hooks`: pre/post commands run around the docs workflow
 
-Example:
+Minimal example:
 
 ```yaml
 docs:
   targets:
-    api:
-      backend: doxygen
-      config_file: Doxyfile
+    site:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build/html
 ```
 
 ## Format backends
@@ -235,34 +239,13 @@ Its fields mean:
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter
 
-Example:
+Minimal example:
 
 ```yaml
 format:
   targets:
     python-style:
       backend: black
-      paths: ["src", "tests"]
-```
-
-### `ruff-format`
-
-`format.targets.<name>.backend: ruff-format` runs `ruff format` on the
-configured paths. Its fields mean:
-
-- `paths`: literal paths or glob patterns resolved before `ruff format` runs; this is required
-- `launcher`: optional command prefix prepended to the formatter command
-- `args`: extra flags appended before the paths
-- `env`: environment variables added to the formatter command
-- `hooks`: pre/post commands run around the formatter
-
-Example:
-
-```yaml
-format:
-  targets:
-    python-style:
-      backend: ruff-format
       paths: ["src", "tests"]
 ```
 
@@ -277,7 +260,7 @@ configured paths. Its fields mean:
 - `env`: environment variables added to the formatter command
 - `hooks`: pre/post commands run around the formatter
 
-Example:
+Minimal example:
 
 ```yaml
 format:
@@ -287,27 +270,48 @@ format:
       paths: ["src/**/*.cc", "include/**/*.h"]
 ```
 
+### `ruff-format`
+
+`format.targets.<name>.backend: ruff-format` runs `ruff format` on the
+configured paths. Its fields mean:
+
+- `paths`: literal paths or glob patterns resolved before `ruff format` runs; this is required
+- `launcher`: optional command prefix prepended to the formatter command
+- `args`: extra flags appended before the paths
+- `env`: environment variables added to the formatter command
+- `hooks`: pre/post commands run around the formatter
+
+Minimal example:
+
+```yaml
+format:
+  targets:
+    python-style:
+      backend: ruff-format
+      paths: ["src", "tests"]
+```
+
 ## Lint backends
 
-### `ruff-check`
+### `clang-tidy`
 
-`lint.targets.<name>.backend: ruff-check` runs `ruff check` on the configured
+`lint.targets.<name>.backend: clang-tidy` runs `clang-tidy` on the configured
 paths. Its fields mean:
 
-- `paths`: paths passed to `ruff check`; this is required
+- `paths`: paths passed to `clang-tidy`; this is required
 - `launcher`: optional command prefix prepended to the lint command
 - `args`: extra flags appended before the paths
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
 
-Example:
+Minimal example:
 
 ```yaml
 lint:
   targets:
-    python-style:
-      backend: ruff-check
-      paths: ["src", "tests"]
+    cpp-style:
+      backend: clang-tidy
+      paths: ["src/main.cc"]
 ```
 
 ### `pylint`
@@ -321,7 +325,7 @@ Its fields mean:
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
 
-Example:
+Minimal example:
 
 ```yaml
 lint:
@@ -331,124 +335,28 @@ lint:
       paths: ["src"]
 ```
 
-### `clang-tidy`
+### `ruff-check`
 
-`lint.targets.<name>.backend: clang-tidy` runs `clang-tidy` on the configured
+`lint.targets.<name>.backend: ruff-check` runs `ruff check` on the configured
 paths. Its fields mean:
 
-- `paths`: paths passed to `clang-tidy`; this is required
+- `paths`: paths passed to `ruff check`; this is required
 - `launcher`: optional command prefix prepended to the lint command
 - `args`: extra flags appended before the paths
 - `env`: environment variables added to the lint command
 - `hooks`: pre/post commands run around the linter
 
-Example:
+Minimal example:
 
 ```yaml
 lint:
   targets:
-    cpp-style:
-      backend: clang-tidy
-      paths: ["src/main.cc"]
+    python-style:
+      backend: ruff-check
+      paths: ["src", "tests"]
 ```
 
 ## Install backends
-
-### `pip`
-
-`install.targets.<name>.backend: pip` runs `python3 -m pip install`. Its fields
-mean:
-
-- `path`: optional local path to install, commonly `.`
-- `packages`: optional package names or specifiers appended after the command
-- `editable`: optional boolean that adds `-e`; requires `path`
-- `launcher`: optional command prefix prepended to the install command
-- `args`: extra flags appended before packages or paths
-- `env`: environment variables added to the install command
-- `hooks`: pre/post commands run around the install target
-
-Example:
-
-```yaml
-install:
-  targets:
-    editable:
-      backend: pip
-      path: .
-      editable: true
-```
-
-### `uv`
-
-`install.targets.<name>.backend: uv` runs `uv sync` for uv-managed projects.
-
-Its fields mean:
-
-- `groups`: optional dependency groups passed as repeated `--group` flags
-- `extras`: optional extras passed as repeated `--extra` flags
-- `install_project`: optional boolean that controls whether the local project is
-  installed; `false` adds `--no-install-project`
-- `launcher`: optional command prefix prepended to the install command
-- `args`: extra flags appended after `uv sync`
-- `env`: environment variables added to the install command
-- `hooks`: pre/post commands run around the install target
-
-The `uv` backend only supports project sync options. `path`, `packages`, and
-`editable` are not supported.
-
-Example:
-
-```yaml
-install:
-  targets:
-    dev-python:
-      backend: uv
-      groups: ["dev"]
-      extras: ["test", "docs"]
-      install_project: false
-```
-
-### `poetry`
-
-`install.targets.<name>.backend: poetry` runs `poetry install`.
-
-- `launcher`: optional command prefix prepended to the install command
-- `args`: extra flags appended after `poetry install`
-- `env`: environment variables added to the install command
-- `hooks`: pre/post commands run around the install target
-
-`poetry` does not use `path`, `packages`, or `editable`.
-
-Example:
-
-```yaml
-install:
-  targets:
-    dev:
-      backend: poetry
-      args: ["--with", "dev"]
-```
-
-### `npm`
-
-`install.targets.<name>.backend: npm` runs `npm install`.
-
-- `packages`: optional package names appended after `npm install`
-- `path`: optional local package path appended after the command
-- `launcher`: optional command prefix prepended to the install command
-- `args`: extra flags appended before packages or paths
-- `env`: environment variables added to the install command
-- `hooks`: pre/post commands run around the install target
-
-Example:
-
-```yaml
-install:
-  targets:
-    ui:
-      backend: npm
-      path: web
-```
 
 ### `apt-get`
 
@@ -460,7 +368,7 @@ install:
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
 
-Example:
+Minimal example:
 
 ```yaml
 install:
@@ -481,7 +389,7 @@ install:
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
 
-Example:
+Minimal example:
 
 ```yaml
 install:
@@ -489,6 +397,102 @@ install:
     macos-deps:
       backend: brew
       packages: ["cmake", "ninja"]
+```
+
+### `npm`
+
+`install.targets.<name>.backend: npm` runs `npm install`.
+
+- `packages`: optional package names appended after `npm install`
+- `path`: optional local package path appended after the command
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended before packages or paths
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+Minimal example:
+
+```yaml
+install:
+  targets:
+    ui:
+      backend: npm
+      path: web
+```
+
+### `pip`
+
+`install.targets.<name>.backend: pip` runs `python3 -m pip install`. Its fields
+mean:
+
+- `path`: optional local path to install, commonly `.`
+- `packages`: optional package names or specifiers appended after the command
+- `editable`: optional boolean that adds `-e`; requires `path`
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended before packages or paths
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+Minimal example:
+
+```yaml
+install:
+  targets:
+    editable:
+      backend: pip
+      path: .
+      editable: true
+```
+
+### `poetry`
+
+`install.targets.<name>.backend: poetry` runs `poetry install`.
+
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended after `poetry install`
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+`poetry` does not use `path`, `packages`, or `editable`.
+
+Minimal example:
+
+```yaml
+install:
+  targets:
+    dev:
+      backend: poetry
+      args: ["--with", "dev"]
+```
+
+### `uv`
+
+`install.targets.<name>.backend: uv` runs `uv sync` for uv-managed projects.
+
+Its fields mean:
+
+- `groups`: optional dependency groups passed as repeated `--group` flags
+- `extras`: optional extras passed as repeated `--extra` flags
+- `install_project`: optional boolean that controls whether the local project is
+  installed; `false` adds `--no-install-project`
+- `launcher`: optional command prefix prepended to the install command
+- `args`: extra flags appended after `uv sync`
+- `env`: environment variables added to the install command
+- `hooks`: pre/post commands run around the install target
+
+The `uv` backend only supports project sync options. `path`, `packages`, and
+`editable` are not supported.
+
+Minimal example:
+
+```yaml
+install:
+  targets:
+    dev-python:
+      backend: uv
+      groups: ["dev"]
+      extras: ["test", "docs"]
+      install_project: false
 ```
 
 ### `yum`
@@ -501,7 +505,7 @@ install:
 - `env`: environment variables added to the install command
 - `hooks`: pre/post commands run around the install target
 
-Example:
+Minimal example:
 
 ```yaml
 install:
@@ -527,7 +531,7 @@ This backend runs `twine upload`. Its fields mean:
 - `env`: environment variables added to the upload command
 - `hooks`: pre/post commands run around the upload step
 
-Example:
+Minimal example:
 
 ```yaml
 deploy:

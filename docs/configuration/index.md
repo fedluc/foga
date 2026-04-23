@@ -1,5 +1,14 @@
 # Configuration Overview
 
+`foga.yml` describes repeatable repository workflows. Each top-level workflow
+section, such as `build`, `test`, or `docs`, declares one or more configured
+workflows. Each workflow chooses a backend, and the backend determines the
+fields that are valid for that workflow.
+
+Profiles apply named overrides on top of the base configuration. Hooks add
+small pre- or post-commands around generated backend commands when a project
+needs custom orchestration.
+
 ## Required sections
 
 - `project`: project metadata
@@ -18,15 +27,14 @@
 
 ## How to read this reference
 
-- Search [Top-level sections](top-level.md) when you need the container shape
-  and a short YAML example for `build`, `test`, `install`, or another
-  top-level key.
-- Search [Backends](backends.md) by backend name such as `pytest`, `cmake`,
-  `pip`, or `twine` when you need the exact configurable fields and a minimal
-  backend example.
-- Search [Profiles And Hooks](profiles-and-hooks.md) when you need override
-  rules, hook behavior, or the boundary between built-in workflows and custom
-  scripts, with short examples for both features.
+- Read [Top-level sections](top-level.md) for the shape of each major
+  `foga.yml` section and short YAML examples.
+- Read [Backends](backends.md) for backend-specific fields and examples.
+- Read [Profiles and hooks](profiles-and-hooks.md) for override behavior and
+  supported customization points.
+
+Use `foga validate` after editing `foga.yml`, and `foga inspect` when you need
+to see the resolved configuration after profiles and defaults are applied.
 
 ```{toctree}
 :maxdepth: 1
