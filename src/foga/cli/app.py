@@ -7,11 +7,12 @@ from typing import Annotated
 
 import click
 import typer
+import typer.rich_utils as typer_rich_utils
 
 from .. import __version__
 from ..config.constants import DEFAULT_CONFIG_FILENAME
 from ..errors import FogaError
-from ..output import format_error
+from ..output import FOGA_PINK_HEX, FOGA_TEAL_HEX, format_error
 from .build import build_command
 from .clean import clean_command
 from .deploy import deploy_command
@@ -22,6 +23,39 @@ from .install import install_command
 from .lint import lint_command
 from .test import test_command
 from .validate import validate_command
+
+
+def _configure_rich_help_palette() -> None:
+    """Apply the foga brand palette to Typer's Rich help output."""
+    brand_pink = f"bold {FOGA_PINK_HEX}"
+    brand_teal = f"bold {FOGA_TEAL_HEX}"
+    accent_teal = FOGA_TEAL_HEX
+
+    typer_rich_utils.STYLE_USAGE = brand_pink
+    typer_rich_utils.STYLE_USAGE_COMMAND = brand_teal
+    typer_rich_utils.STYLE_OPTION = brand_teal
+    typer_rich_utils.STYLE_SWITCH = brand_teal
+    typer_rich_utils.STYLE_NEGATIVE_OPTION = brand_pink
+    typer_rich_utils.STYLE_NEGATIVE_SWITCH = brand_pink
+    typer_rich_utils.STYLE_METAVAR = brand_pink
+    typer_rich_utils.STYLE_COMMANDS_TABLE_FIRST_COLUMN = brand_teal
+    typer_rich_utils.STYLE_OPTIONS_PANEL_BORDER = "dim"
+    typer_rich_utils.STYLE_COMMANDS_PANEL_BORDER = "dim"
+    typer_rich_utils.STYLE_ERRORS_PANEL_BORDER = FOGA_PINK_HEX
+    typer_rich_utils.STYLE_ABORTED = brand_pink
+    typer_rich_utils.STYLE_DEPRECATED = brand_pink
+    typer_rich_utils.STYLE_REQUIRED_SHORT = brand_pink
+    typer_rich_utils.STYLE_REQUIRED_LONG = brand_pink
+    typer_rich_utils.STYLE_HELPTEXT = ""
+    typer_rich_utils.STYLE_HELPTEXT_FIRST_LINE = ""
+    typer_rich_utils.STYLE_OPTION_HELP = ""
+    typer_rich_utils.STYLE_OPTION_ENVVAR = accent_teal
+    typer_rich_utils.RICH_HELP = (
+        f"Try [bold {FOGA_TEAL_HEX}]'{{command_path}} {{help_option}}'[/] for help."
+    )
+
+
+_configure_rich_help_palette()
 
 app = typer.Typer(
     add_completion=False,
