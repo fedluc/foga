@@ -21,6 +21,7 @@ def test_run_dry_run_prints_structured_command_output(tmp_path: Path, capsys) ->
     )
 
     captured = capsys.readouterr()
+    assert "[foga]" in captured.out
     assert "DRY-RUN" in captured.out
     assert "pytest tests" in captured.out
     assert "Step" in captured.out

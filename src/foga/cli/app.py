@@ -166,7 +166,10 @@ def main(argv: list[str] | None = None) -> int:
     except click.exceptions.Exit as exc:
         return exc.exit_code
     except click.exceptions.Abort:
-        print("Aborted!", file=sys.stderr)
+        print(
+            format_status("ABORT", "operation cancelled", tone="warning"),
+            file=sys.stderr,
+        )
         return 1
 
     if isinstance(result, int):

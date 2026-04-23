@@ -98,6 +98,7 @@ def test_validate_command_succeeds(tmp_path: Path, capsys) -> None:
 
     captured = capsys.readouterr()
     assert exit_code == 0
+    assert "[foga]" in captured.out
     assert "Validation OK" in captured.out
     assert "project `demo` is ready to use" in captured.out
     assert "Build workflows" in captured.out
@@ -156,6 +157,7 @@ deploy: [
 
     captured = capsys.readouterr()
     assert exit_code == 1
+    assert "[foga]" in captured.err
     assert "Configuration error" in captured.err
     assert "invalid YAML syntax" in captured.err
     assert "File" in captured.err

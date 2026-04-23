@@ -63,12 +63,14 @@ def format_status(
     title: str, message: str, *, tone: str = "label", stream: TextIO | None = None
 ) -> str:
     """Format a labeled status line for CLI output."""
-    return f"{style(title, tone, stream)}: {message}"
+    prefix = style("[foga]", "brand", stream)
+    return f"{prefix} {style(title, tone, stream)}: {message}"
 
 
 def format_detail(label: str, value: str, *, stream: TextIO | None = None) -> str:
     """Format a secondary detail line for CLI output."""
-    return f"  {style(label, 'label', stream)}: {value}"
+    prefix = style("[foga]", "brand", stream)
+    return f"{prefix}   {style(label, 'label', stream)}: {value}"
 
 
 def format_command(
