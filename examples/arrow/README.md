@@ -1,22 +1,25 @@
 # arrow
 
-This example shows `foga` driving a real upstream mixed C++/Python project with
-system packages, a native CMake build, a PyArrow install, pytest-based tests,
-and Sphinx documentation.
+This example shows `foga` driving a large upstream mixed C++/Python repository
+inside Docker. It combines system package installation, a native CMake build,
+Python installs, pytest, and Sphinx docs in one working configuration.
 
-What it includes:
+## What this example contains
 
-- [`Dockerfile`](https://github.com/fedluc/foga/blob/main/examples/arrow/Dockerfile): clones Apache Arrow in Docker, installs a released
-  `foga`, and prepares the base environment
-- [`foga.yml`](https://github.com/fedluc/foga/blob/main/examples/arrow/foga.yml): a working `foga` configuration for the Arrow checkout
-- [`run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/arrow/run-in-docker.py): helper that builds the image and opens
-  a shell or runs a one-shot command in the container
+- [`Dockerfile`](https://github.com/fedluc/foga/blob/main/examples/arrow/Dockerfile):
+  provisions the container image and clones Apache Arrow
+- [`foga.yml`](https://github.com/fedluc/foga/blob/main/examples/arrow/foga.yml):
+  the working `foga` configuration for the Arrow checkout
+- [`run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/arrow/run-in-docker.py):
+  helper that builds the image and opens a shell or runs a one-shot command
 
-This example pins Arrow to commit
+The example pins Arrow to commit
 `36c8c9a24aec70fb41441c6a1a2a28b777d351e3`
-(`apache-arrow-24.0.0.dev-318-g36c8c9a24a`) so the demo remains reproducible.
+(`apache-arrow-24.0.0.dev-318-g36c8c9a24a`) to keep the demo reproducible.
 
-Typical usage:
+## Typical workflow
+
+Start the example container:
 
 ```bash
 examples/arrow/run-in-docker.py
@@ -31,23 +34,21 @@ foga install --target test-env
 foga test
 ```
 
-The docs path is intentionally heavier. `foga docs` rebuilds Arrow C++ with a
-docs-specific profile and reinstalls `docs-env` in pre-hooks before Sphinx
-runs:
+Build the upstream documentation with:
 
 ```bash
 foga docs
 ```
 
-Why this example matters:
+## What this example demonstrates
 
-- it shows `foga` coordinating a nontrivial upstream project instead of only a
-  toy repository
-- it keeps system setup, native build, Python install, tests, docs, and cleanup
-  in one config
-- it exercised real integration edges, including system package gaps, absolute
-  paths for temp-directory builds, and conservative parallelism for Docker
+- one config coordinating system setup, native build, Python install, tests,
+  docs, and cleanup
+- a credible upstream integration instead of a toy repository
+- heavier docs handling, where `foga docs` rebuilds Arrow C++ with a docs
+  profile and reinstalls `docs-env` in pre-hooks before running Sphinx
 
+## When to use this example
 
-Use this example when you want a credible, containerized demonstration of
-`foga` on a large real-world codebase.
+Use `arrow` when you want the heaviest, most demanding upstream demonstration
+in the repository.

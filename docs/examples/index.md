@@ -1,35 +1,39 @@
 # Examples
 
-The repository organizes examples into guided tutorials and larger real-world
-reference configurations.
+The example set has two distinct jobs:
 
-The examples are meant to answer two different questions:
+- the tutorial track teaches `foga` incrementally, starting from the smallest
+  useful config and adding one concept at a time
+- the real-world examples show `foga` working against larger or more realistic
+  repositories, including upstream checkouts and mixed Python/C++ workflows
 
-- "How do I start writing `foga.yml` without getting lost?"
-- "What does `foga` look like in a repository with real dependencies and more
-  than one workflow?"
+## Choose an example path
 
-## Start here
+Start with the [tutorial examples](tutorials.md) when you are learning the
+configuration model and want a sequence you can read in order.
 
-- [Tutorial examples](tutorials.md): guided examples that start small and add
-  one idea at a time while you learn `foga`
+Jump to the real-world examples when you already understand the basics and want
+to see how `foga` maps onto a more complete repository shape.
 
-## Real-world examples
+## Tutorial track
 
-- [arrow](arrow.md): Apache Arrow in Docker with system dependencies, native
-  builds, Python installs, pytest, and Sphinx docs. This is the heaviest
-  example and shows `foga` coordinating a large upstream project.
-- [numpy](numpy.md): NumPy in Docker with a separate Meson native build,
-  Python packaging, pytest, and docs. This is the best example when you need
-  to understand how `foga` can model a native build independently from Python
-  packaging.
-- [qupled](qupled.md): C++ CMake build, Python packaging, pytest suites,
-  a `ctest` C++ test runner, and MPI-related profiles. This is the clearest
-  single-file reference when you want one config that mixes Python and C++
-  workflows.
-- [pybind11](pybind11.md): pinned containerized example that provisions an
-  upstream repository in Docker and runs `foga` against it. This is useful
-  when you want a realistic upstream checkout without the weight of Arrow.
+- [Tutorial examples](tutorials.md): the guided path through incremental
+  adoption, from a pure Python project to mixed Python/C++ builds, testing, and
+  profiles
+
+## Real-world references
+
+- [arrow](arrow.md): Apache Arrow in Docker with system dependencies, a native
+  CMake build, Python installs, pytest, and Sphinx docs. Use this when you want
+  the heaviest upstream demonstration.
+- [numpy](numpy.md): NumPy in Docker with a separate Meson native build, Python
+  packaging, pytest, and docs. Use this when you want to see the native build
+  and Python packaging workflows kept distinct.
+- [qupled](qupled.md): a full repository already using `foga` across its
+  workflows. Use this when you want a live early-adopter reference.
+- [pybind11](pybind11.md): a pinned upstream checkout in Docker with native
+  builds, tests, and docs. Use this when you want a realistic upstream example
+  without the weight of Arrow.
 
 ```{toctree}
 :maxdepth: 1

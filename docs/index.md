@@ -1,4 +1,8 @@
-# foga
+<p align="center">
+  <img src="https://raw.githubusercontent.com/fedluc/foga/main/assets/foga.svg" alt="foga" width="350">
+</p>
+
+# Documentation
 
 `foga` is a Python package and CLI for developers maintaining Python packages
 with C or C++ bindings. These projects often accumulate a separate tool or
