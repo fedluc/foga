@@ -2,10 +2,12 @@
 
 from pathlib import Path
 
+import typer.rich_utils as typer_rich_utils
 import yaml
 from typer.testing import CliRunner
 
 from foga import __version__, cli
+from foga.output import FOGA_PINK_HEX, FOGA_TEAL_HEX
 
 
 def write_config(path: Path) -> Path:
@@ -1853,3 +1855,18 @@ def test_help_text_describes_common_profile_target_runner_and_dry_run_options() 
         "[cpp|python|all]"
         in runner.invoke(cli.app, ["inspect", "build", "--help"]).stdout
     )
+
+
+def test_rich_help_palette_uses_foga_brand_colors() -> None:
+    """Typer help output should use the same brand palette as the CLI logs."""
+    assert typer_rich_utils.STYLE_USAGE == f"bold {FOGA_PINK_HEX}"
+    assert typer_rich_utils.STYLE_USAGE_COMMAND == f"bold {FOGA_TEAL_HEX}"
+    assert typer_rich_utils.STYLE_OPTION == f"bold {FOGA_TEAL_HEX}"
+    assert typer_rich_utils.STYLE_SWITCH == f"bold {FOGA_TEAL_HEX}"
+    assert typer_rich_utils.STYLE_METAVAR == f"bold {FOGA_PINK_HEX}"
+    assert typer_rich_utils.STYLE_COMMANDS_TABLE_FIRST_COLUMN == (
+        f"bold {FOGA_TEAL_HEX}"
+    )
+    assert typer_rich_utils.STYLE_OPTIONS_PANEL_BORDER == "dim"
+    assert typer_rich_utils.STYLE_COMMANDS_PANEL_BORDER == "dim"
+    assert typer_rich_utils.STYLE_ERRORS_PANEL_BORDER == FOGA_PINK_HEX
