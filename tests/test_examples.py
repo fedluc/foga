@@ -35,6 +35,7 @@ def test_example_configs_validate(
 
     captured = capsys.readouterr()
     assert exit_code == 0
+    assert "[foga]" in captured.out
     assert "Validation OK" in captured.out
 
 

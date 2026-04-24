@@ -12,7 +12,7 @@ import typer.rich_utils as typer_rich_utils
 from .. import __version__
 from ..config.constants import DEFAULT_CONFIG_FILENAME
 from ..errors import FogaError
-from ..output import FOGA_PINK_HEX, FOGA_TEAL_HEX, format_error
+from ..output import FOGA_PINK_HEX, FOGA_TEAL_HEX, format_error, format_status
 from .build import build_command
 from .clean import clean_command
 from .deploy import deploy_command
@@ -166,7 +166,10 @@ def main(argv: list[str] | None = None) -> int:
     except click.exceptions.Exit as exc:
         return exc.exit_code
     except click.exceptions.Abort:
-        print("Aborted!", file=sys.stderr)
+        print(
+            format_status("ABORT", "operation cancelled", tone="warning"),
+            file=sys.stderr,
+        )
         return 1
 
     if isinstance(result, int):
