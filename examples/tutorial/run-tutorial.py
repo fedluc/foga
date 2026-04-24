@@ -130,7 +130,7 @@ def run_container(image_name: str) -> int:
     return run_result.returncode
 
 
-def run_example(example_name: str, tutorial_root: Path) -> int:
+def run_tutorial(example_name: str, tutorial_root: Path) -> int:
     """Build and run the selected tutorial example in Docker.
 
     Args:
@@ -145,7 +145,7 @@ def run_example(example_name: str, tutorial_root: Path) -> int:
     example_dir = tutorial_root / example_name
     image_name = f"foga-tutorial-{example_name}"
 
-    print(f"Setting up example environment for {example_name}")
+    print(f"Setting up tutorial environment for {example_name}")
     build_exit_code = build_image(example_dir, image_name)
     if build_exit_code != 0:
         return build_exit_code
@@ -179,7 +179,7 @@ def main(
         raise typer.Exit(code=0)
 
     example_name = require_example_name(example, examples)
-    raise typer.Exit(code=run_example(example_name, tutorial_root))
+    raise typer.Exit(code=run_tutorial(example_name, tutorial_root))
 
 
 if __name__ == "__main__":

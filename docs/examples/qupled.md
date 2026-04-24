@@ -1,7 +1,6 @@
 # qupled
 
-[`qupled`](https://github.com/fedluc/qupled) is a full repository that is
-already using `foga` across all its workflows.
+`qupled` is a live repository already using `foga` across its workflows,
+making it a useful early-adopter reference.
 
-It is an early adopter and shows how `foga` can be integrated in a live
-repository.
+Check out the `qupled` repository [here](https://github.com/fedluc/qupled) 👈
