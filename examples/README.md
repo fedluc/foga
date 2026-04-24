@@ -10,11 +10,11 @@ projects.
 
 ## Real-world reference examples
 
-* [`arrow`](arrow/README.md): containerized Apache Arrow example with native
-  dependencies, a C++ build, PyArrow install/test flow, and docs support.
-* [`qupled`](qupled/README.md): C++ CMake build, Python packaging, pytest
-  suites, and a `ctest` C++ test runner with MPI-related profiles.
-* [`numpy`](numpy/README.md): containerized NumPy example with a separate
-  Meson native build, Python packaging, pytest, and docs support.
-* [`pybind11`](pybind11/README.md): pinned containerized example that provisions
-  the upstream project in Docker and runs `foga` against it.
+* [`arrow`](arrow/README.md): Apache Arrow in Docker with system dependencies,
+  a native CMake build, Python installs, pytest, and Sphinx docs.
+* [`numpy`](numpy/README.md): NumPy in Docker with a separate Meson native
+  build, Python packaging, pytest, and docs.
+* [`pybind11`](pybind11/README.md): pinned upstream checkout in Docker with
+  native builds, tests, and docs.
+* [`qupled`](../docs/examples/qupled.md): a full repository already using
+  `foga` across its workflows.

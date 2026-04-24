@@ -29,11 +29,11 @@ to see how `foga` maps onto a more complete repository shape.
 - [numpy](numpy.md): NumPy in Docker with a separate Meson native build, Python
   packaging, pytest, and docs. Use this when you want to see the native build
   and Python packaging workflows kept distinct.
-- [qupled](qupled.md): a full repository already using `foga` across its
-  workflows. Use this when you want a live early-adopter reference.
 - [pybind11](pybind11.md): a pinned upstream checkout in Docker with native
   builds, tests, and docs. Use this when you want a realistic upstream example
   without the weight of Arrow.
+- [qupled](qupled.md): a full repository already using `foga` across its
+  workflows. Use this when you want a live early-adopter reference.
 
 ```{toctree}
 :maxdepth: 1
@@ -42,6 +42,6 @@ to see how `foga` maps onto a more complete repository shape.
 tutorials
 arrow
 numpy
-qupled
 pybind11
+qupled
 ```
