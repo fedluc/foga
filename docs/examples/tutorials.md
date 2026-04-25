@@ -41,6 +41,7 @@ based on the kind of repository you want to model:
 
 - [arrow](arrow.md) for the heaviest upstream, containerized demonstration
 - [numpy](numpy.md) for a clear split between native and Python build workflows
-- [pybind11](pybind11.md) for a lighter pinned upstream checkout in Docker
+- [pybind11](pybind11.md) for a lighter Docker-based C++/Python example with
+  builds, tests, docs, and profiles
 - [qupled](qupled.md) for a live repository already using `foga` across its
   workflows

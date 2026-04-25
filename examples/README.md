@@ -14,7 +14,7 @@ projects.
   a native CMake build, Python installs, pytest, and Sphinx docs.
 * [`numpy`](numpy/README.md): NumPy in Docker with a separate Meson native
   build, Python packaging, pytest, and docs.
-* [`pybind11`](pybind11/README.md): pinned upstream checkout in Docker with
-  native builds, tests, and docs.
+* [`pybind11`](pybind11/README.md): pybind11 in Docker with native builds,
+  tests, docs, and profile-driven C++ builds.
 * [`qupled`](../docs/examples/qupled.md): a full repository already using
   `foga` across its workflows.

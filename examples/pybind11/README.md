@@ -1,19 +1,10 @@
 # pybind11
 
-This example shows how to run `foga` against a pinned upstream repository in
-Docker without the weight of the Arrow example.
+This example shows how to use `foga` to build, test, and document pybind11,
+the C++ bindings library for exposing native code to Python.
 
-## What this example contains
-
-- [`Dockerfile`](https://github.com/fedluc/foga/blob/main/examples/pybind11/Dockerfile):
-  provisions the container image and clones `pybind11`
-- [`foga.yml`](https://github.com/fedluc/foga/blob/main/examples/pybind11/foga.yml):
-  the working `foga` configuration for the upstream checkout
-- [`run-in-docker.py`](https://github.com/fedluc/foga/blob/main/examples/pybind11/run-in-docker.py):
-  helper that builds the image and opens a shell or runs a one-shot command
-
-The Docker image clones `pybind11` at pinned commit
-`288913638bb2da563f1c39e7d07071c2f21bfb25` to keep the example reproducible.
+The Docker image clones `pybind11` at pinned commit `2889136` to keep the
+example reproducible.
 
 ## Typical workflow
 
@@ -25,25 +16,30 @@ examples/pybind11/run-in-docker.py
 
 Once inside the container:
 
-```bash
-foga validate
-foga build cpp
-foga build --profile release cpp
-foga test
-```
+1. Validate the configuration before running any workflow:
 
-Build the upstream documentation with:
+   ```bash
+   foga validate
+   ```
 
-```bash
-foga docs
-```
+2. Build the default C++ target, then rebuild it with the `release` profile:
 
-You can also use the helper for one-shot commands:
+   ```bash
+   foga build cpp
+   foga build --profile release cpp
+   ```
 
-```bash
-examples/pybind11/run-in-docker.py foga inspect install
-examples/pybind11/run-in-docker.py foga docs
-```
+3. Run the some tests:
+
+   ```bash
+   foga test
+   ```
+
+4. Build the documentation through the configured docs workflow:
+
+   ```bash
+   foga docs
+   ```
 
 ## What this example demonstrates
 
@@ -51,8 +47,3 @@ examples/pybind11/run-in-docker.py foga docs
 - `foga install` provisioning default Python and system build dependencies
 - a lighter upstream demonstration than Arrow, while still exercising builds,
   tests, docs, and profiles
-
-## When to use this example
-
-Use `pybind11` when you want a realistic upstream example in Docker without the
-setup cost and size of the Arrow demo.
