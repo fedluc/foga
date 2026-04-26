@@ -25,50 +25,15 @@ places in the same patch.
 - Use standard-library solutions unless the repository already depends on a
   better fit.
 - Add or update tests in the same change when behavior changes.
-- Update README, docs, or examples when user-visible CLI, config, packaging, or
-  workflow behavior changes.
 - If a required tool or verification command is unavailable, state what failed
   and why.
 
-## uv Workflow
+## Environment
 
 Set up or refresh the environment with the development and documentation extras:
 
 ```bash
 uv sync --extra dev --extra docs
-```
-
-When dependency metadata changes, refresh the committed lockfile:
-
-```bash
-uv lock
-```
-
-While iterating, run targeted checks first when a narrower command covers the
-change, then run the repository checks that apply:
-
-```bash
-uv run ruff format .
-uv run ruff check .
-uv run pytest
-```
-
-Use narrower pytest paths during iteration, for example:
-
-```bash
-uv run pytest tests/test_cli.py
-```
-
-When documentation changes, build docs with warnings treated as errors:
-
-```bash
-uv run sphinx-build -W --keep-going -b html docs docs/_build/html
-```
-
-Before release-oriented changes, build the distributions:
-
-```bash
-uv run python -m build
 ```
 
 ## Python Standards
@@ -102,12 +67,43 @@ uv run python -m build
 - For config parsing, test both valid and invalid inputs.
 - Add regression coverage for bug fixes before or alongside the fix.
 
+Run targeted tests first when a narrower test file covers the change, for
+example:
+
+```bash
+uv run pytest tests/test_cli.py
+```
+
+Run the full test suite before finishing behavior, CLI, or config changes:
+
+```bash
+uv run pytest
+```
+
 ## Ruff
 
 - Use Ruff as the formatting and linting tool.
 - Fix lint violations in touched code rather than suppressing them by default.
 - Add ignores only when the repository already has a reason or the alternative
   is clearly worse.
+
+Format and lint with uv:
+
+```bash
+uv run ruff format .
+uv run ruff check .
+```
+
+## Documentation
+
+- Update README, docs, or examples when user-visible CLI, config, packaging, or
+  workflow behavior changes.
+
+When documentation changes, build docs with warnings treated as errors:
+
+```bash
+uv run sphinx-build -W --keep-going -b html docs docs/_build/html
+```
 
 ## Packaging and Layout
 
@@ -116,3 +112,15 @@ uv run python -m build
 - Prefer PEP 621 metadata in `pyproject.toml`.
 - Keep the committed `uv.lock` in sync with dependency metadata.
 - `foga` expects a root-level `foga.yml` for project configuration.
+
+When dependency metadata changes, refresh the committed lockfile:
+
+```bash
+uv lock
+```
+
+Before release-oriented changes, build the distributions:
+
+```bash
+uv run python -m build
+```
