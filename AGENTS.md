@@ -12,32 +12,9 @@
 * Tests live in `tests/` and cover config loading, adapter behavior, and CLI
 routing.
 
-* Examples live under `examples/`, especially:
+* Examples live under `examples/`
 
-## Development Commands
-
-Set up the environment:
-
-```bash
-pip install -e .[dev]
-```
-
-Common tasks:
-
-```bash
-ruff format .
-ruff check .
-pytest
-python -m build
-```
-
-Exercise the CLI during development:
-
-```bash
-foga validate
-foga build --profile mpi
-foga deploy --dry-run
-```
+* Documentation lives under `docs/`
 
 ## Skills & Source of Truth
 
@@ -53,12 +30,7 @@ This repository relies on shared skills. Use them.
   opened pull request.
   This is the source of truth for branching, issue pickup, and PR flow.
 
-* `pr-review-loop`
-  Use when implementing or coordinating GitHub PR review feedback.
-
-If a task matches a skill, follow the skill unless this file gives a
-repository-specific override. Repository-specific coding, testing, and GitHub
-workflow rules live in these local skill files rather than being repeated here.
+If a task matches a skill, follow the skill unless given an explicit override.
 
 ## Engineering Principles
 

@@ -24,8 +24,9 @@ uv lock
 Run the fast checks first while iterating on code:
 
 ```bash
-uv run ruff check .
-uv run pytest
+uv run ruff format . # Format
+uv run ruff check . # Lint
+uv run pytest # Test
 ```
 
 When you change documentation, build the docs with warnings treated as errors:

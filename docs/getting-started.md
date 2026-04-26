@@ -53,7 +53,7 @@ Make targets, CI snippets, or README instructions that already work, then ask
 it to map them to built-in `foga` backends before using hooks.
 
 If your tool supports local skills, use the provided
-[`foga-config-authoring` skill](https://github.com/fedluc/foga/blob/main/skills/foga-config-authoring/SKILL.md)
+[`foga-blueprint` skill](https://github.com/fedluc/foga/blob/main/skills/foga-blueprint/SKILL.md)
 to produce the initial config or a first draft.
 
 After the draft is generated, review it with `foga validate`, `foga inspect`,

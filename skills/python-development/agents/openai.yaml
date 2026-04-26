@@ -1,3 +1,3 @@
 interface:
   display_name: "Python Development"
-  short_description: "Implement and verify Python changes with Ruff and pytest"
+  short_description: "Develop Python with uv, Ruff, and pytest"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Foga Blueprint"
+  short_description: "Map repo workflows into foga.yml"
