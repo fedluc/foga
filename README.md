@@ -34,7 +34,7 @@ Start from one of the examples if you want a working baseline quickly. The
 for new users, and the larger reference examples show how `foga` looks in more
 realistic repositories.
 
-For example, a minimal `foga.yml` for a project called `demo` that contains
+For reference, a minimal `foga.yml` for a project called `demo` that contains
 both python and C++ code can look like this:
 
 ```yaml
@@ -68,4 +68,4 @@ foga test --dry-run
 
 ## Documentation
 
-Full documentation available at <https://fedluc.github.io/foga/>
+Full documentation with examples available at <https://fedluc.github.io/foga/>
