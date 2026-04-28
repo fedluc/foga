@@ -34,7 +34,8 @@ Start from one of the examples if you want a working baseline quickly. The
 for new users, and the larger reference examples show how `foga` looks in more
 realistic repositories.
 
-A minimal `foga.yml` can look like this:
+For reference, a minimal `foga.yml` for a project called `demo` that contains
+both python and C++ code can look like this:
 
 ```yaml
 project:
@@ -43,6 +44,10 @@ project:
 build:
   python:
     backend: python-build
+  cpp:
+      backend: cmake
+      source_dir: cpp
+      build_dir: build-cpp
 
 test:
   runners:
@@ -51,16 +56,16 @@ test:
       path: tests
 ```
 
-After you have created `foga.yml`, validate and inspect before you run anything
+After you have created `foga.yml`, validate before you run anything
 for real:
 
 ```bash
 foga validate
-foga inspect
 foga build --dry-run
+foga build cpp --dry-run
 foga test --dry-run
 ```
 
 ## Documentation
 
-Full documentation available at <https://fedluc.github.io/foga/>
+Full documentation with examples available at <https://fedluc.github.io/foga/>
